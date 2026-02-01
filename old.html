@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<style>body{margin:0;overflow:hidden;background:#000}canvas{display:block}</style>
+<script type="module">
+import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm'
+
+// === 1. Engine Setup ===
+let init = () => {
+  let c = document.createElement('canvas')
+  document.body.appendChild(c)
+  let g = c.getContext('webgl2')
+  let r = () => { c.width = innerWidth; c.height = innerHeight; g.viewport(0,0,c.width,c.height) }
+  window.onresize = r; r()
+  g.enable(g.BLEND); g.blendFunc(g.SRC_ALPHA, g.ONE_MINUS_SRC_ALPHA)
+  return { g, c }
+}
+
+let shader = (g, vs, fs) => {
+  let p = g.createProgram(), s = (src, t) => {
+    let h = g.createShader(t); g.shaderSource(h, src); g.compileShader(h); return h
+  }
+  g.attachShader(p, s(vs, g.VERTEX_SHADER)); g.attachShader(p, s(fs, g.FRAGMENT_SHADER))
+  g.linkProgram(p); g.useProgram(p)
+  g.bindBuffer(g.ARRAY_BUFFER, g.createBuffer())
+  g.bufferData(g.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), g.STATIC_DRAW)
+  return { p, loc: n => g.getUniformLocation(p, n) }
+}
+
+// === 2. The "Hybrid" Shader ===
+// 我们将 Code A 和 Code B 的核心函数完全分开，互不干扰
+let vs = `#version 300 es
+in vec4 pos; void main(){ gl_Position=pos; }`
+
+let fs = `#version 300 es
+precision highp float;
+uniform vec2 R;
+uniform float T, S, W, K, G;
+uniform int O, M; // M < 10: Code A Logic; M >= 10: Code B Logic
+uniform vec3 C1, C2, C3;
+out vec4 outColor;
+
+// --- Common Utils ---
+float hVal(vec2 p) { p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+vec2 hGrad(vec2 p) { p = vec2(dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3))); return -1. + 2.*fract(sin(p)*43758.5453123); }
+
+// ==========================================
+// CODE A: ORIGINAL FUNCTIONS (Preserved 1:1)
+// ==========================================
+float nVal_A(vec2 p) {
+  vec2 i=floor(p), f=fract(p), u=f*f*(3.-2.*f);
+  return mix(mix(hVal(i),hVal(i+vec2(1,0)),u.x), mix(hVal(i+vec2(0,1)),hVal(i+vec2(1,1)),u.x), u.y);
+}
+float fbmVal_A(vec2 p) {
+  float v=0., a=.5;
+  // Code A's Value Noise does NOT rotate. This is key for the "Fog" look.
+  for(int i=0; i<O; i++) { v+=a*nVal_A(p); p*=2.; a*=G; } 
+  return v;
+}
+
+float nGrad_A(vec2 p) {
+  vec2 i=floor(p), f=fract(p), u=f*f*f*(f*(f*6.-15.)+10.);
+  return mix(mix(dot(hGrad(i),f), dot(hGrad(i+vec2(1,0)),f-vec2(1,0)),u.x),
+             mix(dot(hGrad(i+vec2(0,1)),f-vec2(0,1)), dot(hGrad(i+vec2(1,1)),f-vec2(1,1)),u.x), u.y);
+}
+float fbmGrad_A(vec2 p) {
+  float v=0., a=.5;
+  mat2 rot = mat2(cos(.5), sin(.5), -sin(.5), cos(.5));
+  // Code A's Gradient Noise uses fixed .5 gain (a*=.5), ignoring G uniform usually
+  for(int i=0; i<O; i++) { v+=a*nGrad_A(p); p=rot*p*2.; a*=.5; } 
+  return v*.5+.5;
+}
+
+// ==========================================
+// CODE B: REDUX FUNCTIONS (Preserved 1:1)
+// ==========================================
+float n_B(vec2 p, int mode) {
+  vec2 i=floor(p), f=fract(p);
+  vec2 u = (mode==10) ? f*f*(3.-2.*f) : f*f*f*(f*(f*6.-15.)+10.);
+  if (mode==10) return mix(mix(hVal(i),hVal(i+vec2(1,0)),u.x), mix(hVal(i+vec2(0,1)),hVal(i+vec2(1,1)),u.x), u.y);
+  return mix(mix(dot(hGrad(i),f), dot(hGrad(i+vec2(1,0)),f-vec2(1,0)),u.x),
+             mix(dot(hGrad(i+vec2(0,1)),f-vec2(0,1)), dot(hGrad(i+vec2(1,1)),f-vec2(1,1)),u.x), u.y);
+}
+float fbm_B(vec2 p, int mode) {
+  float v=0., a=.5;
+  // Code B ALWAYS rotates. M=10(0.8), M=11(cos0.5)
+  mat2 r = (mode==11) ? mat2(cos(.5),sin(.5),-sin(.5),cos(.5)) : mat2(.8,.6,-.6,.8);
+  for(int i=0; i<O; i++) { v+=a*n_B(p, mode); p=r*p*2.; a*=G; }
+  return (mode==10) ? v : v*.5+.5;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy/R.y, p=uv*S;
+  vec3 col = vec3(0);
+  float alpha = 1.;
+
+  // ============================
+  // ROUTING LOGIC
+  // ============================
+  
+  // --- BRANCH 1: CODE A LOGIC (M < 10) ---
+  if (M < 10) {
+     if (M == 1) { // A: Gradient
+        vec2 q = vec2(fbmGrad_A(p + .05*T), fbmGrad_A(p + vec2(5.2,1.3) - .05*T));
+        vec2 r = vec2(fbmGrad_A(p + W*q + vec2(1.7,9.2) + .15*T), 
+                      fbmGrad_A(p + W*q + vec2(8.3,2.8) + .126*T));
+        float f = fbmGrad_A(p + r);
+        float v = pow(smoothstep(.2,.9,f), K);
+        col = C1 + C2 * length(q) * v + C3 * pow(v, 3.);
+     } else { // A: Value (M=0)
+        p*=2.; p.x-=(R.x/R.y-1.)*.5; // Code A Center fix
+        vec2 q = vec2(fbmVal_A(p + .2*T), fbmVal_A(p + vec2(5.2,1.3) + .2*T));
+        vec2 r = vec2(fbmVal_A(p + W*q + vec2(1.7,9.2) + .15*T), 
+                      fbmVal_A(p + W*q + vec2(8.3,2.8) + .126*T));
+        float f = fbmVal_A(p + r);
+        float v = pow(f, K);
+        col = C1 + C2 * (q.x+q.y)*.5 * v*.5 + C3 * pow(v, 2.);
+        col *= (1.-length(gl_FragCoord.xy/R.xy*2.-1.)*.4);
+     }
+  } 
+  
+  // --- BRANCH 2: CODE B LOGIC (M >= 10) ---
+  else {
+     int localM = (M == 10) ? 10 : 11; // 10=Value, 11=Grad
+     if(localM==10){ p*=2.; p.x-=(R.x/R.y-1.)*.5; }
+
+     float t = T*.2; // Code B Time scale
+     vec2 q = vec2(fbm_B(p+t, localM), fbm_B(p+vec2(5.2,1.3)-t, localM));
+     vec2 r = vec2(fbm_B(p+W*q+t, localM), fbm_B(p+W*q+vec2(8.3,2.8)+t, localM));
+     float f = fbm_B(p+W*r, localM);
+
+     if (M == 12) { // B: Thermal
+        f = smoothstep(0.,1.,(f-.2)*K);
+        col = mix(C1,C2,smoothstep(0.,.7,f));
+        col = mix(col,C3,pow(smoothstep(.6,1.,f),3.));
+        alpha = smoothstep(.1,1.,f);
+     } else { // B: V2/V4
+        float v = pow(f,K);
+        float flow = (localM==10) ? (q.x+q.y)*.5 : length(q);
+        col = C1 + C2*flow*v*.5 + C3*pow(v,2.);
+        col *= (1.-length(gl_FragCoord.xy/R.xy*2.-1.)*.4);
+     }
+  }
+
+  outColor = vec4(col, alpha);
+}`
+
+// === 3. Data Structure ===
+
+// Palettes (Shared format)
+let palettes = {
+  'Deep Space': { b:[.02,.02,.1],  f:[.1,.4,.6],  h:[1.,.9,.8] },
+  'Toxic Bio':  { b:[0,.1,.05],    f:[.3,.8,.2],  h:[.9,1.,.8] },
+  'Cyber Punk': { b:[.05,0,.15],   f:[0,.8,1.],   h:[1.,0,.8]  },
+  'Gold Dust':  { b:[.1,.05,0],    f:[.7,.5,.1],  h:[1.,1.,.9] },
+  'Nebula Fire':{ b:[.1,0,0],      f:[.8,.2,0],   h:[1.,.9,.4] },
+  'Plasma':     { b:[.1,0,0],      f:[.8,.1,0],   h:[1.,.9,.5] },
+  'Magma':      { b:[.77,0,0],    f:[.9,.3,0],   h:[1.,.9,.5] }, // Classic Thermal
+  'Monochrome': { b:[0,0,0],       f:[.4,.4,.4],  h:[1.,1.,1.] },
+  'Ink':        { b:[1,1,1],     f:[.5,.5,.5],  h:[0,0,0]    }  // Inverted thermal
+}
+
+// Logic Configs
+// M < 10: Code A Logic (0=Value/Fog, 1=Gradient)
+// M >= 10: Code B Logic (10=Value, 11=Gradient, 12=Thermal)
+let modes = {
+  // --- Code A (Legacy Authentic) ---
+  'A: Fog (Better)':     { M:0, W:6.0, S:2.0, K:1.0, G:0.5, O:8 },
+  'A: Gradient':          { M:1, W:4.0, S:9.0, K:1.0, G:0.5, O:6 },
+  'A: Nebula (Classic)':  { M:0, W:5.0, S:6.0, K:1.2, G:0.5, O:8 },
+
+  // --- Code B (Redux Modern) ---
+  'B: V2 (Rotated Val)':  { M:10, W:5.0, S:6.0, K:1.0, G:0.5, O:8 },
+  'B: V4 (River)': { M:11, W:4.0, S:9.0, K:0.5, G:0.5, O:8 },
+  'B: V3 (Lava Thermal)':      { M:12, W:10., S:7.0, K:1.9, G:0.5, O:5 }
+}
+
+// Initial State (Code A Default)
+let s = {
+  algo: 'A: Fog (Better)', 
+  color: 'Deep Space',
+  ...modes['A: Fog (Better)'], 
+  ...palettes['Deep Space']
+}
+
+// === 4. Run ===
+let { g, c } = init()
+let P = shader(g, vs, fs)
+let a = g.getAttribLocation(P.p, 'pos')
+g.enableVertexAttribArray(a); g.vertexAttribPointer(a, 2, g.FLOAT, false, 0, 0)
+
+let gui = new GUI({ title: 'Nebula Remix (Old)' })
+let sync = () => { 
+  Object.assign(s, modes[s.algo], palettes[s.color])
+  gui.controllers.forEach(c => c.updateDisplay()) 
+}
+
+// [SHARE]: Action to copy URL
+let act = {
+  share: () => {
+    let u = new URL(location)
+    for(let k in s) u.searchParams.set(k, s[k]) // array auto-toStrings to 'r,g,b'
+    history.replaceState(null,'',u)
+    navigator.clipboard.writeText(u.href).then(()=>btn.name('Copied!')).catch(()=>btn.name('Fail'))
+    setTimeout(()=>btn.name('Copy URL'), 2000)
+  }
+}
+let btn = gui.add(act, 'share').name('Copy URL')
+
+
+// [LOAD]: Restore state from URL
+let load = () => {
+  let q = new URLSearchParams(location.search)
+  if(!q.size) return
+  for(let k in s) {
+    if(!q.has(k)) continue
+    let v = q.get(k), t = typeof s[k]
+    if(Array.isArray(s[k])) s[k] = v.split(',').map(x=>+x)
+    else if(t=='number') s[k] = +v
+    else s[k] = v
+  }
+}
+load()
+
+
+gui.add(s, 'algo', Object.keys(modes)).name('Algorithm').onChange(sync)
+gui.add(s, 'color', Object.keys(palettes)).name('Palette').onChange(sync)
+let f_p = gui.addFolder('Physics')
+f_p.add(s, 'S', 1, 20).name('Zoom')
+f_p.add(s, 'W', 0, 20).name('Warp')
+f_p.add(s, 'K', 0.1, 5).name('Contrast')
+f_p.add(s, 'O', 1, 8, 1).name('Octaves')
+let f_c = gui.addFolder('Colors')
+f_c.addColor(s,'b').name('Base').listen()
+f_c.addColor(s,'f').name('Flow').listen()
+f_c.addColor(s,'h').name('Hot').listen()
+
+let loop = (t) => {
+  g.uniform2f(P.loc('R'), c.width, c.height)
+  g.uniform1f(P.loc('T'), t*0.001) // Raw ms for Code A logic, B scales it internally
+  g.uniform1f(P.loc('S'), s.S); g.uniform1f(P.loc('W'), s.W)
+  g.uniform1f(P.loc('K'), s.K); g.uniform1f(P.loc('G'), s.G)
+  g.uniform1i(P.loc('O'), s.O); g.uniform1i(P.loc('M'), s.M)
+  g.uniform3fv(P.loc('C1'), s.b); g.uniform3fv(P.loc('C2'), s.f); g.uniform3fv(P.loc('C3'), s.h)
+  
+  g.clearColor(0,0,0,1); g.clear(g.COLOR_BUFFER_BIT)
+  g.drawArrays(g.TRIANGLES, 0, 3)
+  requestAnimationFrame(loop)
+}
+loop(0)
+</script>

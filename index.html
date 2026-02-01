@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+<style>body{margin:0;overflow:hidden;background:#000}canvas{display:block}</style>
+<script type="module">
+import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm'
+
+// === 1. Engine Setup ===
+let init = () => {
+  let c = document.createElement('canvas'), g = c.getContext('webgl2')
+  let r = () => { c.width = innerWidth; c.height = innerHeight; g.viewport(0,0,c.width,c.height) }
+  window.onresize = r; document.body.append(c); r()
+  g.enable(g.BLEND); g.blendFunc(g.SRC_ALPHA, g.ONE_MINUS_SRC_ALPHA)
+  return { g, c }
+}
+
+let shader = (g, vs, fs) => {
+  let p = g.createProgram(), s = (src, t) => {
+    let h = g.createShader(t); g.shaderSource(h, src); g.compileShader(h); return h
+  }
+  g.attachShader(p, s(vs, g.VERTEX_SHADER)); g.attachShader(p, s(fs, g.FRAGMENT_SHADER))
+  g.linkProgram(p); g.useProgram(p)
+  g.bindBuffer(g.ARRAY_BUFFER, g.createBuffer())
+  g.bufferData(g.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), g.STATIC_DRAW)
+  return { p, loc: n => g.getUniformLocation(p, n) }
+}
+
+// === 2. Shader Logic ===
+let vs = `#version 300 es
+in vec4 pos; void main(){ gl_Position=pos; }`
+
+let fs = `#version 300 es
+precision highp float;
+uniform vec2 R;
+uniform float T, S, W, K, G, SPD;
+uniform int O, M;
+uniform vec3 C1, C2, C3;
+out vec4 outColor;
+
+float h(vec2 p) { p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+vec2 h2(vec2 p) { p=vec2(dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3))); return -1.+2.*fract(sin(p)*43758.5453); }
+
+float N(vec2 p, bool grad) {
+  vec2 i=floor(p), f=fract(p), u;
+  if (grad) u = f*f*f*(f*(f*6.-15.)+10.);
+  else      u = f*f*(3.-2.*f);
+  if (!grad) return mix(mix(h(i),h(i+vec2(1,0)),u.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),u.x), u.y);
+  return mix(mix(dot(h2(i),f), dot(h2(i+vec2(1,0)),f-vec2(1,0)),u.x),
+             mix(dot(h2(i+vec2(0,1)),f-vec2(0,1)), dot(h2(i+vec2(1,1)),f-vec2(1,1)),u.x), u.y);
+}
+
+float F(vec2 p, mat2 m, bool grad) {
+  float v=0., a=.5;
+  for(int i=0; i<O; i++) { 
+    v += a * N(p, grad); 
+    p = m * p * 2.; a *= G; 
+  }
+  return grad ? v*.5+.5 : v;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy/R.y, p = uv*S;
+  bool isB = M >= 10, isGrad = (M==1 || M==11);
+  mat2 rm = mat2(1,0,0,1); 
+  if (isB && M==10) rm = mat2(.8,.6,-.6,.8);
+  if (M==1 || M==11) rm = mat2(cos(.5),sin(.5),-sin(.5),cos(.5));
+  if (M==0 || M==10) { p*=2.; p.x-=(R.x/R.y-1.)*.5; }
+  float t = T * SPD;
+  vec2 q = vec2(F(p + (isB?t:.05*t), rm, isGrad), F(p + vec2(5.2,1.3) + (isB?-t:-.05*t), rm, isGrad));
+  vec2 r = vec2(F(p + W*q + vec2(1.7,9.2) + .15*t, rm, isGrad), F(p + W*q + vec2(8.3,2.8) + .126*t, rm, isGrad));
+  float f = F(p + (isB?W*r:r), rm, isGrad);
+  vec3 col = vec3(0); float alpha = 1.;
+  if (M==12) { 
+    f = smoothstep(0.,1.,(f-.2)*K);
+    col = mix(mix(C1,C2,smoothstep(0.,.7,f)), C3, pow(smoothstep(.6,1.,f),3.));
+    alpha = smoothstep(.1,1.,f);
+  } else {
+    float v = pow(isGrad ? smoothstep(.2,.9,f) : f, K);
+    float flow = (M==0||M==10) ? (q.x+q.y)*.5 : length(q);
+    float gain = isGrad ? 1. : .5;
+    col = C1 + C2*flow*v*gain + C3*pow(v, isGrad?3.:2.);
+    col *= (1.-length(gl_FragCoord.xy/R.xy*2.-1.)*.4);
+  }
+  outColor = vec4(col, alpha);
+}`
+
+// === 3. Data & State ===
+let palettes = {
+  'Deep Space': { b:[.02,.02,.1],  f:[.1,.4,.6],  h:[1.,.9,.8] },
+  'Sweet': {
+    b: [0.05, 0.02, 0.15], // Base: 深紫黑
+    f: [0.10, 0.60, 0.60], // Flow: 青蓝
+    h: [1.00, 0.90, 0.70]  // Hot:  暖白
+  },
+  'Ice Core':    { b:[0,.05,.1],   f:[0,.5,.7],   h:[.8,.95,1] }, // 极寒：深蓝 -> 青 -> 白
+  'Gold Dust':  { b:[.1,.05,0],    f:[.7,.5,.1],  h:[1.,1.,.9] },
+  'Copper Rust': { b:[.15,.1,.1],  f:[.2,.5,.5],  h:[.9,.6,.4] },  // 氧化：暗褐 -> 铜绿 -> 亮铜
+  'Toxic Bio':  { b:[0,.1,.05],    f:[.3,.8,.2],  h:[.9,1.,.8] },
+  'Cyber Punk': { b:[.05,0,.15],   f:[0,.8,1.],   h:[1.,0,.8]  },
+  'Nebula Fire':{ b:[.1,0,0],      f:[.8,.2,0],   h:[1.,.9,.4] },
+  'Plasma':     { b:[.1,0,0],      f:[.8,.1,0],   h:[1.,.9,.5] },
+  'Magma':      { b:[.77,0,0],     f:[.9,.3,0],   h:[1.,1.,.8] },
+  'Vampire':     { b:[0,0,0],      f:[.6,0,0],    h:[1,.9,.9]  }, // 鲜血：纯黑 -> 深红 -> 苍白
+  'Monochrome': { b:[0,0,0],       f:[.4,.4,.4],  h:[1.,1.,1.] },
+  'Ink':        { b:[1,1,1],       f:[.5,.5,.5],  h:[0,0,0]    },
+}
+
+let modes = {
+  'A: Fog':     { M:0,  W:6.0, S:2.0, K:1.0, G:0.5, O:8, flu: 0.2 },
+  'A: Cotton':          { M:1,  W:4.0, S:9.0, K:1.0, G:0.5, O:6, flu: 1.0 },
+  'A: Nebula (Classic)':  { M:0,  W:5.0, S:6.0, K:1.2, G:0.5, O:8, flu: 0.2 },
+  'B: Ocean':  { M:10, W:5.0, S:6.0, K:1.0, G:0.5, O:8, flu: 0.2 },
+  'B: River': { M:11, W:4.0, S:9.0, K:0.5, G:0.5, O:8, flu: 0.2 },
+  'B: Lava':      { M:12, W:10., S:7.0, K:1.9, G:0.5, O:5, flu: 0.2 }
+}
+
+let firstAlgo = Object.keys(modes)[0]
+let s = { algo: firstAlgo, color: 'Deep Space', ...modes[firstAlgo], ...palettes['Deep Space'] }
+
+
+// === 4. Run ===
+let { g, c } = init()
+let P = shader(g, vs, fs)
+let a = g.getAttribLocation(P.p, 'pos')
+g.enableVertexAttribArray(a); g.vertexAttribPointer(a, 2, g.FLOAT, false, 0, 0)
+
+let gui = new GUI({ title: 'Nebula Remix' })
+
+let sync = () => { 
+  let m = modes[s.algo]
+  if(m) { Object.assign(s, m, palettes[s.color]); gui.controllers.forEach(c => c.updateDisplay()) }
+}
+
+// [SHARE]: 1行。利用 Object.entries 直接序列化 s，点击即复制
+gui.add({$:()=>{ 
+  history.replaceState(0,0,'?'+new URLSearchParams(Object.entries(s)))
+  navigator.clipboard.writeText(location.href).then(()=>confirm('Copied 👍!\nOpen in Nebula old?')? (location.pathname+='old.html') :0)
+}},'$').name('Share')
+
+// [LOAD]: 1行。遍历 URL 参数，如果是数组(颜色)则 split，否则尝试转数字，失败则保留字符串
+new URLSearchParams(location.search).forEach((v,k)=>s[k]=Array.isArray(s[k])?v.split(','):(+v||v))
+
+
+gui.add(s, 'algo', Object.keys(modes)).name('Algorithm / 算法').onChange(sync)
+gui.add(s, 'color', Object.keys(palettes)).name('Palette / 配色').onChange(sync)
+
+let f = gui.addFolder('Physics / 物理');
+f.add(s, 'S').min(0).max(20).step(0.1).name('Zoom / 缩放')
+f.add(s, 'W').min(0).max(20).step(0.1).name('Warp / 扭曲')
+f.add(s, 'K').min(0).max(10).step(0.1).name('Contrast / 对比')
+f.add(s, 'O', 1, 10, 1).name('Octaves / 层数')
+f.add(s, 'G').min(0).max(1).step(0.01).name('Gain / 增益')
+f.add(s, 'flu').min(0).max(3).step(0.01).name('Fluidity / 流速')
+
+let fc = gui.addFolder('Colors / 配色');
+fc.addColor(s, 'b').name('Base / 基色').listen()
+fc.addColor(s, 'f').name('Flow / 流体').listen()
+fc.addColor(s, 'h').name('Hot / 高光').listen()
+
+let loop = (t) => {
+  g.uniform2f(P.loc('R'), c.width, c.height)
+  g.uniform1f(P.loc('T'), t*0.001)
+  g.uniform1i(P.loc('O'), s.O); g.uniform1i(P.loc('M'), s.M)
+  g.uniform1f(P.loc('S'), s.S); g.uniform1f(P.loc('W'), s.W)
+  g.uniform1f(P.loc('K'), s.K); g.uniform1f(P.loc('G'), s.G)
+  g.uniform1f(P.loc('SPD'), s.flu)
+  g.uniform3fv(P.loc('C1'), s.b); g.uniform3fv(P.loc('C2'), s.f); g.uniform3fv(P.loc('C3'), s.h)
+  g.drawArrays(g.TRIANGLES, 0, 3)
+  requestAnimationFrame(loop)
+}
+loop(0)
+</script>
