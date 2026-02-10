@@ -2,7 +2,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SwissGL Newton Fractal (Refactored)</title>
+    <title>SwissGL Newton Fractal (Hammer+lil-gui)</title>
     <script src="https://google.github.io/swissgl/swissgl.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19.1/dist/lil-gui.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
@@ -15,65 +15,172 @@
     <canvas id="c"></canvas>
 
 <script>
-    const canvas = document.getElementById('c');
-    const glsl = SwissGL(canvas);
+const canvas = document.getElementById('c');
+const glsl = SwissGL(canvas);
+// Target State (交互修改这里)
+const view = { x: 0, y: 0, zoom: 0.5 }
+// Render State (渲染器读取这里)
+const val = { x: 0, y: 0, zoom: 1. }
 
-    // --- 1. 数据定义 ---
-    const FRACTALS = {
-        "p(z) = z³ − 1": {
-            f:  `{ vec2 z2 = cmul(z,z); f = cmul(z, z2) - vec2(1,0); }`,
-            df: `{ vec2 z2 = cmul(z,z); df = 3.0 * z2; }`
-        },
-        "p(z) = z⁸ + 15z⁴ − 16": {
-            f:  `{ vec2 z2=cmul(z,z); vec2 z4=cmul(z2,z2); vec2 z8=cmul(z4,z4); f = z8 + 15.0*z4 - vec2(16,0); }`,
-            df: `{ vec2 z2=cmul(z,z); vec2 z3=cmul(z,z2); vec2 z4=cmul(z2,z2); df = cmul(4.0*z3, (2.0*z4 + vec2(15,0))); }`
-        },
-        "p(z) = z³ − 2z + 2": {
-            f:  `{ vec2 z2=cmul(z,z); f = cmul(z, z2) - 2.0*z + vec2(2,0); }`,
-            df: `{ vec2 z2=cmul(z,z); df = 3.0*z2 - vec2(2,0); }`
-        },
+// --- 3. 参数与状态 ---
+const params = {
+  formula: "p(z) = z³ − 1",
+  palette: "Magma (Smooth)",
+  iter: 60,
+  vTouch: 0.15,
+  colorScale: 0.6,
+  colorOffset: 0.0,  // 新增：颜色种子/偏移
+  reset: () => {
+      view.x = 0; view.y = 0; view.zoom = 0.5
+      params.colorOffset = 0.0; // 重置时归零，保证默认外观
+      gui.controllers.forEach(c => c.updateDisplay())
+  },
+  Julia:'0',
+};
 
-        "p(z) = z⁶ + z³ − 1": {
-            f:  `{ vec2 z2=cmul(z,z); vec2 z3=cmul(z,z2); vec2 z6=cmul(z3,z3); f = z6 + z3 - vec2(1,0); }`,
-            df: `{ vec2 z2=cmul(z,z); vec2 z3=cmul(z,z2); df = cmul(3.0*z2, (2.0*z3 + vec2(1,0))); }`
-        },
-"p(z) = sin(z)": {
-        "_comment": "Root aligned to Center (0,0). Symmetric grid.",
-        "f":  "{ f = csin(z); }",
-        "df": "{ df = ccos(z) - vec2(1,0); }"
-    },
+let iMouse = [-0.8, 0.156] // 默认 Julia C 值
 
-    "p(z) = cosh(z)": {
-        "_comment": "Center (0,0) becomes chaotic saddle point (maximum detail). Roots move to ±i*PI/2.",
-        "f":  "{ f = ccosh(z); }",
-        "df": "{ df = csinh(z); }"
-    },
-        "p(z) = cosh(z) − 1": {
+canvas.oncontextmenu = e => {
+  e.preventDefault()
+  let w=canvas.width, h=canvas.height, s=Math.min(w,h)
+  // Screen -> UV -> World (Fractal Space)
+  // 注意：Canvas Y轴向下，GL Y轴向上，需反转 ((h-y)-h/2)
+  iMouse = [
+    (e.offsetX - w*.5)/s / val.zoom + val.x,
+    ((h-e.offsetY) - h*.5)/s / val.zoom + val.y
+  ]
+}
 
-            f:  `{ f = ccosh(z) - vec2(1,0); }`,
+    // --- GUI ---
+const gui = new lil.GUI({ title: 'Newton Fractal' });
+setTimeout(()=> {
+  gui.add(params, 'formula', Object.keys(FRACTALS)).name('Function');
+  gui.add(params, 'palette', PALETTE_NAMES).name('Colors');
+  gui.add(params, 'colorScale', 0.1, 5.0, 0.1).name('Gradient Freq');
+  gui.add(params, 'colorOffset', 0.0, 6.28).name('Color Seed/Shift'); // 0 ~ 2PI 刚好一个周期
+  gui.add(params, 'iter', 10, 100, 1).name('Iterations');
+  gui.add(params, 'vTouch', 0, 1).onChange(x=>params.vTouch =  Math.pow(x, 3))
+  gui.add(view, 'zoom').listen().disable();
+  gui.add(params, 'reset').name('Reset View');
+  gui.add(params, 'Julia').name('😎 Julia (0~4)').onChange(s=>{eval(s); if(s=='2') iMouse = [val.x, val.y] })
+})
+function resize() {
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+}
+window.addEventListener('resize', resize);
+resize();
 
-            df: `{ df = csinh(z); }`
+    // --- 交互控制 (Hammer.js) ---
+{
+  let mc = new Hammer(canvas), ref = {}
+  
+  mc.get('pinch').set({ enable: true })
+  mc.get('pan').set({ direction: 30, threshold: 0 })
 
-        },
-    "p(z) = z^3 - z": {
-        "f":  "{ vec2 z2=cmul(z,z); vec2 z3=cmul(z2,z); f = z3 - z; }",
-        "df": "{ vec2 z2=cmul(z,z); df = cmul(vec2(3,0), z2) - vec2(1,0); }"
-    },
+  // 统一的“快照”逻辑：动作开始时，将 view 锁存入 ref
+  mc.on("panstart pinchstart", () => Object.assign(ref, view))
+  
+  // 统一的“投影”逻辑：基于 ref 计算新的 view
+  mc.on("pinchmove", e => view.zoom = ref.zoom * e.scale)
+  mc.on("panmove",   e => {
+    let s = Math.min(canvas.width, canvas.height) * ref.zoom /1.2
+    view.x = ref.x - e.deltaX / s
+    view.y = ref.y + e.deltaY / s
+  })
 
-    "p(z) = z^4 + z^2 - 1": {
-        "f":  "{ vec2 z2=cmul(z,z); vec2 z4=cmul(z2,z2); f = z4 + z2 - vec2(1,0); }",
-        "df": "{ vec2 z3=cmul(z,cmul(z,z)); df = cmul(vec2(4,0), z3) + cmul(vec2(2,0), z); }"
-    }
-    };
+  // Wheel 直接叠加，无需快照
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault(); view.zoom *= e.deltaY > 0 ? 0.9 : 1.1
+  }, { passive: false })
+}
+    // --- 渲染循环 ---
+const loop = () => {
+  requestAnimationFrame(loop)
+
+  // 1. Physics: Lerp Current -> Target (view)
+  for (let k in view) val[k] += (view[k] - val[k]) * params.vTouch
+
+  // 2. Projection
+  let func = FRACTALS[params.formula]
+  glsl({
+    seed:   [val.x, val.y, val.zoom],
+    iResolution: [canvas.width, canvas.height], iMouse,
+    mode: (func.df=='')? +params.Julia:4,
+
+    PID:    PALETTE_NAMES.indexOf(params.palette),
+    MAX_ITER:     params.iter,
+    COLOR_SCALE:  params.colorScale,
+    COLOR_OFFSET: params.colorOffset,
+    FP:           getFP(func.f, func.df)
+  })
+}
+
 
     // 调色板名称数组 (使用 indexOf 获取 ID)
     const PALETTE_NAMES = [
         "Classic (Angle)",   // ID 0
         "Electric (Iter)",   // ID 1
         "Magma (Smooth)",    // ID 2
-        "Contour (Log)",      // ID 3
-        "Contour Soft"      // ID 4
+        "Contour (Log)",     // ID 3
+        "Contour Soft",      // ID 4
+        "ThreeeD Soft",      // ID 5
+        "ThreeeD Hard",      // ID 6
     ];
+    // --- 1. 数据定义 ---
+    const FRACTALS = {
+    Mandel:{df:'', f:'df = 2.0 * mat2(z.x, -z.y, z.y, z.x) * df + vec2(1.0, 0.0); z = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y) + c;'},
+    // z = conj(z)^2 + c
+    Tricorn:{df:'', f:'z.y=-z.y; df=2.*mat2(z.x,-z.y,z.y,z.x)*df+vec2(1.,0.); z=vec2(z.x*z.x-z.y*z.y, 2.*z.x*z.y)+c;'},
+    BurnShip:{df:'', f:'vec2 a = abs(z); df = 2.0 * mat2(a.x,-a.y,a.y,a.x) * df + vec2(1.,0.); z = vec2(a.x*a.x - a.y*a.y, -2.0*a.x*a.y) + c;'},
+    // z = z^3 + c (df = 3*z^2*df + 1)
+    Cubic:  {df:'', f:'vec2 s=vec2(z.x*z.x-z.y*z.y, 2.*z.x*z.y); df=3.*mat2(s.x,-s.y,s.y,s.x)*df+vec2(1.,0.); z=vec2(z.x*s.x-z.y*s.y, z.x*s.y+z.y*s.x)+c;'},
+    // z = |Re(z^2)| + i*Im(z^2) + c
+    Celtic: {df:'', f:'vec2 s = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y); df = 2.0 * mat2(z.x, -z.y, z.y, z.x) * df + vec2(1.0, 0.0); z = vec2(abs(s.x), s.y) + vec2(-c.y, c.x); '},
+    
+    
+    "p(z) = z³ − 1": {
+        f:  `{ vec2 z2 = cmul(z,z); f = cmul(z, z2) - vec2(1,0); }`,
+        df: `{ vec2 z2 = cmul(z,z); df = 3.0 * z2; }`
+    },
+    "p(z) = z³ − 2z + 2": {
+        f:  `{ vec2 z2=cmul(z,z); f = cmul(z, z2) - 2.0*z + vec2(2,0); }`,
+        df: `{ vec2 z2=cmul(z,z); df = 3.0*z2 - vec2(2,0); }`
+    },
+    "p(z) = z^4 + z^2 - 1": {
+        "f":  "{ vec2 z2=cmul(z,z); vec2 z4=cmul(z2,z2); f = z4 + z2 - vec2(1,0); }",
+        "df": "{ vec2 z3=cmul(z,cmul(z,z)); df = cmul(vec2(4,0), z3) + cmul(vec2(2,0), z); }"
+    },
+    "p(z) = z⁸ + 15z⁴ − 16": {
+        f:  `{ vec2 z2=cmul(z,z); vec2 z4=cmul(z2,z2); vec2 z8=cmul(z4,z4); f = z8 + 15.0*z4 - vec2(16,0); }`,
+        df: `{ vec2 z2=cmul(z,z); vec2 z3=cmul(z,z2); vec2 z4=cmul(z2,z2); df = cmul(4.0*z3, (2.0*z4 + vec2(15,0))); }`
+    },
+
+    "p(z) = z⁶ + z³ − 1": {
+        f:  `{ vec2 z2=cmul(z,z); vec2 z3=cmul(z,z2); vec2 z6=cmul(z3,z3); f = z6 + z3 - vec2(1,0); }`,
+        df: `{ vec2 z2=cmul(z,z); vec2 z3=cmul(z,z2); df = cmul(3.0*z2, (2.0*z3 + vec2(1,0))); }`
+    },
+    "p(z) = sin(z)": {
+      "f":  "{ f = csin(z); }",
+      "df": "{ df = ccos(z) - vec2(1,0); }"
+    },
+
+    "p(z) = cosh(z)": {
+        "f":  "{ f = ccosh(z); }",
+        "df": "{ df = csinh(z); }"
+    },
+    "p(z) = cosh(z) − 1": {
+        f:  `{ f = ccosh(z) - vec2(1,0); }`,
+        df: `{ df = csinh(z); }`
+    },
+    "p(z) = z^3 - z": {
+        "f":  "{ vec2 z2=cmul(z,z); vec2 z3=cmul(z2,z); f = z3 - z; }",
+        "df": "{ vec2 z2=cmul(z,z); df = cmul(vec2(3,0), z2) - vec2(1,0); }"
+    },
+
+    };
+
 
     // --- 2. Shader 生成函数 (FP 外提) ---
     // 将 f_code 和 df_code 作为参数注入
@@ -103,22 +210,54 @@
         void fragment() {
             int palType = int(PID);
             int max_iter_int = int(MAX_ITER);
+            vec2 uv, z, c; // [Change] 增加 c 定义
+            uv = (gl_FragCoord.xy - iResolution*0.5) / min(iResolution.x, iResolution.y);
 
             // ... (坐标计算和 Newton 迭代循环保持不变) ...
-            vec2 uv = (gl_FragCoord.xy - aspect*0.5) / min(aspect.x, aspect.y);
-            vec2 z = uv / seed.z + seed.xy;
-            
+            if(int(mode)==0) {
+              // Mandelbrot Set (z0=0, c=uv) / Julia (z0=uv, c=seed)
+              c = uv / seed.z + seed.xy;
+              z = vec2(0.0);
+            } else
+            if(int(mode)==1) {
+              c = seed.xy;
+              z = uv / seed.z + seed.xy; // 灵动色板模式
+            } else
+            if(int(mode)==2) {
+              c = iMouse.xy;
+              z = uv / seed.z + seed.xy; // 色板模式，seed仅控制视角
+            } else
+            if(int(mode)==3) {
+              c = seed.xy;
+              z = uv / seed.z - iMouse.xy; // 色板模式，只染色不渲染
+            } else
+            if(int(mode)==4) {
+              uv = (gl_FragCoord.xy - iResolution*0.5) / min(iResolution.x, iResolution.y);
+              z = uv / seed.z + seed.xy;
+            }
             vec2 f, df;
+            float trajLen = 0.0;
             int iter = 0;
-            
             for(int i=0; i<max_iter_int; i++) {
                 iter = i;
                 ${f_code}
                 ${df_code}
+                if(int(mode)<3) {
+                  // [Change] Mandelbrot/Julia Iteration (z' = z^2 + c)
+                  
+                  f = z; // 映射 z 到 f 以适配 palette 的 log_dist 计算
+                  trajLen += length(z); // 累加用于高度场
 
-                vec2 step = cdiv(f, df);
-                z -= step;
-                if (dot(step, step) < 1e-8) break;
+                  if(dot(z, z) > 4.0) { 
+                    break; 
+                  }
+                } else {
+                  vec2 step = cdiv(f, df);
+                  z -= step;
+                  trajLen += length(step); // 累加每一步移动的距离
+                  
+                  if (dot(step, step) < 1e-8) break;
+                }
             }
 
 // --- 颜色计算逻辑 ---
@@ -129,6 +268,8 @@ float norm_angle = raw_angle / 6.2831853 + 0.5;
 
 vec3 col = vec3(0.0);
 float t = 0.0;
+// 判断是否收敛（用于处理背景）
+bool converged = iter < max_iter_int - 1;
 
 if (palType == 0) {
     // [Classic Hue]
@@ -163,6 +304,108 @@ else if (palType == 3) {
     // 对数模长本身就是连续的，乘以 Scale 可以控制等高线的密度
     t = log(length(f) + 1e-10) * 0.02 * COLOR_SCALE + COLOR_OFFSET;
     col = get_color(t, 3);
+} else if (palType == 5) {
+    // [Pseudo-3D Relief - Arc Length Structure]
+    // Newton 迭代通常是二次收敛的，使用 log2(log2) 进行平滑
+    // 这种势能场在单 basins 内部是连续的 (C1连续)，只在 basins 边界产生干净的"折痕"，而非噪音
+    float log_dist = log2(dot(f,f) + 1e-20);
+    float smooth_i = float(iter) - log2(abs(log_dist)) + 4.0;
+    // --- 核心修复：引入轨迹弧长 (Arc Length) ---
+    // 我们需要在迭代循环中累加步长。
+    // 请确保你在上方的 for 循环中添加了: trajectory_len += length(step);
+    // (如果不想改动循环，可以使用下方的近似公式，但建议在循环里加一句)
+    
+    // 这里假设你无法修改循环，我们使用一种基于 smooth_i 和 导数模长 的近似替代方案
+    // log(length(df)) 反映了空间的局部拉伸率（Lyapunov 指数的近似），这正是"脊"的来源
+    float dist_metric = log(length(df) + 1e-5); 
+    
+    // 1. 复合高度场 (Composite Height Map)
+    // Base: smooth_i 提供大的起伏形状（碗状结构）
+    // Detail: dist_metric 提供内部的脊和纹理（骨架）
+    // 0.3 和 0.15 是混合权重，可根据口味调整
+    float heightVal = -trajLen * 0.2, kFg=COLOR_SCALE+0.5;
+
+    // 2. 法线生成 (保持原有的高精度微分)
+    vec3 n = vec3(0.0, 0.0, 1.0);
+    if (converged) {
+        // 降低 Z 轴分量(0.5 -> 0.1) 可以让脊看起来更锐利
+        float normalZ = mix(1.0, 0.1, clamp(abs(kFg)*0.5, 0.0, 1.0));
+        n = normalize(vec3(dFdx(heightVal), dFdy(heightVal), normalZ));
+    }
+
+    // 3. 增强型光照 (Anisotropic-like)
+    float lightAngle = COLOR_OFFSET;
+    vec3 lightDir = normalize(vec3(cos(lightAngle), sin(lightAngle), 1.0)); // 稍微降低光源高度
+    
+    float diff = max(dot(n, lightDir), 0.0);
+    
+    // 使用半程向量计算高光 (Blinn-Phong)
+    vec3 viewDir = vec3(0.0, 0.0, 1.0);
+    vec3 halfDir = normalize(lightDir + viewDir);
+    
+    // --- 关键点：高光锐化 ---
+    // pow(32.0) 甚至 64.0，让脊线上的高光像金属丝一样细
+    float specAngle = max(dot(n, halfDir), 0.0);
+    float spec = pow(specAngle, 48.0); 
+
+    // 4. 合成
+    // 使用 dist_metric 来调制基色，让脊的颜色也深一点，增强体积感
+    float colorT = (smooth_i * 0.05 + norm_angle * 0.1) * kFg;
+    vec3 baseCol = get_color(colorT, 2); 
+    
+    // 在脊的凹陷处(dist_metric小)加深颜色 (Ambient Occlusion 近似)
+    baseCol *= smoothstep(-2.0, 4.0, dist_metric);
+
+    // 混合：环境光 + 漫反射 + 强高光
+    col = baseCol * (diff * 0.8 + 0.2) + vec3(spec * 0.8);
+    
+    if (!converged) col = vec3(0.0);
+} else if (palType == 6) {
+    // [True Smooth Relief - Double Log Correction]
+    
+    // 1. 计算剩余距离 (Residue)
+    float dist = length(f) + 1e-20;
+    
+    // 2. 双重对数平滑 (核心修复)
+    // Newton迭代每一次让误差平方(精度翻倍)，导致 log(dist) 翻倍。
+    // 因此 log2(log(dist)) 每一次迭代增加 1.0。
+    // 我们减去这个值，就能在两次整数迭代之间进行完美的线性插值。
+    // 注意：log(dist) 是负数，取 -log(dist) 变为正数再取 log2
+    float smooth_h = float(iter) - log2(-log(dist));
+
+    // 3. 高度场调整
+    // 这个 smooth_h 现在是完美的连续值。
+    // 我们乘以一个系数让它变成合适的高度。
+    float h = smooth_h * 0.5;
+
+    // 4. 法线生成 (无噪点)
+    // 根据 COLOR_SCALE 动态调整立度 (Steepness)
+    // 越小越平滑，越大越像雕刻
+    float steepness = mix(0.1, 2.0, abs(COLOR_SCALE));
+    vec3 n = normalize(vec3(dFdx(h), dFdy(h), 1.0/steepness));
+
+    // 5. 光照模型 (Blinn-Phong)
+    // 使用 COLOR_OFFSET 旋转光源
+    float lightAngle = COLOR_OFFSET * 6.28;
+    vec3 lightDir = normalize(vec3(cos(lightAngle), sin(lightAngle), 0.5));
+    
+    float diff = max(dot(n, lightDir), 0.0);
+    
+    // 高光处理
+    vec3 viewDir = vec3(0.0, 0.0, 1.0);
+    vec3 halfDir = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(n, halfDir), 0.0), 16.0); // 16.0 是高光锐度
+
+    // 6. 颜色混合
+    // 基色使用相位颜色
+    vec3 baseCol = get_color(norm_angle, 2);
+    
+    // 稍微降低未受光处的饱和度，增加金属感
+    col = baseCol * (diff * 0.7 + 0.3) + vec3(spec * 0.5);
+
+    // 7. 消除背景/未收敛区域的伪影
+    // 如果没有收敛，强制设为深色背景，并不计算高光
+    if (!converged) col = vec3(0.02);
 }
 else {
     // Spectral Soft (Pal 4)
@@ -172,100 +415,13 @@ else {
 }
 
 // 统一的内部阴影：未收敛区域(分形内部)设为黑色
-if (iter >= max_iter_int - 1) col = vec3(0.0);
+if (palType != 5 && !converged) col = vec3(0.0);
 
 FOut = vec4(col, 1.0);
         }
     `;
 
-    // --- 3. 参数与状态 ---
-    const params = {
-        formula: "p(z) = z³ − 1",
-        palette: "Magma (Smooth)",
-        zoom: 0.5,
-        iter: 60,
-        colorScale: 0.6,   // 原有的缩放
-        colorOffset: 0.0,  // 新增：颜色种子/偏移
-        reset: () => {
-            state.targetCenter = { x: 0, y: 0 };
-            state.targetZoom = 0.5;
-            params.colorOffset = 0.0; // 重置时归零，保证默认外观
-            gui.controllers.find(c => c.property === 'colorOffset').updateDisplay();
-        }
-    };
 
-    const state = {
-        center: { x: 0, y: 0 },
-        zoom: 0.5,
-        targetCenter: { x: 0, y: 0 },
-        targetZoom: 0.5,
-    };
-
-    // --- GUI ---
-    const gui = new lil.GUI({ title: 'Newton Fractal' });
-    gui.add(params, 'formula', Object.keys(FRACTALS)).name('Function');
-    // 使用新的 PALETTE_NAMES 数组
-    gui.add(params, 'palette', PALETTE_NAMES).name('Colors');
-    gui.add(params, 'colorScale', 0.1, 5.0, 0.1).name('Gradient Freq');
-    gui.add(params, 'colorOffset', 0.0, 6.28).name('Color Seed/Shift'); // 0 ~ 2PI 刚好一个周期
-    gui.add(params, 'iter', 10, 100, 1).name('Iterations');
-    gui.add(state, 'targetZoom').name('Zoom Info').listen().disable();
-    gui.add(params, 'reset').name('Reset View');
-
-    // --- 交互控制 (Hammer.js) ---
-    const mc = new Hammer(canvas);
-    mc.get('pinch').set({ enable: true });
-    mc.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0 });
-
-    let startCenter = { x: 0, y: 0 };
-    let startZoom = 1;
-
-    mc.on("panstart", () => startCenter = { ...state.targetCenter });
-    mc.on("panmove", e => {
-        const s = Math.max(canvas.width, canvas.height);
-        state.targetCenter.x = startCenter.x - e.deltaX / (s * state.targetZoom);
-        state.targetCenter.y = startCenter.y + e.deltaY / (s * state.targetZoom);
-    });
-
-    mc.on("pinchstart", () => startZoom = state.targetZoom);
-    mc.on("pinchmove", e => state.targetZoom = startZoom * e.scale);
-
-    canvas.addEventListener('wheel', e => {
-        e.preventDefault();
-        state.targetZoom *= e.deltaY > 0 ? 0.9 : 1.1;
-    }, { passive: false });
-
-    // --- 渲染循环 ---
-    function loop(t) {
-        requestAnimationFrame(loop);
-
-        const lerp = (a, b) => a + (b - a) * 0.15;
-        state.zoom = lerp(state.zoom, state.targetZoom);
-        state.center.x = lerp(state.center.x, state.targetCenter.x);
-        state.center.y = lerp(state.center.y, state.targetCenter.y);
-
-        const selectedFunc = FRACTALS[params.formula];
-        
-
-        glsl({
-            seed: [state.center.x, state.center.y, state.zoom],
-            aspect: [canvas.width, canvas.height],
-            PID: PALETTE_NAMES.indexOf(params.palette),
-            MAX_ITER: params.iter,
-            COLOR_SCALE: params.colorScale,
-            COLOR_OFFSET: params.colorOffset,
-            // 调用外部定义的 FP 生成函数
-            FP: getFP(selectedFunc.f, selectedFunc.df)
-        });
-    }
-    
-    function resize() {
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = window.innerWidth * dpr;
-        canvas.height = window.innerHeight * dpr;
-    }
-    window.addEventListener('resize', resize);
-    resize();
     loop();
 </script>
 </body>
