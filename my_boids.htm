@@ -1,0 +1,80 @@
+<body style=margin:0;background:#000;overflow:hidden><canvas id=v></canvas>
+<script src="https://cdn.jsdelivr.net/npm/lil-gui"></script>
+<script>
+let c=document.getElementById('v'), x=c.getContext('2d'), w, h, pts=[]
+//🐦Refactor of: https://codepen.io/duangsuz/pen/dPXKaeM
+// 配置参数
+let S = { n:200, r:80, sr:30, a:0.1, c:0.01, s:0.5, mf:500, spd:3, fade:0.1, col:'#00ff88' }
+
+let resize = () => {
+  w=c.width=innerWidth; h=c.height=innerHeight
+  pts = Array(S.n).fill(0).map(()=>({x:Math.random()*w, y:Math.random()*h, vx:Math.random()*2-1, vy:Math.random()*2-1}))
+}
+
+let g = new lil.GUI({title: 'Boids 鸟群粒子 🛠️'})
+
+// 基础环境与感知
+let f0 = g.addFolder('基础与感知 👁️')
+f0.add(S, 'n', 10, 1000, 1).name('数量 Count').onFinishChange(resize)
+f0.add(S, 'r', 10, 200).name('感知半径 Radius')
+f0.add(S, 'sr', 5, 100).name('分离半径 Sep Radius')
+
+// g1 集群行为
+let f1 = g.addFolder('集群行为规则 🐦').open(0)
+f1.add(S, 'a', 0, 1).name('对齐权重 Alignment')
+f1.add(S, 'c', 0, 0.1).name('内聚权重 Cohesion')
+f1.add(S, 's', 0, 2).name('分离权重 Separation')
+
+// g2 视觉效果
+let f2 = g.addFolder('视觉效果 🎨')
+f2.add(S, 'spd', 1, 10).name('最大速度 Speed')
+f2.add(S, 'fade', 0.01, 1).name('残影浓度 Fade')
+f2.addColor(S, 'col').name('粒子颜色 Color')
+
+// g 交互反馈
+g.add(S, 'mf', -2000, 2000).name('鼠标斥力 Mouse Force')
+
+window.onresize=resize; resize()
+
+let m={x:-1e3, y:-1e3}; onmousemove=e=>m={x:e.clientX, y:e.clientY}
+
+let loop = () => {
+  x.fillStyle=`rgba(0,0,0,${S.fade})`; x.fillRect(0,0,w,h)
+  
+  pts.forEach(p => {
+    let ax=0, ay=0, cx=0, cy=0, sx=0, sy=0, n=0
+    
+    pts.forEach(q => {
+      let dx=q.x-p.x, dy=q.y-p.y, d=Math.hypot(dx,dy)
+      // 【修复核心】只有有效距离才参与计算，彻底隔绝 0/0 产生的 NaN
+      if(d>0 && d<S.r) {
+        ax += q.vx; ay += q.vy 
+        cx += q.x; cy += q.y   
+        if(d<S.sr) { sx += dx/d; sy += dy/d }
+        n++
+      }
+    })
+
+    n > 0 && (ax/=n, ay/=n, cx=cx/n-p.x, cy=cy/n-p.y)
+    
+    let mx=p.x-m.x, my=p.y-m.y, md=Math.hypot(mx,my)+1
+    let rf = S.mf/(md*md)
+    
+    p.vx += (ax*S.a + cx*S.c - sx*S.s + mx/md*rf)
+    p.vy += (ay*S.a + cy*S.c - sy*S.s + my/md*rf)
+    
+    // 【修复潜在Bug】加入 ||1 防止 s 为 0 时产生 NaN
+    let s = Math.hypot(p.vx, p.vy) || 1; 
+    p.vx = p.vx/s*S.spd; p.vy = p.vy/s*S.spd
+    
+    p.x = (p.x + p.vx + w) % w; p.y = (p.y + p.vy + h) % h
+    
+    x.save(); x.translate(p.x, p.y); x.rotate(Math.atan2(p.vy, p.vx));
+    x.fillStyle=S.col; x.beginPath(); x.moveTo(6,0); x.lineTo(-4,-3); x.lineTo(-4,3); x.fill();
+    x.restore()
+  })
+  requestAnimationFrame(loop)
+}
+loop()
+</script>
+</body>

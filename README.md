@@ -12,12 +12,15 @@ more retro-goods like Phase Beam、Bubble、Nexus、Water Ripple、Grass can be 
 
 - [🧬c_life](./c_life.html)
 - [⏳c_sand](./c_sand.html)
+- [🦢 Boids](./my_boids.htm)
 
+normal phys:
+
+- [🍥fft](./demo/fft.htm)
 - [🔴balls_bezier](./demo/balls_bezier.htm)
 - [🔴balls](./demo/balls.htm)
 - [🧷box_bezier](./demo/box_bezier.htm)
 - [🖥cmatrix](./demo/cmatrix.htm)
-- [🍥fft](./demo/fft.htm)
 - [🏙van_gogh](./demo/van_gogh.htm)
 - [🏙van_sfx](./demo/van_sfx.htm)
 
@@ -30,6 +33,7 @@ field:
 
 ## See Also
 
+* [📚 Good First DSP - 👍👍👍](./study/)
 * [Inigo Quilez: Domain Warping](https://iquilezles.org/articles/warp/) - The foundational article on this technique.
 * [The Book of Shaders: Fractal Brownian Motion](https://thebookofshaders.com/13/) - Visual guide to noise layering.
 * [Curl Noise](https://www.overdraw.xyz/blog/tag/Curl+Noise) - An alternative approach for divergence-free fluid simulation.
