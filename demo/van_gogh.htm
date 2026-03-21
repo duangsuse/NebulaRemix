@@ -1,0 +1,79 @@
+<body style=margin:0;background:#000;overflow:hidden><canvas id=c></canvas>
+<script type=module>
+import G from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm'
+
+let c=document.getElementById('c'), x=c.getContext('2d'), w, h, pts=[], grid=[], res, m={x:-999,y:-999}
+let P = { gridOsc:false, r:0, n:2000, f:.18, s:1, c:()=>{ x.clearRect(0,0,w,h);I()} }
+
+let I = () => {
+  res = Math.max(4, 40000/P.n|0) // nSamp 完美映射为动态网格分辨率
+  pts=Array(P.n).fill(0).map(()=>({x:Math.random()*w, y:Math.random()*h, l:Math.random()*100, m:50+Math.random()*50}))
+  grid = Array(Math.ceil(w/res)).fill(0).map(() => Array(Math.ceil(h/res)).fill(0).map(() => Math.random()*Math.PI*2))
+}
+
+let R = () => { w=c.width=innerWidth; h=c.height=innerHeight; I() }
+window.onresize=R; R(); onmousemove=e=>m={x:e.clientX,y:e.clientY}
+
+let g = new G()
+g.add(P, 'gridOsc').name('Oscillator Grid').onChange(()=>x.clearRect(0,0,w,h))
+g.add(P, 'r', {'ptr Vortex':0, 'Turbulence':4, 'Interference':6, 'ptr Sine':1, 'Galaxy':2, 'Lissajous Grid':3, 'Standing Wave':5,}).name('Rule30流形')
+g.add(P, 'n', 500, 5000, 100).name('nSamp逼近').onChange(I)
+g.add(P, 'f', .01, .3).name('Star trail星轨'); g.add(P, 's', .1, 3).name('Speed动感'); g.add(P, 'c').name('Clear')
+
+let F = [
+  (p,t, nx=p.x*.005, ny=p.y*.005, dx=m.x-p.x, dy=m.y-p.y, d2=dx*dx+dy*dy+100) => 
+    [Math.sin(ny+t)+Math.cos(ny*.5-t*.7)-dy*500/d2, Math.cos(nx-t)+Math.sin(nx*.8+t*.5)+dx*500/d2],
+  (p,t) => 
+    [Math.sin((p.y/h)*(m.x/w)*10+t)*2, Math.cos((p.x/w)*(m.y/h)*10+t)*2],
+  (p,t, dx=p.x-w/2, dy=p.y-h/2, r=Math.sqrt(dx*dx+dy*dy)||1, th=Math.atan2(dy,dx), mx=m.x-p.x, my=m.y-p.y, md=mx*mx+my*my+1000) => 
+    [-Math.sin(th+r*.005-t)*3+mx*50/md, Math.cos(th+r*.005-t)*3+my*50/md],
+  (p,t, nx=p.x*.01, ny=p.y*.01) => 
+    [(Math.sin(t*.8)*Math.cos(ny*3)+Math.sin(nx*2+t))*1.5, (Math.cos(t*.8)*Math.sin(nx*3)+Math.cos(ny*2-t))*1.5],
+  (p,t, nx=p.x*.003, ny=p.y*.003) => 
+    [(Math.sin(ny*2.5+t*1.2)-Math.cos(nx*1.5+ny))*1.8, (Math.cos(nx*2.5+t*.8)+Math.sin(ny*1.5-nx))*1.8],
+  (p,t, nx=p.x*.005, ny=p.y*.005, wave=Math.sin(t*2)) => 
+    [Math.cos(nx)*Math.sin(ny)*wave*2, Math.sin(nx)*Math.cos(ny)*wave*2],
+  (p,t, nx=p.x*.005, ny=p.y*.005) => 
+    [Math.sin(ny)+Math.cos(nx+t), Math.cos(nx)+Math.sin(ny+t)],
+], HUES = [200, 180, 280, 320, 140, 190, 320]
+
+let L = () => {
+  // 统一的透明清屏逻辑：制造粒子尾迹与网格自旋残影
+  x.fillStyle=`rgba(0,0,0,${.3-P.f})`; x.fillRect(0,0,w,h); let t=Date.now()*.001
+  
+  if (!P.gridOsc) {
+    pts.forEach(p => {
+      let [vx, vy] = F[P.r](p, t)
+      vx*=P.s; vy*=P.s; p.x+=vx; p.y+=vy; p.l-=.5
+      
+      x.fillStyle=`hsla(${HUES[P.r]+(vx*vx+vy*vy)*5},70%,60%,${p.l/p.m})`
+      x.fillRect(p.x, p.y, 1.5, 1.5)
+      
+      let out=(p.x<0||p.x>w||p.y<0||p.y>h||p.l<=0)
+      out && Object.assign(p, {x:Math.random()*w, y:Math.random()*h, l:p.m})
+    })
+  } else {
+    let next = grid.map(r => [...r])
+    for(let i=0; i<grid.length; i++) {
+      for(let j=0; j<grid[i].length; j++) {
+        let th = grid[i][j], f = 0, dx=m.x-i*res, dy=m.y-j*res, d2=dx*dx+dy*dy+1
+        // 耦合逻辑 + 鼠标扰动
+        let nb = [[i-1,j],[i+1,j],[i,j-1],[i,j+1]]
+        nb.forEach(([ni, nj]) => grid[ni]?.[nj] !== undefined && (f += Math.sin(grid[ni][nj] - th)))
+        
+        // s 全局控制自旋步进和耦合强度
+        next[i][j] = th + (0.05 + f * 0.1) * P.s + (5000/d2)
+        
+        x.save(); x.translate(i*res, j*res); x.rotate(next[i][j])
+        // 视觉：长度随 Speed 动态伸缩，色相随相位变化
+        x.strokeStyle = `hsla(${next[i][j]*50 + 200}, 80%, 60%, ${.2 + P.f})`
+        x.lineWidth = 1.2; x.beginPath(); x.moveTo(0,0); x.lineTo(res*(0.5+P.s*0.1), 0); x.stroke()
+        x.restore()
+      }
+    }
+    grid = next
+  }
+  requestAnimationFrame(L)
+}
+L()
+</script>

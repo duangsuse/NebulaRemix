@@ -1,0 +1,123 @@
+<html>
+<head>
+<meta charset="utf-8">
+<style>body { margin: 0; background: #000; overflow: hidden; }</style>
+</head>
+<body>
+<canvas id="v"></canvas>
+
+<script type="module">
+import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
+
+// 基础变量声明，保持简短明确
+let c = document.getElementById('v'), x = c.getContext('2d'), w, h, pts = [];
+let mouse = { x: 0.5, y: 0.5 };
+
+// 配置对象：数据驱动逻辑
+let cfg = {
+    mode: 'Wave',
+    count: 1200,
+    speed: 0.006,
+    kBase: 1, k0:0.5,
+    kScale: 40,
+    damp: 0.88,
+    force: 1.8,
+    trail: 0.12,
+    size: 1.8,
+    hue: 190,
+    reset: init
+};
+
+// 初始化 GUI
+let gui = new GUI(),g1;
+gui.add(cfg, 'mode', ['Wave', 'Vortex', 'Orbit', 'Interference']);
+gui.add(cfg, 'kBase', -1, 1, 1).onChange(k=>{cfg.k0=(k==0)?mouse.x:0});
+gui.add(cfg, 'kScale', 10, 100);
+gui.add(cfg, 'damp', 0.5, 0.99);
+gui.add(cfg, 'disco', 0.001, 0.02);
+gui.add(cfg, 'count', 100, 5000, 100).onFinishChange(init);
+g1=gui.addFolder('Visuals').open(0)
+g1.add(cfg, 'trail', 0.01, 1.0);
+g1.add(cfg, 'hue', 0, 360);
+g1.add(cfg, 'size', 0.5, 5.0);
+g1.add(cfg, 'speed', 0.1, 5.0);
+gui.add(cfg, 'reset').name('Reset Particles');
+
+// 内存与状态初始化
+function init() {
+    w = c.width = innerWidth;
+    h = c.height = innerHeight;
+    pts = [];
+    for (let i = 0; i < cfg.count; i++) {
+        pts.push({ x: Math.random() * w, y: Math.random() * h, vx: 0, vy: 0 });
+    }
+    x.fillStyle = '#000';
+    x.fillRect(0, 0, w, h);
+}
+
+window.onresize = init;
+window.onmousemove = e => { mouse.x = e.clientX / w; mouse.y = e.clientY / h; };
+
+init();
+
+// 主渲染循环：无多余闭包，平铺直叙
+function loop() {
+    x.fillStyle = `rgba(0, 0, 0, ${cfg.trail})`;
+    x.fillRect(0, 0, w, h);
+
+    let t = Date.now() * cfg.speed;
+    let k = cfg.k0 + mouse.x * cfg.kBase * cfg.kScale;
+    let wave = Math.sin(t);
+
+    for (let i = 0; i < pts.length; i++) {
+        let p = pts[i];
+        let nx = p.x / w * k;
+        let ny = p.y / h * k;
+        let fx = 0, fy = 0;
+
+        // 核心算法：通过 Switch 切换向量场，直白且高效
+        switch (cfg.mode) {
+            case 'Wave': 
+                // 原始驻波引力场
+                fx = Math.cos(nx) * Math.sin(ny) * wave;
+                fy = Math.sin(nx) * Math.cos(ny) * wave;
+                break;
+            case 'Vortex': 
+                // 泰勒-格林流体旋涡
+                fx = Math.sin(nx) * Math.cos(ny);
+                fy = -Math.cos(nx) * Math.sin(ny) * wave;
+                break;
+            case 'Orbit': 
+                // 相位偏移产生的环状流
+                fx = Math.sin(ny + wave * 2);
+                fy = Math.cos(nx + wave * 2);
+                break;
+            case 'Interference': 
+                // 时空网格干涉
+                fx = Math.sin(ny) + Math.cos(nx + t);
+                fy = Math.cos(nx) + Math.sin(ny + t);
+                break;
+        }
+
+        // 欧拉积分与阻尼
+        p.vx = p.vx * cfg.damp + fx * cfg.force;
+        p.vy = p.vy * cfg.damp + fy * cfg.force;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // 环形拓扑：处理屏幕边缘穿越
+        p.x = (p.x + w) % w;
+        p.y = (p.y + h) % h;
+
+        // 根据动能计算色彩
+        let s = Math.abs(p.vx) + Math.abs(p.vy);
+        x.fillStyle = `hsla(${cfg.hue + s * 25}, 80%, 65%, 0.9)`;
+        x.fillRect(p.x, p.y, cfg.size, cfg.size);
+    }
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>

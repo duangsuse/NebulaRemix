@@ -1,0 +1,118 @@
+<style>
+  body { margin: 0; background: #111; overflow: hidden; font-family: monospace; color: #888; }
+  canvas { display: block; }
+  #ui { position: absolute; top: 12px; left: 12px; pointer-events: none; user-select: none; }
+  b { color: #ccc; }
+</style>
+</head>
+<body>
+<div id="ui">
+  <b>L-Click</b> Spawn &nbsp; <b>R-Click</b> Toggle Gravity &nbsp; <b>M-Click</b> Rand Reset pos
+</div>
+<canvas id="c"></canvas>
+
+<script>
+  //sub=1时确实像果冻一样缺乏恒定性，而动态时有时能感觉到重影
+  
+// --- STATE & CONFIG ---
+let c = document.getElementById('c'),
+    ctx = c.getContext('2d'),
+    w, h,
+    ps = [], // Particles
+    g = 0.5, // Gravity (State)
+    f = 0.99, r = 10, sub = 8
+
+// --- KERNEL (Verlet + Solver) ---
+
+integrate = () => {
+  for (let p of ps) {
+    let vx = (p.x - p.ox) * f,
+        vy = (p.y - p.oy) * f
+    p.ox = p.x; p.oy = p.y
+    p.x += vx; p.y += vy + g
+
+    // Constraints
+    if (p.y > h - r) { p.y = h - r; p.oy = p.y + vy }
+    if (p.x < r) { p.x = r; p.ox = p.x + vx }
+    if (p.x > w - r) { p.x = w - r; p.ox = p.x + vx }
+  }
+}
+
+solve = () => {
+  for (let i = 0; i < ps.length; i++) {
+    for (let j = i + 1; j < ps.length; j++) {
+      let p1 = ps[i], p2 = ps[j],
+          dx = p1.x - p2.x, dy = p1.y - p2.y,
+          d2 = dx*dx + dy*dy, minD = r*2
+
+      if (d2 < minD*minD) {
+        let d = Math.sqrt(d2),
+            pen = (minD - d) * 0.5,
+            nx = dx/d * pen, ny = dy/d * pen
+        p1.x += nx; p1.y += ny
+        p2.x -= nx; p2.y -= ny
+      }
+    }
+  }
+}
+
+draw = () => {
+  ctx.fillStyle = '#111'; ctx.fillRect(0, 0, w, h)
+  
+  // Vector Vis: Velocity = (Current - Old)
+  ctx.beginPath()
+  for (let p of ps) {
+    ctx.moveTo(p.x, p.y)
+    ctx.lineTo(p.x + (p.x-p.ox)*10, p.y + (p.y-p.oy)*10)
+  }
+  ctx.strokeStyle = '#f04'; ctx.lineWidth = 2; ctx.stroke()
+
+  // Body
+  ctx.beginPath()
+  for (let p of ps) {
+    ctx.moveTo(p.x + r, p.y)
+    ctx.arc(p.x, p.y, r-1, 0, Math.PI*2)
+  }
+  ctx.fillStyle = g === 0 ? '#666' : '#ccc' // Gray when gravity off
+  ctx.fill()
+}
+
+// --- I/O LAYER ---
+
+resize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHeight }
+window.onresize = resize
+resize()
+
+window.oncontextmenu = e => e.preventDefault() // Block menu
+
+window.onmousedown = e => {
+  let x = e.clientX, y = e.clientY
+  
+  // Interaction Router
+  if (e.button === 0) { // L-Click: Spawn
+    for(let i=0; i<5; i++) 
+      ps.push({ x: x+Math.random(), y: y+Math.random(), ox: x, oy: y })
+  } 
+  else if (e.button === 1) { // M-Click: Random Reset
+    e.preventDefault()
+    for(let p of ps) {
+      p.x = p.ox = Math.random() * w
+      p.y = p.oy = Math.random() * h
+    }
+  } 
+  else if (e.button === 2) { // R-Click: Toggle G
+    g = g === 0 ? 0.5 : 0
+  }
+}
+
+loop = () => {
+  integrate()
+  for(let i=0; i<sub; i++) solve()
+  draw()
+  requestAnimationFrame(loop)
+}
+
+loop()
+</script>
+</body>
+</html>

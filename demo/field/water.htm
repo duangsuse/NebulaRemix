@@ -1,0 +1,82 @@
+<body style=margin:0;background:#000;overflow:hidden><canvas id=v></canvas>
+<script>
+let c=document.getElementById('v'), x=c.getContext('2d'), md=0
+window.oncontextmenu = e => { e.preventDefault(); md^=1; md ? setFluid() : setDots() }
+
+// Mode 0: Dots Wave Vars
+let w1, h1, res=20, p=[], o=[], m1={x:300/10, y:10}
+// Mode 1: Fluid Wave Vars
+let w2, h2, H, P, N, img, d, m2={x:300, y:10, v:50}
+
+let resize = () => {
+  // Pre-allocate for Dots
+  w1=innerWidth; h1=innerHeight
+  let cols=Math.ceil(w1/res), rows=Math.ceil(h1/res)
+  p=Array(cols).fill(0).map(()=>Array(rows).fill(0))
+  o=Array(cols).fill(0).map(()=>Array(rows).fill(0))
+
+  // Pre-allocate for Fluid (Downscaled)
+  w2=innerWidth/2|0; h2=innerHeight/2|0
+  H=new Float32Array(w2*h2); P=new Float32Array(w2*h2); N=new Float32Array(w2*h2)
+  img=x.createImageData(w2,h2); d=img.data
+  for(let i=3; i<d.length; i+=4) d[i]=255 
+  
+  md ? setFluid() : setDots()
+}
+
+// Canvas state switches
+let setDots = () => { c.width=w1; c.height=h1; c.style.width=''; c.style.height='' }
+let setFluid = () => { c.width=w2; c.height=h2; c.style.width='100vw'; c.style.height='100vh' }
+
+window.onresize=resize;
+onmousemove = e => { 
+  m1={x:e.clientX/res|0, y:e.clientY/res|0}
+  m2={x:e.clientX/2|0, y:e.clientY/2|0, v:Math.abs(e.movementX||0)+Math.abs(e.movementY||0)}
+}
+
+let loop = () => {
+  if(!md) {
+    // Mode 0: Dots Wave Logic
+    x.fillStyle='#000'; x.fillRect(0,0,w1,h1)
+    
+    if(m1.x>0 && m1.x<p.length-1 && m1.y>0 && m1.y<p[0].length-1) o[m1.x][m1.y]=150 
+
+    for(let i=1; i<p.length-1; i++) {
+      for(let j=1; j<p[i].length-1; j++) {
+        p[i][j] = (o[i-1][j] + o[i+1][j] + o[i][j-1] + o[i][j+1])/2 - p[i][j]
+        p[i][j] *= 0.96 
+      }
+    }
+
+    for(let i=0; i<p.length; i++) {
+      for(let j=0; j<p[i].length; j++) {
+        let v=p[i][j], lum=Math.min(255, Math.abs(v)*2)
+        if(lum>1) {
+          x.fillStyle = `hsla(${200+v}, 80%, ${30+lum/5}%, ${Math.abs(v)/50})`
+          x.beginPath(); x.arc(i*res, j*res, Math.abs(v)*0.06, 0, 7); x.fill()
+        }
+      }
+    }
+    let t=o; o=p; p=t
+  } else {
+    // Mode 1: Fluid Wave Logic
+    let midx = m2.x + m2.y * w2
+    if(H[midx] !== undefined) H[midx] += m2.v * 5
+    m2.v *= 0.8 
+
+    for(let i=w2; i<w2*h2-w2; i++) {
+      let e = (i%w2 === 0) + ((i+1)%w2 === 0)
+      let lap = H[i-1] + H[i+1] + H[i-w2] + H[i+w2] - 4*H[i]
+      N[i] = (H[i]*2 - P[i] + lap * 0.49) * 0.99 * (1-e)
+      
+      let v = N[i], idx = i*4
+      d[idx] = v*3; d[idx+1] = v*5+30; d[idx+2] = v*10+80
+    }
+    let tmp = P; P = H; H = N; N = tmp
+    x.putImageData(img, 0, 0)
+  }
+  requestAnimationFrame(loop)
+}
+
+resize(); loop()
+</script>

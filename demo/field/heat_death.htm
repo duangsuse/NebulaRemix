@@ -1,0 +1,47 @@
+<body style=margin:0;background:#000;overflow:hidden><canvas id=v></canvas>
+<script>
+let
+  c=document.getElementById('v'), x=c.getContext('2d'), w, h, res=10,
+  dv=0.247, COOL=0.9996, f=[], m={x:30,y:10,d:10}
+let resize = () => {
+  w=c.width=innerWidth; h=c.height=innerHeight
+  f = Array(Math.ceil(w/res)).fill(0).map(()=>Array(Math.ceil(h/res)).fill(0))
+}
+https://codepen.io/duangsuz/pen/dPpXOKM
+window.onresize=oncontextmenu=resize; resize()
+
+// 移动时只更新坐标，不重置 d。利用逗号表达式保持单行极简。
+onmousemove = e => (m.x=e.clientX/res|0, m.y=e.clientY/res|0)
+onmousedown = () => m.d=5; onmouseup = () => m.d=1
+
+onwheel = (e) => {
+  if (e.deltaY < 0) dv += 0.001; 
+  else dv -= 0.001;              
+  dv = Math.max(0.245, Math.min(0.258, dv));
+  document.title = `Heat dv=${dv.toFixed(3)}`;
+}
+
+let loop = () => {
+  for(let k=0; k<2; k++) {  // 1. Logic: Local relaxation (4-neighbor average, 2step/1frame)
+    for(let i=1; i<f.length-1; i++) {
+      for(let j=1; j<f[i].length-1; j++) {
+        let src = (i==m.x && j==m.y) ? m.d : 0 // Heat source d + Laplacian smoothing
+        f[i][j] = (f[i-1][j] + f[i+1][j] + f[i][j-1] + f[i][j+1]) * dv + src
+      }
+    }
+  }
+  // 2. Data Flow: Field scalar -> HSL mapping
+  x.fillStyle='#000'; x.fillRect(0,0,w,h)
+  for(let i=0; i<f.length; i++) {
+    for(let j=0; j<f[i].length; j++) {
+      let v = f[i][j], l = Math.min(60, v*20)
+      let draw = v > 0.01
+      draw && (x.fillStyle=`hsla(${200+v*30}, 80%, ${l}%, ${v})`, x.fillRect(i*res, j*res, res-1, res-1))
+      f[i][j] *= COOL
+    }
+  }
+  requestAnimationFrame(loop)
+}
+loop()
+</script>
+</body>

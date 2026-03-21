@@ -1,0 +1,88 @@
+<body style=margin:0;background:#000;overflow:hidden><canvas id=c></canvas>
+  <script type="module">
+    import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm'
+
+    let cvs = document.getElementById('c'), ctx = cvs.getContext('2d')
+    let cols, drops = [], mse = {x:-999, y:-999}
+    
+    let cfg = {
+      pal: '数字',
+      paL: 'LeetCode',
+      size: 12,
+      trail: 0.42,      // New Setting
+      rad: 300,
+      main: '#0084ff',
+      bg: '#030303',
+      hi: '#307e4e'     // New Setting: fgHilight
+    }
+
+    let pals = {
+      LeetCode: "{}[]()<>!@#$%^&*=+-/|\\;:,.?~abcdefghijklmnopqrstuvwxyz",
+      Katakana: "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン",
+      Binary: "01",
+      Numbers: "0123456789",
+      数字: "一二三四五六七八九",
+    }
+
+    let init = () => {
+      cvs.width = window.innerWidth
+      cvs.height = window.innerHeight
+      cols = Math.floor(cvs.width / cfg.size)
+      drops = Array(cols).fill(1).map(() => Math.random() * -100)
+    }
+
+    let draw = () => {
+      // Fade effect (Trail)
+      ctx.fillStyle = cfg.bg
+      ctx.globalAlpha = .5-cfg.trail
+      ctx.fillRect(0, 0, cvs.width, cvs.height)
+      ctx.globalAlpha = 1.0
+
+      ctx.font = `bold ${cfg.size}px monospace`
+      let ch = pals[cfg.pal], dec = pals[cfg.paL]
+
+      drops.forEach((y, i) => {
+        let x = i * cfg.size
+        let py = y * cfg.size
+        let isHov = Math.hypot(x - mse.x, py - mse.y) < cfg.rad
+
+        if (isHov) {
+          // Glitch / Decode Effect
+          let txt = dec[Math.floor(Math.random() * dec.length)]
+          //ctx.fillStyle = '#fff' // Cursor block
+          //ctx.fillRect(x, py - cfg.size, cfg.size, cfg.size)
+          
+          ctx.fillStyle = cfg.hi // fgHilight
+          let jit = () => (Math.random() - 0.5) * 4
+          ctx.fillText(txt, x + jit(), py + jit())
+        } else {
+          // Normal Stream
+          let txt = ch[Math.floor(Math.random() * ch.length)]
+          ctx.fillStyle = Math.random() > 0.9 ? '#fff' : cfg.main
+          ctx.fillText(txt, x, py)
+        }
+
+        if (py > cvs.height && Math.random() > 0.975) drops[i] = 0
+        drops[i]++
+      })
+      requestAnimationFrame(draw)
+    }
+
+    window.onresize = init
+    window.onmousemove = e => { mse.x = e.clientX; mse.y = e.clientY }
+
+    let gui = new GUI({ title: 'Settings' })
+    gui.add(cfg, 'pal', Object.keys(pals))
+    gui.add(cfg, 'paL', Object.keys(pals))
+    
+    gui.add(cfg, 'size', 10, 30, 1).onChange(init)
+    gui.add(cfg, 'trail', 0.2, 0.5)
+    gui.add(cfg, 'rad', 20, 300).name('hov range')
+    gui.addColor(cfg, 'main')
+    gui.addColor(cfg, 'hi').name('fgHov')
+    gui.addColor(cfg, 'bg')
+
+    init()
+    draw()
+  </script>
+</body>

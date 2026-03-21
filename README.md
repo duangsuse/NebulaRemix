@@ -1,12 +1,32 @@
 # Nebula Remix
 
-[Green Fog](https://duangsuse.github.io/NebulaRemix/?algo=A%3A+Cotton&color=Toxic+Bio&M=1&W=9.4&S=8&K=1.2&G=0.43&O=10&flu=3&b=0%2C0.1%2C0.05&f=0.3%2C0.8%2C0.2&h=0.9%2C1%2C0.8), [Try Fractals](https://duangsuse.github.io/NebulaRemix/mandel.html)
+[Green Fog wallpaper](https://duangsuse.github.io/NebulaRemix/live/?algo=A%3A+Cotton&color=Toxic+Bio&M=1&W=9.4&S=8&K=1.2&G=0.43&O=10&flu=3&b=0%2C0.1%2C0.05&f=0.3%2C0.8%2C0.2&h=0.9%2C1%2C0.8), [Try Fractals!](https://duangsuse.github.io/NebulaRemix/mandel.html)
 
 A WebGL reconstruction of the recursive domain warping technique found in Android's ["Magic Smoke" live wallpaper](https://live-wallpaper.fandom.com/wiki/Magic_Smoke).
 
 It simulates fluid dynamics and cloud formations not through Navier-Stokes equations, but via iterated fractional Brownian motion (FBM), where the noise domain is distorted by the noise itself.
 
 more retro-goods like Phase Beam、Bubble、Nexus、Water Ripple、Grass can be found in `livewall.zip`
+
+## Gallery
+
+- [🧬c_life](./c_life.html)
+- [⏳c_sand](./c_sand.html)
+
+- [🔴balls_bezier](./demo/balls_bezier.htm)
+- [🔴balls](./demo/balls.htm)
+- [🧷box_bezier](./demo/box_bezier.htm)
+- [🖥cmatrix](./demo/cmatrix.htm)
+- [🍥fft](./demo/fft.htm)
+- [🏙van_gogh](./demo/van_gogh.htm)
+- [🏙van_sfx](./demo/van_sfx.htm)
+
+field:
+
+- [water](./demo/field/water.htm)
+- [💦flow](./demo/field/flow.htm)
+- [hair_style](./demo/field/hair_style.htm)
+- [heat_death](./demo/field/heat_death.htm)
 
 ## See Also
 

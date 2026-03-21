@@ -1,0 +1,137 @@
+<body style=margin:0;background:#111;overflow:hidden;cursor:crosshair><canvas tabindex=0 id=v></canvas>
+<script>
+document.title="Press H (BasicPhy Lab)"
+let c=document.getElementById('v'), g=c.getContext('2d'), W=innerWidth, H=innerHeight
+let mode='D', pts=[], balls=[], sel=null, drag=null, m={x:0,y:0}
+let resize=()=>{c.width=W=innerWidth;c.height=H=innerHeight}
+window.onresize=resize; resize()
+
+// --- Logic: Init ---
+let
+  rand = (min,max) => Math.random()*(max-min)+min,
+  lerp=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t}),
+  dist = (a, b) => Math.hypot(a.x-b.x, a.y-b.y)
+let reset = () => {
+  let ry = (v) => v + (Math.random()-0.5)*200 // Y轴随机扰动
+  // 随机下凹：两头高，中间低
+  pts = [{x:W*0.2,y:ry(H*0.4)}, {x:W*0.5,y:Math.min(H-50, ry(H*0.8))}, {x:W*0.8,y:ry(H*0.4)}]
+  balls = mode=='D' ? [{x:W/2, y:50, vx:0, vy:0, r:15}] : []
+  drag = null
+}, start,raf
+reset()
+
+// --- Math Kernels ---
+let lagrange = (tx) => pts.reduce((a,p,i)=>a+p.y*pts.reduce((k,q,j)=>i==j?k:k*(tx-q.x)/(p.x-q.x),1),0)
+let catmull = (p0,p1,p2,p3,t) => {
+  let v=(a,b,c,d)=>0.5*((2*b)+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t)
+  return {x:v(p0.x,p1.x,p2.x,p3.x), y:v(p0.y,p1.y,p2.y,p3.y)}
+}
+let bez = (ps, t) => ps.length==1?ps[0]:bez(ps.slice(0,-1).map((p,i)=>lerp(p,ps[i+1],t)),t)
+let bezTan = (ps, t) => { // f(t+e)-f(t-e)
+  let e=0.001, a=bez(ps,Math.max(0,t-e)), b=bez(ps,Math.min(1,t+e))
+  return {x:b.x-a.x, y:b.y-a.y}
+}
+
+// --- Physics (Multi-Ball) ---
+let closestT = (p, ps) => {
+  let minD=Infinity, bestT=0, scans=40
+  for(let i=0; i<=scans; i++) { let t=i/scans, d=dist(p, bez(ps,t)); if(d<minD){minD=d;bestT=t} }
+  let l=Math.max(0,bestT-0.02), h=Math.min(1,bestT+0.02)
+  for(let i=0; i<6; i++) {
+    let t1=(l*2+h)/3, t2=(l+h*2)/3
+    if(dist(p,bez(ps,t1)) < dist(p,bez(ps,t2))) h=t2; else l=t1
+  }
+  return (l+h)/2
+}
+let solve = () => {
+  if(drag && balls.includes(drag)) return
+  let sub=8, dt=1/sub
+  for(let s=0; s<sub; s++) {
+    balls.forEach(b => {
+      b.vy+=0.5*dt; b.x+=b.vx*dt; b.y+=b.vy*dt
+      
+      if(pts.length>1) {
+        let t=closestT(b, pts), ground=bez(pts, t), d=dist(b, ground)
+        if(d < b.r) {
+          let tan=bezTan(pts, t), m=Math.hypot(tan.x, tan.y), tx=tan.x/m, ty=tan.y/m
+          let nx=-ty, ny=tx
+          if((b.x-ground.x)*nx + (b.y-ground.y)*ny < 0) { nx=-nx; ny=-ny; tx=-tx; ty=-ty }
+          
+          b.x += nx*(b.r-d); b.y += ny*(b.r-d) // Resolve Pen
+          let vn=b.vx*nx+b.vy*ny, vt=b.vx*tx+b.vy*ty
+          if(vn<0) vn *= (vn<-1.0?-0.6:0); 
+          vt *= 0.999 // 降低阻尼 (Rolling Resistance)
+          b.vx = vn*nx + vt*tx; b.vy = vn*ny + vt*ty
+        }
+      }
+      // Bounds
+      if(b.y>H-b.r){b.y=H-b.r;b.vy*=-0.6}
+      if(b.x<b.r||b.x>W-b.r) b.vx*=-0.6
+    })
+  }
+}
+
+// --- Interaction ---
+c.onmouseup = () => {drag = sel = null; c.focus()}
+c.onmousedown = e => {
+  e.preventDefault()
+  m={x:e.clientX, y:e.clientY}
+  if(e.button==1) return reset() // Mid: Reset Random
+  if(e.button==2) { pts.push({...m}); pts.sort((a,b)=>a.x-b.x); return } // Right: Add + Sort X
+  
+  let hitB = balls.find(b=>dist(m,b)<b.r)
+  let hitP = pts.find(p=>dist(m,p)<20)
+  drag = hitB || hitP
+  if(drag && !drag.r) sel=drag
+}
+c.onmousemove = e => {
+  m={x:e.clientX, y:e.clientY}
+  if(!drag) return
+  let old={x:drag.x, y:drag.y}
+  drag.x=m.x; drag.y=m.y
+  if(drag.r) { drag.vx=drag.x-old.x; drag.vy=drag.y-old.y }
+}
+oncontextmenu = e => e.preventDefault()
+c.onkeyup = e => {
+  if(e.key=='h') start(mode=(prompt('Mode:\nA: Lagrange\nB: Bezier (Key S -> cont)\nC: Catmull\nD: Collision (D -> +Ball)')||'A').toUpperCase()[0])
+  if(e.key=='s') pts.push({...m}) // S: Add (No Sort)
+  if(e.key=='d' && mode=='D') balls.push({x:m.x, y:m.y, vx:rand(-5,5), vy:rand(-5,5), r:rand(10,20)}) // Space: Spawn
+}
+
+// --- Loops ---
+let drawPts = () => pts.forEach(p=>{
+  g.fillStyle=p==sel?'#fff':'#0f8'; g.beginPath(); g.arc(p.x,p.y,4,0,7); g.fill()
+  g.fillStyle='#555'; g.fillText(`(${p.x|0},${p.y|0})`,p.x+8,p.y-8)
+})
+
+let loopStd = () => {
+  g.fillStyle='rgba(17,17,17,0.2)'; g.fillRect(0,0,W,H)
+  if(pts.length>1) {
+    g.strokeStyle='#0f8'; g.lineWidth=2; g.beginPath()
+    if(mode=='A') for(let tx=0;tx<W;tx+=4) g.lineTo(tx, lagrange(tx))
+    if(mode=='B') for(let t=0;t<=1;t+=0.01) { let p=bez(pts,t); t==0?g.moveTo(p.x,p.y):g.lineTo(p.x,p.y) }
+    if(mode=='C') for(let i=0;i<pts.length-1;i++) {
+      let p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||p2
+      for(let t=0;t<=1;t+=0.05) { let p=catmull(p0,p1,p2,p3,t); t==0&&i==0?g.moveTo(p.x,p.y):g.lineTo(p.x,p.y) }
+    }
+    g.stroke()
+  }
+  drawPts(); raf=requestAnimationFrame(loopStd)
+}
+
+let loopPhy = () => {
+  g.fillStyle='#111'; g.fillRect(0,0,W,H)
+  if(pts.length>1) {
+    g.strokeStyle='#333'; g.lineWidth=1; g.beginPath(); pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)); g.stroke()
+    g.strokeStyle='#0f8'; g.lineWidth=3; g.beginPath()
+    for(let t=0;t<=1;t+=0.01) { let p=bez(pts,t); t==0?g.moveTo(p.x,p.y):g.lineTo(p.x,p.y) }
+    g.stroke()
+  }
+  solve()
+  drawPts()
+  balls.forEach(b => { g.fillStyle='#f05'; g.beginPath(); g.arc(b.x,b.y,b.r,0,7); g.fill() })
+  raf=requestAnimationFrame(loopPhy)
+}
+
+(start=()=>{if(raf) cancelAnimationFrame(raf); mode=='D' ? loopPhy() : loopStd()})()
+</script></body>

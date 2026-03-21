@@ -1,0 +1,125 @@
+<body style=margin:0;background:#000;overflow:hidden oncontextmenu="return false">
+<canvas id=v></canvas>
+<script type="module">
+import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm'
+
+let c=document.getElementById('v'), x=c.getContext('2d'), bg0, w, h
+let pts, mouse={x:-999,y:-999,down:0},
+conf = {
+  n: 11,
+  m: 3,
+  nAtom: 15000,
+  friction: 0.14,
+  ptrRadius: 150,
+  ptrForce: false, // false = 全局物理场, true = 局部鼠标力场
+  shake: 25,
+  speed: 0.2,
+  isCircle: false,
+  heatmap: true
+}
+
+let init = () => {
+  w=c.width=innerWidth; h=c.height=innerHeight; pts=new Float32Array(conf.nAtom*4)
+  for(let i=0;i<conf.nAtom;i++) { pts[i*4]=Math.random()*w; pts[i*4+1]=Math.random()*h }
+}
+window.onresize=init; init()
+
+window.onmousedown = e => {
+  if(e.button===2) init() 
+  else if(e.button===1) {
+    conf.n=(Math.random()*15+1).toFixed(1); conf.m=(Math.random()*15+1).toFixed(1)
+    gui.controllers.forEach(c=>c.updateDisplay())
+  } else mouse.down=true
+}
+window.onmouseup=()=>mouse.down=false
+window.onmousemove=e=>{mouse.x=e.clientX; mouse.y=e.clientY}
+
+let loop = () => {
+  x.fillStyle='rgba(0,0,0,0.2)'; x.fillRect(0,0,w,h)
+  
+  let rSq = conf.ptrRadius ** 2
+  let absF = Math.abs(conf.friction)
+  
+  for(let i=0; i<conf.nAtom; i++) {
+    let k=i*4, px=pts[k], py=pts[k+1]
+    
+    // A. 物理波函数 (Entropy)
+    let wave = conf.isCircle 
+      ? Math.sin(Math.sqrt((px-w/2)**2+(py-h/2)**2)*conf.n*.05)*Math.sin(Math.atan2(py-h/2,px-w/2)*conf.m)
+      : Math.cos(conf.n*Math.PI/w*px)*Math.cos(conf.m*Math.PI/h*py) - Math.cos(conf.m*Math.PI/h*px)*Math.cos(conf.n*Math.PI/w*py)
+    
+    let f = (Math.random()-.5) * conf.shake * Math.abs(wave)
+    pts[k+2]+=f; pts[k+3]+=f
+
+    // 防止速度无限累积导致粒子飞出。模拟空气阻力。
+    pts[k + 2] *= 0.96;
+    pts[k + 3] *= 0.96;
+    // B. 交互逻辑 (Interaction)
+    let dx = px - mouse.x, dy = py - mouse.y
+    let distSq = dx*dx + dy*dy
+    let rSq = conf.ptrRadius * conf.ptrRadius
+    
+    // 是否应用强交互 (鼠标力场)
+    // 触发条件：要么是全局模式，要么是局部模式且在圈内
+
+    if (!conf.ptrForce || distSq < rSq) {
+      let absF = Math.abs(conf.friction)
+      
+      if (conf.friction < 0) {
+        // --- 负数逻辑：吸引 (Attract) ---
+        // 按下时引力 x4
+        let s = absF * (mouse.down ? 4 : 1) * 0.02
+        pts[k+2] -= dx*s; pts[k+3] -= dy*s 
+      } else {
+        // --- 正数逻辑：排斥 或 冻结 ---
+        if (mouse.down) {
+           // [关键修改] 冻结：只在这里生效
+           // 强力阻尼：乘以一个很小的数 迅速降速
+           pts[k+2] *= 0.7; pts[k+3] *= 0.7; 
+        } else
+        if (conf.ptrForce) {
+           // 悬停：排斥
+           let s = absF * 0.05
+           pts[k+2] += dx*s; pts[k+3] += dy*s 
+        } else {
+           // 全局模式：不要使用斥力（否则会炸飞所有粒子）
+           pts[k + 2] *= (1 - conf.friction * 0.5);
+           pts[k + 3] *= (1 - conf.friction * 0.5);
+        }
+      }
+    }
+
+    // C. 位置更新
+    pts[k] += pts[k+2] * conf.speed; 
+    pts[k+1] += pts[k+3] * conf.speed
+
+    // 渲染
+    if(conf.heatmap) {
+      let v = Math.abs(pts[k+2])+Math.abs(pts[k+3])
+      x.fillStyle=bg0=`hsl(${240-Math.min(v*50,240)},80%,60%)`
+    } else x.fillStyle=bg0
+    x.fillRect(pts[k], pts[k+1], 1.5, 1.5)
+  }
+  
+  if(conf.ptrForce && mouse.x>0) {
+    x.beginPath(); x.strokeStyle='#333'; x.arc(mouse.x,mouse.y,conf.ptrRadius,0,7); x.stroke()
+  }
+  requestAnimationFrame(loop)
+}
+
+let gui = new GUI({ title: 'Chladni Plates' })
+gui.add(conf, 'nAtom', 1000, 50000, 1000).onFinishChange(init)
+gui.add(conf, 'speed', 0, 1).name('Approx')
+gui.add(conf, 'n', 1, 30, 0.1).listen()
+gui.add(conf, 'm', 1, 30, 0.1).listen()
+let f = gui.addFolder('Do Physics').open(0)
+f.add(conf, 'shake', 0, 50)
+f.add(conf, 'heatmap')
+f.add(conf, 'isCircle')
+f.add(conf, 'ptrRadius', 10, 500)
+f.add(conf, 'friction', -0.1, 0.2, 0.001).name('-Friction / +Attract')
+f.add(conf, 'ptrForce').name('Pointer Mode (tap2freeze)')
+
+loop()
+</script>
+</body>

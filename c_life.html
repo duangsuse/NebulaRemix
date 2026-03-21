@@ -1,0 +1,416 @@
+<head>
+<meta charset=utf-8>
+<link rel=icon id=favicon></head>
+<body style="margin:0;background:#000;overflow:hidden"><canvas id="c" style="will-change: filter;"></canvas>
+<script async src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+
+<script type="module">
+import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
+
+let c = document.getElementById('c'), x = c.getContext('2d'), w, h;
+window.onresize = () => { w = c.width = innerWidth; h = c.height = innerHeight; };
+window.onresize();
+
+// 统一（过度工程）的世界坐标解算函数
+window.v=c
+window.m = {x:-999,y:-999}
+window.tx = {x:0,y:0,k:1, invert:P=>P}
+window.mSel = {x:300,y:300}
+
+v.onmousemove = e => v.updateMouse(e.offsetX, e.offsetY);
+v.onmouseout = () => {
+    m.sx = m.sy = m.x = m.y = -999;
+};
+v.onpointerdown = v.onpointerup = e => {v.isShiftDown = e.buttons; if(e.buttons) favicon.href = scrcat(c, m,64); mSel = {...m} };
+v.addEventListener('wheel', e => { if(!tx.apply) tx.k *= e.deltaY > 0 ? 0.9 : 1.1 })
+
+
+let view = { x: 0, y: 0, z: 1 };
+v.updateMouse = (sx, sy) => {
+  let v=view
+  m.sx = sx; m.sy = sy;
+  m.x = (sx - v.x) / tx.k;
+  m.y = (sy - v.y) / tx.k;
+};
+
+if(!'bad boy'){
+const mc = new Hammer(v);
+    mc.get('pinch').set({ enable: true });
+    mc.get('pan').set({ direction: Hammer.DIRECTION_ALL, threshold: 0 });
+mc.on("panmove pinchmove", (e) => {
+    view.x += e.deltaX;
+    view.y += e.deltaY;
+    tx.k *= e.scale;
+    v.updateMouse(m.sx, m.sy); 
+});
+}
+
+
+// 元胞状态与配置： p.seed 是连接 #hash 和 GUI 的桥梁，nKrnl 不是DNN里的float宽度或核的大小，而是前馈层数。 vxyOnly时只涌现细菌和涡虫（径向对称/线性loss），Pure时不去演化彩噪点贴图
+let pts = [], krnl = [], S = 0
+let p = v.p = {
+  seed: '', taoKrnl: 4,
+  svgFx: '',svgFx1:'hue-rotate(0deg)', divRem:true, osc:'',vxyOnly:true,germPure:true, planck:0*60,
+  count: 810, friction: 0.24, repulsion: 15, ruleMult: 1.0, trail:.6,
+  mouseForce: -50, endEpoch: () => location.hash = ''
+},
+  R_entropy=()=>Math.random().toString(36).slice(2, 10),
+  TAU=2*Math.PI, c_in_Emc=4000, t_in_Share=-1;
+
+let initPts = (w,h) => {
+  pts = Array.from({length: p.count}, (_, i) => ({
+    x: pmix(23,w,R()), y: pmix(33,h,R()), vx: 0, vy: 0,
+    c: i%p.taoKrnl, C:i%p.taoKrnl,...(p.vxyOnly?{}:{a:R()*TAU, va:0})
+  }));
+  p.planck=0
+}, _4fg = ['#fff'], pmix=(A,B,t)=>t*B+(1-t)*A,
+
+// 核心逻辑：数据驱动。Hash 变了，规则就变，xy和鼠标都引入信息熵。 2020, https://ventrella.com/Clusters/intro.html
+krnl_tau = [],
+R = () => {
+    let t = S += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+},
+endBible=()=>{
+  _4fg=Array.from({length: p.taoKrnl}, (_, i) => `hsl(${i * (360 / p.taoKrnl) + 20}, 90%, 65%)`)
+
+  S = [...p.seed].reduce((a, v) => Math.imul(31, a) + v.charCodeAt(0) | 0, 0);
+  // 极简兽核 PRNG Mulberry32 伪随机数生成器 (替换 Math.random 以支持 S seed)
+  krnl = Array.from({length: p.taoKrnl}, () => Array.from({length: p.taoKrnl}, () => (R() - 0.5) * 2.5));  
+  v.angel()
+}
+v.angel=()=>{krnl_tau = Array.from({length: p.taoKrnl}, () => Array.from({length: p.taoKrnl}, () => (R() * 2 - 1) * 0.9));}
+//^ NOTE 新增：A对B的偏置结合角。你如何生成中空细胞？
+
+// 初始化
+let gui = new GUI({ title: "Laplace's Demon" }), g1,g2, ctrlD='WTF favicon!', pwm;
+;(window.onhashchange = () => {
+    let [h,t] = location.hash.slice(1).split('+');
+    h = h|| R_entropy(); t_in_Share=+t||-1;
+    p.seed = h; // 同步到GUI和 Ctrl+D
+    history.replaceState(null, '', ctrlD? `?_=${h.slice(5)}#${h}` : `#${h}`);
+    
+    endBible()
+})()
+
+// GUI 绑定
+gui.add(p, 'seed').listen().onFinishChange(v => location.hash = v);
+gui.add(p, 'taoKrnl', 1, 20, 1).name('C-137 |碳氢氧氮>').onFinishChange(() => {
+  endBible(); for(let i=p.count;i-->0;)pts[i].c=i%p.taoKrnl // 天堂制造！
+});
+g1=gui.addFolder('🦜 CA 超参数').open(0);
+g2=gui.addFolder('🧬 CA 层模型').open(0);
+
+g1.domElement.lastChild.append('Ctrl+D/pasteSeed to save Life基因! Try svgFx1=" "or"D"')
+g1.add(p, 'friction', 0.01, 0.4).name("temp温度/DkT布朗力");
+g1.add(p, 'repulsion', 0, 50).name("cell意识形态");
+g1.add(p, 'ruleMult', 0.1, 5).name("4x4pairs兽核的痛感");
+
+'planck divRem germPure vxyOnly'.split(' ').map(k=>g2.add(p, k))[0].name("芝诺时间（鼠标扰动失效）").listen().onChange(t=>{})
+gui.add(p, 'count', 100, 2000, 10).onFinishChange(v.onauxclick=()=>{initPts(w,h);tx.x=tx.y=0}).name("UV tensor |1>");
+gui.add(p, 'mouseForce', -400, 400);
+gui.add(p, 'endEpoch').name('💣 False Vacuum (try winsize/中右键热寂)');
+gui.add(p, 'svgFx', {
+  "The Force": "",
+  "Micro显微镜": "url(#cellr-glow)",
+  "Hyper纠缠辉光": "url(#hyper-glow)",
+  "Slime粘菌放大镜": "url(#cell-glow)",
+  "Glitch抖音": "url(#douyin-glow)",
+  "CSS暗场/高对比": "contrast(2.5) brightness(2.2) blur(2px)",
+  "Gray": "sepia(1)",
+  "Micro惨白": "url(#pale-glow)",
+}).onChange(css=>v.style.filter = css+p.svgFx1).setValue("url(#hyper-glow)");
+g1.add(p, 'svgFx1').onChange(css=>{
+  v.style.filter = p.svgFx+css;
+  if(/^ /.test(css))p.seed='(Jesus Knows)',R=Math.random
+  if(css=='D')ctrlD=''
+});
+g1.add(p, 'trail', 0,1)
+
+// 右键：矩形区完整重置
+v.oncontextmenu = e => { e.preventDefault(); p.endEpoch(); v.onmousemove(e); initPts(m.x,m.y); };
+v.onauxclick()
+{
+let actx, sfx;
+gui.add(p, 'osc').name('🔊 盖革计数器').onChange(k => {
+    if(k && !sfx) actx = new AudioContext();
+    sfx=({e:'triangle', w:'sawtooth',q:'square'})[k.at(-1)] ?? 'sine'
+    if(actx) k ? actx.resume() : actx.suspend();
+});
+pwm=(hits, panX)=>{
+    if(hits>p.count*1.23) { if(v.isShiftDown) hits/=p.count*.3; else return; }
+    // 映射：碰撞越多，这一帧内生成的“水滴”颗粒就越密集 (最多限制5个防爆音)
+    let drops = Math.min(Math.ceil(hits / 5), 5); 
+    let pan = (panX / hits / w + tx.x) * 2 - 1;
+
+    for (let i = 0; i < drops; i++) {
+        // 将声音随机打散在当前帧的 16ms 内，避免声波重叠变成电子嗡嗡声
+        let t = actx.currentTime + Math.random() * 0.016; 
+        
+        let o = actx.createOscillator(), g = actx.createGain(), p_ = actx.createStereoPanner();
+        o.type = sfx
+        o.frequency.value = 300 + Math.random() * 500 + hits * 2; // 碰撞越剧烈，音调微高
+        p_.pan.value = pan;
+        
+        // 【核心魔法】ADSL loop：瞬间发声，然后以指数级极速衰减，形成“清脆感”
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.1, t + 0.002);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.04); // 40毫秒内瞬间寂静 (Decay)
+        
+        o.connect(p_).connect(g).connect(actx.destination);
+        o.start(t); o.stop(t + 0.05); // 发声后立刻销毁节点，释放内存
+    }
+}
+}
+
+// Ctrl+C / Ctrl+V：序列化整个宇宙，也可只写入hash（seed文本框）
+let [e,e1]=document.querySelectorAll('#lil-gui-name-1+div>input, #lil-gui-name-9+div')
+e.oncopy = e => {
+    if(getSelection().type=='Range')return;
+    e.clipboardData.setData('text/plain', JSON.stringify({h: location.hash, krnl, krnl_tau: p.vxyOnly? null : krnl_tau, uv:pts}));
+    e.preventDefault(); v.snap();
+};
+
+e.onpaste = e => {
+    try {
+        let d = JSON.parse(e.clipboardData.getData('text')), putLife=p => ({...p, x: p.x + mSel.x, y: p.y + mSel.y});
+        if (d.uv || d.krnl) {
+            krnl = d.krnl??krnl; if(!(krnl_tau=d.krnl_tau))v.angel()
+            if (d.h) { pts = d.uv??pts; history.replaceState(null, '', d.h); p.seed = d.h.slice(1); }
+            else { pts.push(...d.uv?.map(putLife)??[]); }
+            e.preventDefault();
+        } else alert('bad json')
+    } catch(err) {alert('CtrlL to seed, CtrlC to snapshot {h,krnls,uv}')}
+};
+v.snapPts = (m,r2)=>pts.flatMap(p => (p.x - m.x)**2 + (p.y - m.y)**2 < r2 / (tx.k**2) ? [{...p, x: p.x - m.x, y: p.y - m.y}] : []);
+e1.insertAdjacentHTML('beforeEnd', `<button onclick="v.angel()">.reshape()</button>`)
+
+let scrcat=((fv = document.createElement('canvas'), fx = fv.getContext('2d'))=>
+(c,m,size)=>{
+  fv.width = fv.height = size;
+
+  // 核心：从主画布 c 中，以鼠标屏幕坐标 m.sx/sy 为中心截取内容，确保鼠标点在截取区域的正中心
+  fx.drawImage(c,
+      m.sx - size/2, m.sy - size/2, size, size, 
+      0, 0, size, size
+  );
+  return fv.toDataURL()
+})()
+
+let epoch = () => {
+    p.planck+=1; let hits = 0, panX = 0;
+    x.resetTransform(); // 重置变换，先画背景
+    if(!'bad boy'){
+      x.fillStyle = 'rgba(0,0,0,0.3)'; x.fillRect(0, 0, w, h);
+      x.save(); //<v “相机”坐标系
+      x.translate(view.x, view.y); x.scale(tx.k, tx.k);
+    } else {
+      x.globalCompositeOperation = 'destination-out';
+      x.fillStyle = `rgba(0,0,0,${1-p.trail})`; x.fillRect(0, 0, w, h);
+      x.setTransform(tx.k, 0, 0, tx.k, tx.x, tx.y);
+      x.globalCompositeOperation = 'source-over';
+    }
+
+    for (let p_ of pts) {
+        let fx = 0, fy = 0;
+        for (let q of pts) {
+            let dx = p_.x - q.x, dy = p_.y - q.y;
+            if(p.divRem) { dx -= Math.round(dx / w) * w; dy -= Math.round(dy / h) * h; } // 甜甜圈宇宙：边界条件的降噪-跨屏手拉手
+            let d2 = dx * dx + dy * dy, d = Math.sqrt(d2) + 0.1, pain, Fma;
+
+            pain = Math.exp(-(d - 30) * (d - 30) / 150) * p.ruleMult
+            if(p.germPure) { pain*=krnl[p_.c][q.c] }
+            else {
+              if(d2 > 0 && d2 < 20) p_.C = q.c;
+              pain *= (krnl[p_.c][q.c] + krnl[p_.C][q.c]) * 0.5;
+            }
+            if(p.osc) if(d2 > 0 && d2 < 20) { hits+=1, panX += p_.x; }
+            if(p.vxyOnly){
+              Fma = (d2 < c_in_Emc) * (p.repulsion / (d2 + 1) + pain);
+            } else {
+              let r = Math.atan2(dy, dx), r0=krnl_tau[p_.c][q.c];
+
+              // 磁性耦合：首尾相连，dipole 为正 (增强引力)；如果肩并肩，dipole 为负 (转为斥力) 1 + dipole 决定了磁极的放大效应
+              let dipole = Math.cos(p_.a - r -r0) * Math.cos(q.a - r +r0); 
+              Fma = (d2 < c_in_Emc) * (p.repulsion / (d2 + 1) +  pain * (1 + dipole * 1.5));
+
+              // 粒子会被迫向受力的方向偏转自旋角度，不再是各向同性 (Isotropy 2~5%)同色流沙，而是拼装成了坚硬的【大分子骨架】。
+              p_.va += Math.sin(r - p_.a +r0) * Fma * 0.03;
+            }
+            fx += (dx / d) * Fma; fy += (dy / d) * Fma; //^ 以高斯距离包络，接近 30 即1普朗克空间的时候，DO 贪心法
+        }
+
+let mx = p_.x - m.x, my = p_.y - m.y;
+let md2 = mx * mx + my * my + 100;
+fx += (mx / md2) * p.mouseForce;
+
+// 【神迹判定】：如果请求Shift，鼠标所在位置变为“奇点”，打破第四面墙！
+if (v.isShiftDown) {
+    let dx = p_.x - m.x, dy = p_.y - m.y;
+    let d2 = dx * dx + dy * dy;
+    
+    // 只有在神迹半径 (例如 40000，即距离 200) 内的生命受到影响
+    if (d2 < Math.abs(p.mouseForce*200)) {
+        let d = Math.sqrt(d2) + 0.1;
+        // 1. 绝对吸引：无视原有规则，施加极强的向心力
+        let divineForce = -500 / d; 
+        fx += (dx / d) * divineForce;
+        fy += (dy / d) * divineForce;
+        
+        // 2. 熵减冷却：强行剥夺动能，建立秩序
+        p_.vx *= 0.05; 
+        p_.vy *= 0.05; 
+        p_.C=p_.c
+    }
+}
+
+        p_.vx = (p_.vx + fx) * p.friction; p_.vy = (p_.vy + fy) * p.friction;
+        if(!p.vxyOnly) {p_.a += p_.va; p_.va *= p.friction; }
+        if(p.divRem) { p_.x = (p_.x + p_.vx + w) % w; p_.y = (p_.y + p_.vy + h) % h; } else {
+          p_.x += p_.vx; p_.y += p_.vy;
+          // 培养皿宇宙：撞墙反弹 + 强制坐标修正 (防止粘连)
+          if (p_.x < 0 || p_.x > w) { p_.vx *= -1; p_.x = p_.x < 0 ? 0 : w; }
+          if (p_.y < 0 || p_.y > h) { p_.vy *= -1; p_.y = p_.y < 0 ? 0 : h; }
+        }
+        
+
+        //if(p.planck<t_in_Share)continue
+        if(p.vxyOnly) { x.fillStyle = _4fg[p_.c]; x.fillRect(p_.x, p_.y, 3, 3); }
+        else {
+          // 现在的量子有自旋角度
+          x.beginPath();
+          x.moveTo(p_.x, p_.y);
+          // 画一条长为 6 的线段，代表磁极的 N 极指向
+          x.lineTo(p_.x + Math.cos(p_.a) * 5, p_.y + Math.sin(p_.a) * 5);
+          x.strokeStyle = _4fg[p_.c]; 
+          x.stroke();
+        }
+    }
+    //if(p.planck<t_in_Share)return setTimeout(epoch,0)
+    if(p.osc) pwm(hits, panX)
+    requestAnimationFrame(epoch); //x.restore();
+};
+epoch();
+</script>
+
+<script async type="module">// 相机动了，需要反向更新你的世界坐标 m.x, m.y
+import { zoom } from 'https://esm.sh/d3-zoom@3?bundle';
+import { select } from 'https://esm.sh/d3-selection@3?bundle';
+
+let {v,m}=window, zoomer = zoom()
+  .scaleExtent([0.1, 10]) // 限制缩放倍数
+  .on("zoom", (e) => {window.tx = e.transform});
+v.updateMouse = (sx, sy) => {
+    m.sx = sx; m.sy = sy;
+    [m.x, m.y] = tx.invert([sx, sy])
+};
+select(v).call(zoomer);
+
+//ctrlD
+window.onkeydown=e=>{
+  // 1024 即 (64/2)^2，确保抓取范围刚好是 Favicon 那个方框的内切圆    
+  if (e.ctrlKey && e.key.toLowerCase() === 'd'){v.snap(); let uv=v.snapPts(mSel,32**2); if (uv.length) navigator.clipboard.writeText(JSON.stringify({uv})) }
+}
+v.snap=()=>{
+  v.p.friction=0; setTimeout(()=>v.p.friction=.24, 2500)
+  v.animate([{ filter: 'brightness(5)'},{ filter: 'brightness(1)'}], {duration:400,timingFunction:'cubic-bezier(0.22, 1, 0.3, 1)'})
+}
+</script>
+
+<svg hidden>
+  <defs>
+    <filter id="cell-glow">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
+      <feColorMatrix in="blur" mode="matrix" 
+                     values="1 0 0 0 0  
+                             0 1 0 0 0  
+                             0 0 1 0 0  
+                             0 0 0 12 -4" result="goo" />
+      <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+    </filter>
+
+
+    <filter id="hyper-glow">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+      <feComponentTransfer in="blur">
+        <feFuncA type="linear" slope="2.9" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="pale-glow">
+      <feColorMatrix type="matrix" 
+                     values="1 0 0 0 0  
+                             0 0 0 0 0  
+                             0 0 0 0 0  
+                             0 0 0 1 0" in="SourceGraphic" result="grayscale" />
+      
+      <feGaussianBlur stdDeviation="1" in="grayscale" result="blur" />
+      
+      <feConvolveMatrix order="3 3" kernelMatrix="-1 -.5 0
+                                                    -1  0 1
+                                                     0  1 1" divisor="1" bias="0.3" in="blur" result="emboss" />
+
+    </filter>
+
+
+    <filter id="douyin-glow">
+      <feOffset in="SourceGraphic" dx="-4" dy="0" result="red-shift" />
+      <feColorMatrix in="red-shift" type="matrix" 
+                     values="1 0 0 0 0  
+                             0 0 0 0 0  
+                             0 0 0 0 0  
+                             0 0 0 1 0" result="red-only" />
+                             
+      <feOffset in="SourceGraphic" dx="4" dy="0" result="cyan-shift" />
+      <feColorMatrix in="cyan-shift" type="matrix" 
+                     values="0 0 0 0 0  
+                             0 1 0 0 0  
+                             0 0 1 0 0  
+                             0 0 0 1 0" result="cyan-only" />
+                             
+      <feBlend in="red-only" in2="cyan-only" mode="screen" />
+    </filter>
+
+    <filter id="cellr-glow">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+      <feColorMatrix in="blur" mode="matrix" 
+                     values="1 0 0 0 0  
+                             0 1 0 0 0  
+                             0 0 1 0 0  
+                             0 0 0 18 -8" result="goo" />
+      <feComposite in="SourceGraphic" in2="goo" operator="atop" result="goo-shape" />
+
+      <feTurbulence type="fractalNoise" baseFrequency="0.1 0.1" numOctaves="2" seed="1" result="noise" />
+      <feComposite in="noise" in2="SourceGraphic" operator="in" result="noise-mask" />
+
+      <feColorMatrix in="SourceGraphic" values="1 0 0 0 0
+                                                  0 0 0 0 0
+                                                  1 0 1 0 0
+                                                  0 0 0 1 0" result="color1" />
+      <feGaussianBlur in="color1" stdDeviation="4" result="glow1" />
+      
+      <feColorMatrix in="SourceGraphic" values="0 1 1 0 0
+                                                  1 0 1 0 0
+                                                  1 1 0 0 0
+                                                  0 0 0 1 0" result="color2" />
+      <feGaussianBlur in="color2" stdDeviation="4" result="glow2" />
+      
+      <feComposite in="glow2" in2="noise-mask" operator="in" result="glow2-masked" />
+      <feComposite in="glow1" in2="glow2-masked" operator="xor" result="pingpong-mixed" />
+
+      <feMerge>
+        <feMergeNode in="goo-shape" />
+        <feMergeNode in="pingpong-mixed" />
+      </feMerge>
+    </filter>
+
+  </defs>
+</svg>
+
+</body>

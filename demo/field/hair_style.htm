@@ -1,0 +1,57 @@
+<body style=margin:0;background:#000;overflow:hidden><canvas id=v></canvas>
+<script>
+let c=v, x=c.getContext('2d'), w, h, g=[], res=20, dr=0
+let resize = () => {
+  w=c.width=innerWidth; h=c.height=innerHeight; g=[]
+  for(let i=0; i<w/res; i++) {
+    g[i]=[]
+    for(let j=0; j<h/res; j++) g[i][j]=[0, 0, 0.11] // [vx, vy, decay]
+  }
+}
+window.onresize=resize; resize()
+
+onmousedown = e => e.button==2 && (dr=1)
+onmouseup = () => dr=0
+oncontextmenu = e => e.preventDefault()
+//onauxclick = () => { resize(); x.clearRect(0,0,w,h) }
+
+onmousemove = e => {
+  let i=e.clientX/res|0, j=e.clientY/res|0
+  if(g[i]&&g[i][j]) {
+    // 右键：cp，冲击力减半 (1x)，衰减极低 (0.99, 模拟边缘死区)
+    // 普通：原版力度 (2x)，高衰减 (0.11)
+    let f=dr?.5:2, p=dr?0.996:0.11
+    g[i][j]=[(e.movementX||0)*f, (e.movementY||0)*f, p]
+  }
+}
+
+let loop = () => {
+  x.fillStyle='rgba(0,0,0,0.1)'; x.fillRect(0,0,w,h)
+  let next = g.map(r => r.map(v => [...v]))
+
+  for(let i=1; i<g.length-1; i++) {
+    for(let j=1; j<g[i].length-1; j++) {
+      let [cvx, cvy, cp] = g[i][j], sx=0, sy=0
+      for(let ox=-1; ox<=1; ox++) for(let oy=-1; oy<=1; oy++) {
+        sx+=g[i+ox][j+oy][0]; sy+=g[i+ox][j+oy][1]
+      }
+      
+      // 核心算法：使用单元格自带的衰减率。
+      // sx*0.11 是 3x3 均值，我们根据 cp 决定保留多少自身动量。
+      // cp 为 0.99 时，动量几乎不随扩散消失，形成“彩丝”。
+      let v = (sx * 0.11) * (1 - cp) + (cvx * cp)
+      let u = (sy * 0.11) * (1 - cp) + (cvy * cp)
+      
+      next[i][j] = [v, u, cp]
+      let l=Math.hypot(v, u)
+      if(l>0.1) {
+        x.beginPath(); x.strokeStyle=`hsla(${l*10+200},70%,60%,${cp>0.5?0.8:l*0.5})`
+        x.moveTo(i*res, j*res); x.lineTo(i*res+v*res, j*res+u*res); x.stroke()
+      }
+    }
+  }
+  g=next; requestAnimationFrame(loop)
+}
+loop()
+onmousemove({clientX:300,clientY:50,movementY:600})
+</script>

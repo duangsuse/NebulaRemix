@@ -3,7 +3,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>SwissGL Newton Fractal (Hammer+lil-gui)</title>
-    <script src="https://google.github.io/swissgl/swissgl.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/google/swissgl@main/swissgl.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19.1/dist/lil-gui.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <style>
@@ -52,16 +52,17 @@ canvas.oncontextmenu = e => {
 }
 
     // --- GUI ---
-const gui = new lil.GUI({ title: 'Newton Fractal' });
+let gui = new lil.GUI({ title: 'Newton Fractal' }), g1;
 setTimeout(()=> {
   gui.add(params, 'formula', Object.keys(FRACTALS)).name('Function');
   gui.add(params, 'palette', PALETTE_NAMES).name('Colors');
   gui.add(params, 'colorScale', 0.1, 5.0, 0.1).name('Gradient Freq');
   gui.add(params, 'colorOffset', 0.0, 6.28).name('Color Seed/Shift'); // 0 ~ 2PI 刚好一个周期
-  gui.add(params, 'iter', 10, 100, 1).name('Iterations');
-  gui.add(params, 'vTouch', 0, 1).onChange(x=>params.vTouch =  Math.pow(x, 3))
-  gui.add(view, 'zoom').listen().disable();
-  gui.add(params, 'reset').name('Reset View');
+  g1=gui.addFolder('Anim').open(0)
+  g1.add(params, 'iter', 10, 100, 1).name('Iterations逼近根式');
+  g1.add(params, 'vTouch', 0, 1).onChange(x=>params.vTouch =  Math.pow(x, 3))
+  g1.add(view, 'zoom').listen().disable();
+  gui.add(params, 'reset').name('⚖️ Reset View');
   gui.add(params, 'Julia').name('😎 Julia (0~4)').onChange(s=>{eval(s); if(s=='2') iMouse = [val.x, val.y] })
 })
 function resize() {

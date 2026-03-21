@@ -1,0 +1,220 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { margin:0; background:#222; overflow:hidden; font-family:'Courier New', monospace; }
+    canvas { display:block; }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+  import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm'
+
+  // --- 1. Vector Math (Algebraic Simplicity) ---
+  class Vec {
+    constructor(x=0, y=0) { this.x=x; this.y=y }
+    add(v) { return new Vec(this.x+v.x, this.y+v.y) }
+    sub(v) { return new Vec(this.x-v.x, this.y-v.y) }
+    mul(s) { return new Vec(this.x*s, this.y*s) }
+    dot(v) { return this.x*v.x + this.y*v.y }
+    mag()  { return Math.hypot(this.x, this.y) }
+    norm() { let m = this.mag(); return m ? this.mul(1/m) : new Vec() }
+    dist(v){ return Math.hypot(this.x-v.x, this.y-v.y) }
+    rot(a) { let c=Math.cos(a), s=Math.sin(a); return new Vec(this.x*c-this.y*s, this.x*s+this.y*c) }
+    perp() { return new Vec(-this.y, this.x) } 
+  }
+
+  // --- 2. Bezier Logic (Pure Functional) ---
+  let bez = (ps, t) => {
+    let i=1-t, a=i*i*i, b=3*i*i*t, c=3*i*t*t, d=t*t*t
+    return ps[0].mul(a).add(ps[1].mul(b)).add(ps[2].mul(c)).add(ps[3].mul(d))
+  }
+  let bezTan = (ps, t) => { 
+    let i=1-t
+    return ps[1].sub(ps[0]).mul(3*i*i).add(ps[2].sub(ps[1]).mul(6*i*t)).add(ps[3].sub(ps[2]).mul(3*t*t))
+  }
+  let closestT = (p, ps) => {
+    let minD=Infinity, t0=0, scans=10
+    for(let i=0; i<=scans; i++) {
+      let t=i/scans, d=p.dist(bez(ps, t))
+      if(d<minD) { minD=d; t0=t }
+    }
+    let l=Math.max(0, t0-0.1), h=Math.min(1, t0+0.1)
+    for(let i=0; i<6; i++) { // Golden section simplified
+      let t1=(l*2+h)/3, t2=(l+h*2)/3
+      let d1=p.dist(bez(ps, t1)), d2=p.dist(bez(ps, t2))
+      if(d1<d2) h=t2; else l=t1
+    }
+    return (l+h)/2
+  }
+
+  // --- 3. Data: Terrains ---
+  let make = coords => coords.map(p => new Vec(p[0], p[1]))
+let maps = {
+  // 1. 盒子 (原版保持不变)
+  'Box': [
+    [[-120,-180],[ 80,-200],[ 180,-100],[ 120,   0]], 
+    [[ 120,   0],[ 60, 120],[ 100, 220],[   0, 200]], 
+    [[   0, 200],[-120, 180],[-180, 100],[-140,   0]], 
+    [[-140,   0],[-100, -80],[-220,-140],[-120,-180]]  
+  ],
+// 6. 棉花糖 (新增：根据图片边缘绘制)
+  'Marshmallo': [
+    [[-130, -80], [ -50,-150], [  50,-150], [ 130, -80]], // 顶部凹陷
+    [[ 130, -80], [ 180, -20], [ 180, 100], [ 130, 160]], // 右侧凸起
+    [[ 130, 160], [  50, 120], [ -50, 120], [-130, 160]], // 底部凹陷
+    [[-130, 160], [-180, 100], [-180, -20], [-130, -80]]  // 左侧凸起
+  ],
+  // 2. 沙漏 (原版保持不变)
+  'Hourglass': [
+    [[-100,-200],[  50,-200],[  50,-50],[ 150,   0]], 
+    [[ 150,   0],[ 250,  50],[ 250,200],[ 100, 200]],
+    [[ 100, 200],[ -50, 200],[ -50, 50],[-150,   0]],
+    [[-150,   0],[-250, -50],[-250,-200],[-100,-200]]
+  ],
+
+  // 3. 蚕豆 (修正版：平滑肾形)
+  // 逻辑：左侧大外凸，右侧中间内凹
+  'Bean': [
+    [[   0,-120],[ 100,-120],[ 160, -60],[ 160,  20]], // 上部圆弧 -> 右上
+    [[ 160,  20],[ 160,  80],[  80, 100],[  80, 140]], // 右侧内凹处 -> 转向底部
+    [[  80, 140],[  80, 220],[-120, 220],[-120, 100]], // 底部圆弧 -> 左下
+    [[-120, 100],[-120, -20],[ -80,-120],[   0,-120]]  // 左侧直线/弧 -> 回到顶部
+  ],
+
+  // 4. 圆形 (新增：标准 Bezier 圆)
+  // 使用 kappa = 0.55228475 * 半径(160) ≈ 88 来逼近完美圆
+  'Circle': [
+    [[   0,-160],[  88,-160],[ 160, -88],[ 160,   0]],
+    [[ 160,   0],[ 160,  88],[  88, 160],[   0, 160]],
+    [[   0, 160],[ -88, 160],[-160,  88],[-160,   0]],
+    [[-160,   0],[-160, -88],[ -88,-160],[   0,-160]]
+  ],
+
+  // 5. 心形 (新增)
+  // 上方内凹，下方尖锐
+  'Heart': [
+    [[   0, -80],[  30,-140],[ 140,-140],[ 140, -30]], // 右上瓣
+    [[ 140, -30],[ 140,  60],[  60, 120],[   0, 180]], // 右下收尾至尖端
+    [[   0, 180],[ -60, 120],[-140,  60],[-140, -30]], // 左下瓣
+    [[-140, -30],[-140,-140],[ -30,-140],[   0, -80]]  // 左上瓣回到中心
+  ],
+
+  // 6. 圆角三角形 (新增)
+  // 类似于盾牌形状
+  'SoftTriangle': [
+    [[   0,-180],[  80,-180],[ 160,-100],[ 160,  40]], // 顶部 -> 右侧
+    [[ 160,  40],[ 160, 140],[ 100, 180],[   0, 180]], // 右下角 -> 底部中心
+    [[   0, 180],[-100, 180],[-160, 140],[-160,  40]], // 底部中心 -> 左下角
+    [[-160,  40],[-160,-100],[ -80,-180],[   0,-180]]  // 左侧 -> 顶部
+  ]
+}
+
+  // --- 4. State & Config ---
+  let C = document.getElementById('c'), X = C.getContext('2d')
+  let W, H, keys = {}, drag = null
+  let state = { map: 'Box', ang: 0, p: new Vec(0,0), v: new Vec(200, -200), r: 18 }
+  let cfg = { fric: 0.998, rest: 0.7, gravity: 1500, Normals:true } // Tweak physics here
+
+  let gui = new GUI()
+  gui.add(state, 'map', Object.keys(maps)).onChange(()=> state.p=new Vec(W/2,H/2))
+  gui.add(cfg, 'fric', 0.9, 1.0).name('Friction (Tan)')
+  gui.add(cfg, 'rest', 0.1, 1.5).name('Bounciness')
+  gui.add(cfg, 'Normals')
+  gui.domElement.append(`andremichelle.io/lab/, show Ball Bezier Collision`)
+
+  // --- 5. Main Loop ---
+  let loop = () => {
+    // Canvas
+    if(W!==innerWidth) { W=C.width=innerWidth; H=C.height=innerHeight; state.p=new Vec(W/2,H/2) }
+    X.fillStyle='#333'; X.fillRect(0,0,W,H)
+    let cx = W/2, cy = H/2, center = new Vec(cx, cy)
+
+    // Input
+    if(keys['ArrowLeft']) state.ang -= 0.04
+    if(keys['ArrowRight']) state.ang += 0.04
+    
+    // Geometry
+    let terrain = maps[state.map].map(make).map(seg => seg.map(p => p.rot(state.ang).add(center)))
+
+    // Physics (Sub-stepping)
+    let steps = drag ? 0 : 8, dt = (1/60)/steps
+    for(let i=0; i<steps; i++) {
+      state.v = state.v.add(new Vec(0, cfg.gravity).mul(dt)) 
+      state.p = state.p.add(state.v.mul(dt))
+
+      terrain.forEach(seg => {
+        let t = closestT(state.p, seg)
+        let pOnC = bez(seg, t) // Point on Curve
+        let diff = state.p.sub(pOnC) // Vector from Curve to Ball
+        let dist = diff.mag()
+
+        if(dist < state.r) {
+          // 1. Resolve Penetration
+          // Normal should point from wall towards ball (or inwards). 
+          // We use geometry to determine: Vector from Wall Point to Center
+          let wallToCenter = center.sub(pOnC)
+          let n = bezTan(seg, t).perp().norm() 
+          if(n.dot(wallToCenter) < 0) n = n.mul(-1) // Ensure N points IN
+
+          let pen = state.r - dist
+          state.p = state.p.add(n.mul(pen)) // Hard position fix
+
+          // 2. Resolve Velocity (Decomposition)
+          let vnVal = state.v.dot(n)
+          if(vnVal < 0) { // Only bounce if moving INTO wall
+            let vn = n.mul(vnVal)             // Normal Component
+            let vt = state.v.sub(vn)          // Tangent Component
+            
+            // Apply bounce to Normal, Friction to Tangent
+            state.v = vt.mul(cfg.fric).add(vn.mul(-cfg.rest))
+          }
+        }
+      })
+    }
+
+    // --- Render ---
+    
+    // 1. Normals (Red Sensors)
+    if(cfg.Normals){
+      X.lineWidth=1; X.strokeStyle='#f33'; X.beginPath()
+      terrain.forEach(seg => {
+        let t = closestT(state.p, seg)
+        let p = bez(seg, t)
+        X.moveTo(state.p.x, state.p.y); X.lineTo(p.x, p.y)
+      })
+      X.stroke()
+    }
+
+    // 2. Terrain
+    X.lineWidth=12; X.lineCap='round'; X.strokeStyle='#111'; X.beginPath()
+    terrain.forEach((s,i) => {
+      if(i===0) X.moveTo(s[0].x, s[0].y)
+      X.bezierCurveTo(s[1].x, s[1].y, s[2].x, s[2].y, s[3].x, s[3].y)
+    })
+    X.stroke()
+
+    // 3. Ball
+    X.fillStyle='#eee'; X.beginPath(); X.arc(state.p.x, state.p.y, state.r, 0, 7); X.fill()
+
+    // 4. Drag UI
+    if(drag) {
+      X.beginPath(); X.moveTo(state.p.x, state.p.y); X.lineTo(drag.x, drag.y)
+      X.strokeStyle='yellow'; X.lineWidth=3; X.setLineDash([5,5]); X.stroke(); X.setLineDash([])
+    }
+
+    requestAnimationFrame(loop)
+  }
+
+  // Interaction
+  window.onmousedown = e => { let m=new Vec(e.clientX,e.clientY); if(m.dist(state.p)<50) drag=m }
+  window.onmousemove = e => { if(drag) { drag.x=e.clientX; drag.y=e.clientY } }
+  window.onmouseup   = e => { if(drag) { state.v = drag.sub(state.p).mul(10); drag=null } }
+  window.onkeydown   = e => keys[e.code] = true
+  window.onkeyup     = e => keys[e.code] = false
+
+  loop()
+</script>
+</body>
+</html>
