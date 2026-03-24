@@ -1,4 +1,4 @@
-<body style=margin:0;background:#000;overflow:hidden><canvas id=c></canvas>
+<body style=margin:0;background:#000;overflow:hidden;touch-action:none;><canvas id=c></canvas>
   <script type="module">
     import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm'
 
@@ -69,7 +69,7 @@
     }
 
     window.onresize = init
-    window.onmousemove = e => { mse.x = e.clientX; mse.y = e.clientY }
+    window.onpointermove = e => { mse.x = e.clientX; mse.y = e.clientY }
 
     let gui = new GUI({ title: 'Settings' })
     gui.add(cfg, 'pal', Object.keys(pals))

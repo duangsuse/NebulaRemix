@@ -1,28 +1,30 @@
-<body style=margin:0;background:#000;overflow:hidden><canvas id=v></canvas>
+<body style=margin:0;background:#000;overflow:hidden;touch-action:none;><canvas id=v></canvas>
 <script type="module">
 import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm'
 
 let c=document.getElementById('v'), x=c.getContext('2d'), w, h, grid=[], particles=[],
-cfg={mode:'flow', res:20, decay:0.99, force:50, num:3000, chars:' .:-=+*#%@', color:'#00ffcc', fade:0.1, reset:()=>resize()}
+cfg={mode:'flow', dxy:20, decay:0.99, force:50, num:3000, chars:' .:-=+*#%@', color:'#00ffcc', fade:0.1, reset:()=>resize()}
 
 // GUI Setup
-const gui = new GUI({title:'Fluid Control'})
-gui.add(cfg,'mode',['flow','hair','ascii']); gui.add(cfg,'res',10,60,1).onChange(()=>resize())
-gui.add(cfg,'decay',0.9,0.999); gui.add(cfg,'force',5,100); gui.addColor(cfg,'color')
-gui.add(cfg,'fade',0.01,0.4); gui.add(cfg,'reset')
+let gui = new GUI({title:'Fluid World'}), g1
+gui.add(cfg,'mode',['flow','ascii','hair'])
+gui.add(cfg,'fade',0.01,0.2); gui.add(cfg,'force',5,100); gui.add(cfg,'decay',0.9,0.999);
+g1=gui.addFolder('Renderer')
+g1.addColor(cfg,'color'); g1.add(cfg,'dxy',4,60,1).onChange(()=>resize())
+gui.add(cfg,'reset')
 
 let resize = () => { 
   w=c.width=innerWidth; h=c.height=innerHeight
   // Initialize vector field (padded) & particles
-  let cols=Math.ceil(w/cfg.res)+2, rows=Math.ceil(h/cfg.res)+2
+  let cols=Math.ceil(w/cfg.dxy)+2, rows=Math.ceil(h/cfg.dxy)+2
   grid=[]; for(let i=0; i<cols; i++) { grid[i]=[]; for(let j=0; j<rows; j++) grid[i][j]=[0,0] }
   particles=[]; for(let i=0; i<cfg.num; i++) particles.push({x:Math.random()*w, y:Math.random()*h, vx:0, vy:0})
 }
 window.onresize=resize; resize()
 
-// Logic: Inject velocity on mouse move
-c.onmousemove = e => {
-  let gx=(e.clientX/cfg.res|0)+1, gy=(e.clientY/cfg.res|0)+1
+// Logic: Inject velocity on user move
+c.onpointermove = e => {
+  let gx=(e.clientX/cfg.dxy|0)+1, gy=(e.clientY/cfg.dxy|0)+1
   if(grid[gx]&&grid[gx][gy]) grid[gx][gy]=[(e.movementX||0)*cfg.force*0.1, (e.movementY||0)*cfg.force*0.1]
 }
 
@@ -45,13 +47,13 @@ let loop = () => {
       // Render: Mode Specific
       if(cfg.mode=='hair' && len>0.1) {
         x.strokeStyle=`hsla(${len*5+200},70%,60%,${len*0.5})`
-        x.beginPath(); x.moveTo((i-1)*cfg.res, (j-1)*cfg.res)
-        x.lineTo((i-1)*cfg.res+cell[0]*3, (j-1)*cfg.res+cell[1]*3); x.stroke()
+        x.beginPath(); x.moveTo((i-1)*cfg.dxy, (j-1)*cfg.dxy)
+        x.lineTo((i-1)*cfg.dxy+cell[0]*3, (j-1)*cfg.dxy+cell[1]*3); x.stroke()
       }
       else if(cfg.mode=='ascii') {
         let char = cfg.chars[Math.min(cfg.chars.length-1, len*1.5|0)]
-        x.fillStyle=cfg.color; x.font=`${cfg.res}px monospace`; x.textAlign='center'
-        if(len>0.5) x.fillText(char, (i-1)*cfg.res+cfg.res/2, (j-1)*cfg.res+cfg.res/2)
+        x.fillStyle=cfg.color; x.font=`${cfg.dxy}px monospace`; x.textAlign='center'
+        if(len>0.5) x.fillText(char, (i-1)*cfg.dxy+cfg.dxy/2, (j-1)*cfg.dxy+cfg.dxy/2)
       }
     }
   }
@@ -61,7 +63,7 @@ let loop = () => {
   if(cfg.mode=='flow') {
     x.fillStyle=cfg.color; x.globalCompositeOperation='lighter'
     for(let p of particles) {
-      let gx=(p.x/cfg.res|0)+1, gy=(p.y/cfg.res|0)+1
+      let gx=(p.x/cfg.dxy|0)+1, gy=(p.y/cfg.dxy|0)+1
       if(grid[gx]&&grid[gx][gy]) { p.vx+=grid[gx][gy][0]*0.2; p.vy+=grid[gx][gy][1]*0.2 }
       p.x+=p.vx*=0.95; p.y+=p.vy*=0.95
       if(p.x<0)p.x=w; if(p.x>w)p.x=0; if(p.y<0)p.y=h; if(p.y>h)p.y=0
@@ -73,7 +75,7 @@ let loop = () => {
   requestAnimationFrame(loop)
 }
 loop()
-c.onmousemove({clientX:300,clientY:50,movementY:100})
+c.onpointermove({clientX:300,clientY:50,movementY:100})
 </script>
 </body>
  

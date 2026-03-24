@@ -1,9 +1,9 @@
-<body style=margin:0;background:#000;overflow:hidden><canvas id=c></canvas>
+<body style=margin:0;background:#000;overflow:hidden;touch-action:none;><canvas id=c></canvas>
 <script type=module>
 import G from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm'
 
 let c=document.getElementById('c'), x=c.getContext('2d'), w, h, pts=[], grid=[], res, m={x:-999,y:-999}
-let P = { gridOsc:false, r:0, n:2000, f:.18, s:1, c:()=>{ x.clearRect(0,0,w,h);I()} }
+let P = { gridOsc:false, r:0, n:2700, f:.25, s:2, c:()=>{ x.clearRect(0,0,w,h);I()} }
 
 let I = () => {
   res = Math.max(4, 40000/P.n|0) // nSamp 完美映射为动态网格分辨率
@@ -12,7 +12,7 @@ let I = () => {
 }
 
 let R = () => { w=c.width=innerWidth; h=c.height=innerHeight; I() }
-window.onresize=R; R(); onmousemove=e=>m={x:e.clientX,y:e.clientY}
+window.onresize=R; R(); onpointermove=e=>m={x:e.clientX,y:e.clientY}
 
 let g = new G()
 g.add(P, 'gridOsc').name('Oscillator Grid').onChange(()=>x.clearRect(0,0,w,h))

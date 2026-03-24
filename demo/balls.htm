@@ -1,6 +1,6 @@
 <style>
   body { margin: 0; background: #111; overflow: hidden; font-family: monospace; color: #888; }
-  canvas { display: block; }
+  canvas { touch-action: none; display: block; }
   #ui { position: absolute; top: 12px; left: 12px; pointer-events: none; user-select: none; }
   b { color: #ccc; }
 </style>
@@ -19,8 +19,11 @@ let c = document.getElementById('c'),
     ctx = c.getContext('2d'),
     w, h,
     ps = [], // Particles
-    g = 0.5, // Gravity (State)
+    gy = 0.5, gx=0., g=1, // Gravity (State)
     f = 0.99, r = 10, sub = 8
+
+if(navigator.maxTouchPoints)
+window.ondeviceorientation=e=>{ gx=e.gamma/45; gy=e.beta/45 } // gamma 左右滚，beta 前后倾
 
 // --- KERNEL (Verlet + Solver) ---
 
@@ -29,7 +32,7 @@ integrate = () => {
     let vx = (p.x - p.ox) * f,
         vy = (p.y - p.oy) * f
     p.ox = p.x; p.oy = p.y
-    p.x += vx; p.y += vy + g
+    p.x += vx+gx*g; p.y += vy + gy*g
 
     // Constraints
     if (p.y > h - r) { p.y = h - r; p.oy = p.y + vy }
@@ -83,7 +86,7 @@ resize = () => { w = c.width = window.innerWidth; h = c.height = window.innerHei
 window.onresize = resize
 resize()
 
-window.oncontextmenu = e => e.preventDefault() // Block menu
+window.oncontextmenu = e => { e.preventDefault(); g = g === 1 ? 0 : 1 }
 
 window.onmousedown = e => {
   let x = e.clientX, y = e.clientY
@@ -101,7 +104,6 @@ window.onmousedown = e => {
     }
   } 
   else if (e.button === 2) { // R-Click: Toggle G
-    g = g === 0 ? 0.5 : 0
   }
 }
 

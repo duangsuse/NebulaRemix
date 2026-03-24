@@ -114,15 +114,16 @@ let maps = {
   // --- 4. State & Config ---
   let C = document.getElementById('c'), X = C.getContext('2d')
   let W, H, keys = {}, drag = null
-  let state = { map: 'Box', ang: 0, p: new Vec(0,0), v: new Vec(200, -200), r: 18 }
+  let state = { map: 'Bean', ang: 0, p: new Vec(0,0), v: new Vec(200, -200), r: 18 }
   let cfg = { fric: 0.998, rest: 0.7, gravity: 1500, Normals:true } // Tweak physics here
 
   let gui = new GUI()
   gui.add(state, 'map', Object.keys(maps)).onChange(()=> state.p=new Vec(W/2,H/2))
-  gui.add(cfg, 'fric', 0.9, 1.0).name('Friction (Tan)')
-  gui.add(cfg, 'rest', 0.1, 1.5).name('Bounciness')
+  gui.add(cfg, 'fric', 0.9, 1.0).name('Friction (* BezTan)')
+  gui.add(cfg, 'rest', 0.1, 1.1).name('Bounciness!')
   gui.add(cfg, 'Normals')
-  gui.domElement.append(`andremichelle.io/lab/, show Ball Bezier Collision`)
+  gui.add(state, 'ang', 0,6.28).listen()
+  gui.domElement.append(`andremichelle.io/lab/, [Ball Bezier Collision]. ball lost->set map`)
 
   // --- 5. Main Loop ---
   let loop = () => {
