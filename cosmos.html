@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>Holographic Principle</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #111; color: #fff; font-family: sans-serif; }
+        canvas { display: block; }
+        #hint { position: absolute; bottom: 20px; left: 20px; opacity: 0.5; pointer-events: none; user-select: none; }
+    </style>
+    <script src="https://unpkg.com/three@0.146.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.146.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://unpkg.com/lil-gui@0.19"></script>
+</head>
+<body>
+    <div id="hint">双击DblClick: 新世界种子 | 左键拖拽: 观察者视角 | 右键MouseR: 切换为 2D/3D 存在形式</div>
+    <script>
+        // 核心要求：3D球体纠缠
+        let univ = { clustering: 0.2, speed: .1, nodes: 150, entropy: 810, is2D: false },
+            R = 150,
+            particles = [],
+            centroids = [],
+            scene = new THREE.Scene(),
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000),
+            renderer = new THREE.WebGLRenderer({ antialias: true }),
+            controls = new THREE.OrbitControls(camera, renderer.domElement),
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.5),
+            light = new THREE.PointLight(0xffffff, 1),
+            gridGroup = new THREE.Group(),
+            pGeo = new THREE.SphereGeometry(1.5, 8, 8),
+            // 球上点透明配色
+            pMat = new THREE.MeshPhongMaterial({ color: 0x4488ff, transparent: true, opacity: 0.6 }),
+            pointsGroup = new THREE.Group(),
+            gui = new lil.GUI({ title: '全息原理映射' }),
+            entropyUI = null,
+            clock = new THREE.Clock(),
+            // 预分配所有计算临时变量
+            currentEntropy = 0, nearest = null, minDist = 0, d = 0,
+            target3D = new THREE.Vector3(), targetPos = new THREE.Vector3(), targetColor = new THREE.Color(),
+            i = 0, j = 0, k = 0, p = null, c = null, mesh = null, pos = null,
+            phi = 0, rRadius = 0, yPos = 0, curve = null, pts = null,
+            latGeo = null, lonGeo = null,
+            latMat = new THREE.LineBasicMaterial({ color: 0x444455, transparent: true, opacity: 0.5 }),
+            lonMat = new THREE.LineBasicMaterial({ color: 0x444455, transparent: true, opacity: 0.5 }),
+            rRand = 0, thetaRand = 0, phiRand = 0, dt = 0, t = 0,
+            
+            // 逻辑函数作为 let 变量赋值
+            randSpherePoint = function(radius) {
+                rRand = radius * Math.cbrt(Math.random());
+                thetaRand = Math.acos(2 * Math.random() - 1);
+                phiRand = 2 * Math.PI * Math.random();
+                return new THREE.Vector3().setFromSphericalCoords(rRand, thetaRand, phiRand);
+            },
+            
+            reset = function() {
+                pointsGroup.clear();
+                particles = [];
+                centroids = Array.from({ length: 4 }, function() { return randSpherePoint(R * 0.7); });
+                for (i = 0; i < univ.nodes; i++) {
+                    mesh = new THREE.Mesh(pGeo, pMat.clone());
+                    pos = randSpherePoint(R);
+                    particles.push({ orig: pos, curr: pos.clone(), surf: new THREE.Vector3(), mesh: mesh });
+                    pointsGroup.add(mesh);
+                }
+            },
+            
+            animate = function() {
+                requestAnimationFrame(animate);
+                dt = clock.getDelta();
+                t = clock.getElapsedTime(); // 引入真实流逝时间
+
+                controls.update();
+
+                gridGroup.rotation.y += dt * 0.1 * univ.speed;
+                pointsGroup.rotation.y += dt * 0.1 * univ.speed;
+
+                // 激活演化参数：使坍缩中心点随时间进行轨迹运动，速度乘数挂载在这里
+                for (k = 0; k < centroids.length; k++) {
+                    centroids[k].x = R * 0.5 * Math.sin(t * univ.speed * (k + 1) * 0.5);
+                    centroids[k].y = R * 0.5 * Math.cos(t * univ.speed * (k + 2) * 0.4);
+                    centroids[k].z = R * 0.5 * Math.sin(t * univ.speed * (k + 3) * 0.3);
+                }
+
+                currentEntropy = 0;
+
+                for (j = 0; j < particles.length; j++) {
+                    p = particles[j];
+                    nearest = centroids[0];
+                    minDist = Infinity;
+                    for (k = 0; k < centroids.length; k++) {
+                        c = centroids[k];
+                        d = p.orig.distanceTo(c);
+                        if (d < minDist) { minDist = d; nearest = c; }
+                    }
+
+                    target3D.lerpVectors(p.orig, nearest, univ.clustering);
+                    p.curr.lerp(target3D, 0.1);
+                    p.surf.copy(p.curr).normalize().multiplyScalar(R + 2);
+
+                    targetPos = univ.is2D ? p.surf : p.curr;
+                    p.mesh.position.lerp(targetPos, 0.1);
+
+                    targetColor.setHex(univ.is2D ? 0xff4444 : 0x4488ff);
+                    p.mesh.material.color.lerp(targetColor, 0.1);
+
+                    currentEntropy += (1 - univ.clustering) * 10;
+                }
+
+                univ.entropy = Math.floor(currentEntropy);
+                if (entropyUI) entropyUI.updateDisplay();
+
+                renderer.render(scene, camera);
+            };
+
+        // ================= 单一 let 声明域结束，以下为装配与执行逻辑 =================
+
+        // 场景装配
+        camera.position.z = 450;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enablePan = false;
+
+        light.position.set(200, 200, 200);
+        scene.add(ambientLight);
+        scene.add(light);
+
+        // Desmos 风格稀疏网格 (平滑曲线构建经纬线)
+        // 纬线圈 (Latitudes)
+        for(i = -4; i <= 4; i++) {
+            phi = (i / 10) * Math.PI; // -0.4PI 到 0.4PI 之间取9个环
+            rRadius = R * Math.cos(phi);
+            yPos = R * Math.sin(phi);
+            curve = new THREE.EllipseCurve(0, 0, rRadius, rRadius, 0, 2 * Math.PI, false, 0);
+            pts = curve.getPoints(64);
+            latGeo = new THREE.BufferGeometry().setFromPoints(pts);
+            mesh = new THREE.Line(latGeo, latMat);
+            mesh.rotation.x = Math.PI / 2;
+            mesh.position.y = yPos;
+            gridGroup.add(mesh);
+        }
+        // 经线圈 (Longitudes)
+        curve = new THREE.EllipseCurve(0, 0, R, R, 0, 2 * Math.PI, false, 0);
+        pts = curve.getPoints(64);
+        lonGeo = new THREE.BufferGeometry().setFromPoints(pts);
+        for(i = 0; i < 8; i++) {
+            mesh = new THREE.Line(lonGeo, lonMat);
+            mesh.rotation.y = (i / 8) * Math.PI;
+            gridGroup.add(mesh);
+        }
+        scene.add(gridGroup);
+        scene.add(pointsGroup);
+
+        // GUI 装配 (节点总数可变)
+        gui.add(univ, 'clustering', 0, 1).name('稠密度');
+        gui.add(univ, 'nodes', 10, 500, 10).name('真实节点数').onChange(reset);
+        entropyUI = gui.add(univ, 'entropy').name('系统总熵').disable();
+        gui.add(univ, 'speed', 0.1, 5).name('连续速度');
+
+        // 事件监听
+        window.addEventListener('dblclick', function(e) {
+            if (e.target.tagName !== 'CANVAS') return;
+            reset();
+        });
+
+        window.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            univ.is2D = !univ.is2D;
+            // 维度切换时让网格的高亮程度有所改变以作区分
+            latMat.opacity = univ.is2D ? 0.8 : 0.5;
+            lonMat.opacity = univ.is2D ? 0.8 : 0.5;
+        });
+
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 启动
+        reset();
+        animate();
+    </script>
+</body>
+</html>

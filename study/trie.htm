@@ -1,0 +1,202 @@
+<textarea id="inp" rows="5" cols="50" placeholder="字典树Trie。多行用 find . -type f"></textarea>
+
+<input type="file" webkitdirectory onchange="
+let p=[];for(let f of this.files)p.push(f.webkitRelativePath);
+inp.value=p.join('\n');run()" />
+
+<pre id="out"></pre>
+<div id="calc"></div>
+
+<script>
+n=x=>x.length
+loadTDict=(o,T=trieS)=>{let d=new Map,f=T(d),k;for(k in o)f(k,o[k]);return d}
+
+trieS=d=>(k,v)=>{
+  let pre=(a,b)=>{let i=0,N=Math.min(n(a),n(b));for(;i<N;i++)if(a[i]!==b[i])return i;return N},
+  p=d,K,p1,S
+  fndK:for(;;){for([K,p1]of p)if(S=pre(K,k))
+    if(p1.set&&S==n(K)){p=p1,k=k.slice(S);continue fndK}else{
+        p.set(K.slice(0,S),p.delete(K)&&new Map([[k.slice(S),v],[K.slice(S),p1]]));return}
+    p.set(k,v);break}
+}
+
+// ========== $ tree ==========
+run=()=>{let t=inp.value.trim(),arr=t.includes('\n')?t.split(/[\n]+/).filter(x=>x):t.split(/\s+/);
+  out.textContent='./\n'+vis(this.it=loadTDict(Object.fromEntries(arr.map((x,i)=>[x,i]))))}
+
+vis=(m,pre='')=>{let s='',a=[...m];a.forEach(([k,v],i)=>{
+  let last=i==a.length-1,c=last?'└─':'├─',line=last?'  ':'│ ';
+  s+=pre+c+(k||'./')+(v.set?'':' → '+v)+'\n';
+  if(v.set)s+=vis(v,pre+line)});return s}
+
+// 默认示例。逐个字去“点开文件夹”的方法是O(N)的，失败时完全回退。如果需要failPtr，只需在fndK的过程中把前缀也（累积或回退到root）一遍，彻底变成树状图。Trie树就可兼容多path的KMP(glibc strstr)
+inp.value='abstract continue for new switch assert default goto package synchronized boolean do if private this break double implements protected throw'
+;(inp.onblur=run)()
+
+test1=(o=UF(3), ten=dfs(["+3","*3"],  (a,k)=>eval(a+k), a=>a>10))=>{
+  o(0,1);o(1,2) // (o_o)?
+  console.log(
+    o(0,2, false)==true,
+    ten(2,9)
+  )
+}
+
+bzr=(ps,t)=>{let T=([x,y],[x1,y1])=>[x+t*(x1-x),y+t*(y1-y)] //lerp(mix ab@t). N次方 de Casteljau 法
+  return n(ps)==1?ps[0] : bzr(ps.slice(0,-1).map((x,i)=>T(x,ps[i+1])  ),t) //所有左的P都*t 至Plast
+}
+
+
+
+UF=(N,up=Array(N).fill(0).map((x,i)=>i) )=>(a,b,eq=true)=>{
+  let max=i=>{for(;i!= (i=up[i]);); return i}, iA=max(a),iB=max(b)
+  if(eq&&iA!=iB)up[iA]=iB; return eq||iA==iB //不上obj,写不好..
+}
+
+// UF,BFS 都是在节点图上判断两点是否联通，如果需要路径则用 DFS ，如从节点 2 的[+3,*3]边怎么走到 "9":
+dfs=(link,flink,out,chk=(e,e1)=>{let k,k1;if(e==e1)return[]; if(!out(e)) for(k of link){k1=chk/*找!*/(flink(e,k),e1); if(k1)return k1.concat(k) } })=>chk
+</script>
+
+<script>
+sexp=s=>{let a=[],x;for(;(x=s())&&x!=')';)a.push(x=='('?sexp(s):x); return a}
+//^ 一般需配对/报错。此省行数
+sexp=(s, a=[], f=()=>{let x,i=0;for(;(x=s())&&x!=')';i++) {x=='('?f():a.push(x)} a.push(i) })=>(f(),a)
+//'(a (b c) d)' 换RPN [a b c 2 d 3], 可显示步骤
+
+tok=(cod, s=cod.split(/\s+|([()]|\W+)/).filter(x=>!!x).values())=>
+ ()=>s.next().value
+
+
+//中前缀转后缀（JVM等栈机/parser）
+optab={[';']:-1}
+"=;+ -;* /".split(';').map((a,l)=>a.split(' ').forEach(x=> optab[x]=l ))
+exp=(s/*token x单项o算符 x..*/, l/*evels 大则深,紧 */)=>{
+  let o,x=()=>add(Number(s())), ord=[],add=x=>ord.push(x),
+  at=O=>{let A,B; x()
+    for(o=s();(A=l[o])>=(B=l[O]);)if(A!=B)at(o);else{add(O);x(); O=o;o=s()}  add(O)
+  }
+  at(";");return ord // 人机同构的“经验”：梳理一下语序，规范个词典
+}
+
+//highlighter(dyn-len span): https://github.com/duangsuse/Pinata/blob/main/index.html#L90
+console.log(exp(tok('1*2+3'), optab))
+
+console.table(
+`1
+(1 2)
+(1) 2 (3)
+(a (b c) d)`.split('\n').map(s=>sexp(tok(s)))
+)
+</script>
+
+
+<script>
+浅先=`;=;+ -;* / %`
+切2D=(s,sp0,sp1)=>s.split(sp0).map(s=>s.split(sp1) )
+流=(a, _s=[...a].values())=>()=>_s.next().value
+{let t={},k; 切2D(浅先,';',' ').forEach((x,i)=>{for(k of x)t[k]=i});  符深值大=t}
+
+// TODO E=字面|中缀链|'(' E ')' 。PEG的事实标准： tree-sitter/lark, Kaitai/ImHex
+// TODO 猜猜vararg,for,if这些惰性AST该怎么保存（依然Tagless。试试“双指针fatptr”和子数组）
+符号调用链=(s,l)=>{let a=[],add=x=>a.push(x),
+  o,x=()=>add(Number(s())),
+  one=ed=>{x(); let A,B;for(o=s(); (A=l[o])>=(B=l[ed]);)if(A!=B)one(o);else{add(ed);x();ed=o,o=s()} add(ed)}
+  one('');a.pop(); return a//深先. ^已优化:仅 l右>l现 递归.等价逆波兰, 注意o=s()只一次
+}
+{
+B=window.calc;B.innerHTML=`<input id=x placeholder="1+2*3"> <b id=y></b><details id=ans open>`
+B.style.cssText=`display:flex;flex-direction:column; white-space:pre`
+x.onchange=()=>{y.innerText=(this.expr=符号调用链(流(x.value.split(/([-+*/%])\s*/g)), 符深值大) ).join(" "); ans.append('=',折叠(expr),'\n\n')}
+}
+// TODO E=..|[a-z] 的动态作用域，比如 eval(e, ev={...ev, ...zip(callee.argK, arguments)})，值和字面像充电线一样插入typec树状图
+// ^^ Binding作为值(argK[0].* = arg[0]) 也是种“调用栈env”的实现。ev暗示event，它是Closure与常量折叠而非hash表替换。ev副作用作为值！template参数只是特化(monomorphization)！这是Dataflow的解释器观！
+折叠=(码, //v  每eval一数，infix格式导出（求值栈）
+  算=(st,k,a,b)=>{console.log(a,b,k,码); ans.append(折叠([...st.slice(0,-2),a,b,k,...码],(_,k,a,b)=>a+k+b)+"\n");return eval(a+k+b)})=>{
+  let st=[],x;
+  while(null!=(x=码.shift()))(typeof x=='number')?st.push(x):
+    (i=> st.splice(i,2, 算(st,x,...st.slice(i)) ))(st.length-2)
+  if(st.length!=1)throw st; return st}
+</script>
+
+
+
+
+<script>
+itera=f=>(...a)=>[...f(...a)]
+fthis=f=>function(...a){return f(this,...a)}
+newA=(n,f)=>Array(n).fill(0).map(f)
+Type=(x,T)=>(
+  Object.keys(T).forEach(k=>T[k]=fthis(T[k])),
+  T.__proto__=x.__proto__,
+  Object.setPrototypeOf(x,T)
+)
+Eqv=(A,B=A)=>Type([A,B], {oncat:(o,x,f=x=>x)=>o.cut(f(o.cat(x))), flip:([A,B])=>Eqv(B,A),
+  cat:([F,f],x)=>F(x),cut:([f,F],y)=>F(y) })
+
+pipe=(...ab)=>ab.reduce((a,b)=>Eqv(x=>b.cat(a.cat(x)), y=>a.cut(b.cut(y))) )
+
+chunk=itera(function*(a,Nd, f2=a=>a,i=0) {let n=a.length,nR,[f,fR/*est*/,fE/*EOF*/]=f2.map?f2:[f2,0,0], [N,d]=Nd.map?Nd:[Nd,Nd]
+  if(fR&&(nR=n%N))a=a.substr? a+fR(N-nR).join(''):[...a,...fR(N-nR)]
+  for(n-=fE?fE.d||d :0 ;i<n;i+=d)yield f(a.slice(i,i+N))
+  if(fE)yield fE(a.slice(i,a.length))
+})
+
+
+UTF=(k='utf8', A=new TextEncoder(k),B=new TextDecoder(k))=>
+  Eqv(x=>x.buffer?x:A.encode(x), y=>y.length? B.decode(new Uint8Array(y[0].toFixed?y: y.map(Number))) :'' )
+
+
+reCGrp=([s,sr=''], b=UTF())=>chunk(b.cat(s),2, ([A,B])=>b.cut(newA(B+1-A, (x,i)=>A+i)) ).join('')+sr
+reTrim=(s,at='$', re=RegExp(`${s||'\s'}+`+at,'g'))=>s=>s.replace(re,'')
+
+//eg([0xFF],8, 6,64-1)
+bits=(a,bN, bn,bi)=>{let b=x=>x, i=bn.toFixed&&bN.toFixed?0x00: (b=BigInt, bn=b(bn),bN=b(bN),bi=b(bi),0n),x
+  for(x of a){i=i<<bN|b(x)} return ()/*pop*/=>(x=i&bi,i=i>>bn, x)
+}
+
+{
+  //按膨胀率 3b:4c 补足3个\x00 重分组，查码表后换成'='
+let enc=(K,R64)=>{let bn=Math.log2(K), tm=reTrim(base.pad/*=*/), charz=(N,z/*Decode*/, j,f)=>
+    (s,EQ,r)=>(r=j(chunk(z&&z85?tm(s):s,N, [f, n=>(EQ=-( (z?Math.round(n*kA): n/kA>>0)), newA(n,_=>z)), eof=>f(eof).slice(0,EQ)] )), z?r:r+base.pad.repeat(z85?-EQ:0) ),
+  [A,B]= (5==bn?[(bn=5n,5),8] : 4==bn?[1,2] : R64.ratio) ||  //b32,16
+  [3,4], z85=Number(bn)%1==0, kA=K!=32?1: A/B //trim tail, nc=4,5,6 的膨胀率(B/A)是 2/1, 8/5, 4/3. 对于z85(nc非整数) pad=禁用
+  return Eqv(
+  charz(A,0, b=>b.join(''), u=>{let a,s="",i=B; if(z85){
+    a=bits(u,8, bn,K-1) ;while(i-->0){s=R64[a()]+s} } else {
+    a=bits(u,8, 32,0xFFFFFFFF)(); for(;i-->0;a=a/K>>0)s=R64[a%K]+s
+    }
+    return s
+  }),
+  charz(B,R64.at(-1), b=>b.flat(), u=>{u=u.split('').map(x=>R64.indexOf(x)); let a,s=[],i=A; if(z85){
+    a=bits(u,bn ,8,0xFF) ;while(i-->0){s.unshift(a())} } else {
+    a=0; u.forEach(di=>a=a*K+di); for(;i-->0;a=a>>8)s.unshift(a&0xFF)
+    }
+    return s
+  })
+  )
+},rt=(t,k)=>Object.assign(reCGrp(t),{ratio:k}),
+  a=[64,'u64',16,32,'u32',
+     2, 'a85','z85','b58'], 
+  tb=[["AZaz09",'+/'],["AZaz09",'_-'], ['09AF'],['AZ','234567'], ['09AV'] ,
+      rt(["01"],[1,8]), rt(["!u"],[4,5]),rt(["09azAZ",".-:+=^!/*?&<>()[]{}@%$#"],[4,5]),
+     "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"] //nInput%4 must 0
+
+base={ofChars:enc, pad:'='}
+a.forEach((k,i)=> base[k]=pipe(UTF(),enc(+k?k:k.slice(1), tb[i].map?reCGrp(tb[i]):tb[i] )) )
+}
+
+/* ^ base{64,32,85,16} 的编解码支持
+
+z85 和 base85 在 ZeroMQ,PDF,git-diff 里有用
+base16就是 hex editor
+base58用于btc和区块链IPFS
+base32很冷门但不做不好..
+base256 用于emoji
+b85 的编码无法靠二进制移位、无需'='pads，解码需填'u'
+*/
+
+;[['abc', 'caty', 'catsy','goodgy','slamiiyz','ab',...'aA@','AMan '],
+ [...reCGrp(["AN"])].map(k=>[...reCGrp([`A${k}`])].join('') ) ].map(a=>{
+  fs=[base.z85,base.a85]//[base.u64,base[32],base[85],base[16]]
+console.table(a.map(x=>[x,...(r=fs.map(f=>f.cat(x) )), r.map((y,i)=>fs[i].cut(y)).join()] ))
+})
+</script>

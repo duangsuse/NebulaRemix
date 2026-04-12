@@ -1,0 +1,65 @@
+<meta charset=utf-8>
+
+<canvas id=C><script>
+//https://www.dwitter.net/top/all (by sadropol)
+//https://codepen.io/gotofritz/details/aPWLyG clear ver
+
+c={l:10,叶:[100,70,18], 球:[[94,83,0],[25,50,0]], h:0.4, w:1/16, wz:6, p:0.2}
+//将结合预渲染（Pre-rendering）、万向贴图（Billboarding）和画家算法（Painter's Algorithm）。
+
+with(Math)TAU=2*PI, Q=k=>(k*random()-k/2),乱转=(f,t=Q(TAU))=>f(cos(t),sin(t))
+bg=(a,L=a[2])=>g.fillStyle=g.strokeStyle=`hsla(${a[0]},${a[1]}%,${L}%,.25)`
+
+;(init=()=>{
+  P=[]
+  for(let k=0,i,l,L=2*c.l,树叶=10;k<200;){ //< 先画好 10 种不同暗度的叶子卡片，和 2 种彩球卡片，存在内存里。
+    with(bg[k]=k?C.cloneNode(0):C){
+      width=height=k?2*L:(W=L*50)
+      with(g=getContext("2d"))if(k){
+        i=0;g.translate(L,L)
+        if(k<=树叶)for(;i++<80;)乱转((y,x)=>{ // 几何生成：绘制类似松针的线段，随机明暗。
+          l=Q(2); bg(c.叶, c.叶[2]+l*5)
+          
+          //beginPath(),arc(L*x, L*y, L/5, 0, TAU),stroke()
+          beginPath(),moveTo(l*5*x,l*8*y),lineTo(L*l*x,L*l*y),stroke()
+        })
+
+        else if(k<=树叶+c.球.length)for(l=c.l;i<l;i++) // 绘制同心圆形成立体球，亮度递增高光
+          bg(c.球[k-树叶-1], i/l*70),
+          beginPath(),arc(-i/3,l-i/4,l-i,0,TAU),fill()
+      }
+    }
+    乱转((A,B)=>{ //< 随机上千个 P[i].xyzv (v in bg)，Q=生成[-k/2, k/2]的随机分布，【顶点生成管线】
+      for(H=c.w*(y=k++*c.l*c.h),i=0,d=3,x=0;i<H;i++)
+        P.push([
+          x+=A*d,y+=Q(c.wz)*Q(L),i*B*d, //< 高度决定长度，生成球(v=11)
+          ((i+1>H)&(Q(1)+.5)<c.p ? 11+Q(2) : i/H*10) | 0
+        ])
+    })
+  }
+  g=bg[0].getContext("2d")
+})()
+
+draw=t=>乱转((A,B)=>{
+  for(let[x,y,z,n]of P.sort((a,b)=>A*(a[2]-b[2])-B*(a[0]-b[0])))
+  //^ 每次根据时间t旋转相机视角，实时重新对 P 数组动态计算Z深度，从远到近排序。也可以用像素级并行的 Z-buffer （冲突时再覆盖）
+  g.drawImage(bg[1+n],W/2+A*x+B*z |0, y/2)
+}, t)
+
+t=0;setInterval(()=>{g.clearRect(0,0,W,W);draw(t+=.05)},1000/60)
+
+import('https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm').then(({GUI})=>{
+  let gui = new GUI(), conf = {...c}
+  
+  let _ = (k, name, ...a) => gui.add(c,k, ...a).name(name).onChange(v => { init() })
+  let js = k => {conf[k]=JSON.stringify(c[k]); gui.add(conf, k).onChange(v => { c[k]=eval(v); init() })}
+
+  _('p', '彩球概率', 0, 1)
+  _('wz', '发散度', 0, 40)
+  _('l', '尺寸(l)', 2, 20)
+  _('h', '树高(h)', 0.1, 1)
+  _('w', '树宽(w)', 0.01, 0.2)
+  js('叶')
+  js('球')
+})
+</script>

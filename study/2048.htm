@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+
+<input id=阵分>次<input id=阵n type=number min="0" max="99999"> <a href="?配0(10,10,2,4);配1(1,100,20);配2(2)">刷分</a><a href="?配0(7,7,2,128);doc.body.style.userSelect=`none`;cfg.动感=1">爽文 </a>
+<a href="?配0(50,50,4,128);阵.style.fontSize=`5pt`;配2(3);配2(4)">巨</a><textarea id=cod rows="1"></textarea>
+<main><p id=阵></p></main>
+<script>doc=this.document||{}
+newA=(N,f)=>{let a=[],i=0;for(;i<N;i++)a[i]=f(i) ;return a},n=o=>o.length, ss=s=>s.split(" ")
+minL=e=>Math.min(e.offsetWidth,e.offsetHeight)
+xyBond=(e,ce=e.style)=>{let c=e.getClientRects()[0],k;ce.position="absolute"; for(k of ss(`left top width height`)) ce[k]=c[k]+"px"}
+
+线扫=([n,m],f行,f)=>(iv,a)=>{
+let i=0,j=0, N=n*m,
+横=(q,f)=>{if(q)for(j=0;j<m;j++)f();else for(j=m-1;j!=-1;j--)f()},
+竖=(q,f)=>{if(q)for(i=0;i<N;i+=m)f();else for(i=N-m;i>=0;i-=m)f()},//a[i][j] 里i增减
+
+v=(A,B,d)=>{let ln=()=>f行(iv>0?d:-d); null==f?ln(): A(true,()=>{ln();B(iv>0,()=> f(a[i+j],i+j)) }) }
+iv%2==0?v(横,/*偶*/竖,m):v(竖/*里*/,横,1)
+}
+
+键向=(a,f, f允=(a,b)=>a, d0=0)=>doc.body?
+
+ev=>{let k=ev.keyCode,iv=[-1,-2,1,2],d, E=ev.target;if(E&&E.matches(`:read-write`))return //允:只有换向才做f
+  if(37<=k&&k<=40){d=iv[k-37];if(d=f允(d,d0)){f(d,a);d0=d; return d} } }
+
+: (s,ev)=>{let k=ev.code,iv=[-2,2,1,-1],d; if(k&&k[0]=='['&& (d=k.charCodeAt(1) -65 )<4){d=iv[d]; if(d=f允(d,d0)){f(d,a);d0=d; return d}} }
+
+// == App part ==
+cfg={l:[4,4], Pt:0, radd:()=>2,nr:1, bg:`341deg 52%`,an:{duration:150,easing:"ease-in-out"}}
+棋盘=()=>{let c=阵.style,[n,m]=cfg.l; c.setProperty("--n",m);c.setProperty("--L", c.height=c.width=minL(doc.body)*.97+"px")//自顶向下(整到散)确定宽高
+阵.innerHTML=``
+return newA(n*m, _=>阵.appendChild(doc.createElement("b"))) } //span类似div 是默认行内元素,hr内不能有项
+
+试用=(q,i0=0,i)=>{
+doc.onkeydown=q? 键向(棋盘(),线扫(cfg.l, iv=>{i=i0}, (x,I)=>x.className=`n${2**(x.innerText=i++)}`), (a,b)=>a==b?(i0+=a,a):a )
+ : 键向(0,线扫(cfg.l, console.log))//或只得四邻距差; 或试:a[I]=x+iv
+}
+
+
+_2048=a=>{let d,j左,j,
+落并2=(x,I)=>{
+  if(j左==null)j左=I
+  let _0=j左-d, 并; j++
+  if(x!=0){//则合并(首次不需)或 左移(置0若真移). j列号
+    if(j!=1&& +x==(并=a[_0])){a[_0]=asig(并*2,{id:[并.id,x.id].flat()/*224=8*/}); cfg.Pt+=并;a[I]=0}
+    else{a[j左]=x; if(I!=j左)a[I]=0; j左+=d}
+  }
+}
+return 键向(a,线扫(cfg.l, iv=>{j左=null,j=0;d=iv}, 落并2), (a,b)=>qOk? -a :0)//左落,i需++ ;id旧位
+}
+
+顺滑=f=>{let e=棋盘(), a=e.ok?e: Array(n(e)).fill(0),回合, c={Pt:0},
+显=()=>{qOk=1;阵分.value=`${chgD(cfg,c,"Pt")} : ${chg(localStorage,cfg,Math.max,"Pt")}`; if(Arec)Arec.push([...a]); 阵n.value++;  a.ok()},
+新位=({id},i)=>{let p={};if(id){xyBond(e[i],p); return n(id)?[...id.map(x=>滑(x,p) ),cfg.bump(e[i])] :滑(id,p)} }
+
+qOk=1;if(!e.ok){e[1].innerHTML=`<span class=kts onclick="试用(1)">Hit↓ to Start`
+a.ok=()=>a.forEach((x,i)=>{e[i].className="n"+(e[i].innerText=x);if(cfg.要滑格(x))a[i]=asig(x,{id:e[i]}) }); a.ok0=()=>Promise.all(a.flatMap(新位)) }
+doc.onkeydown=(...ev)=>{if(!回合(...ev))return; for(let i=cfg.nr;i-->0;)pickZ(a,i=>{a[i]=cfg.radd();cfg.appear(e[i])}); qOk=0;a.ok0().then(显)} ;A=a,Arec=0; 回合=f(a)
+}
+pickZ=(a,f)=>{let i,N=n(a), bad=0;do{i=n(a)*Math.random()>>0}while(a[i]!=0&& ++bad!=N); if(N!=bad)f(i)} //不会在GG时真死机
+asig=Object.assign, chg=(a,b,f,k)=>a[k]=f(a[k]||0,b[k]), chgD=(a,b,k)=>`${a[k]-b[k]}+${b[k]=a[k]}`
+</script>
+<style>
+#阵{
+box-sizing: border-box; touch-action: none; user-select: none;
+display: grid; grid-template-columns: repeat(var(--n),calc(100% / var(--n))); justify-items:center;
+border-radius: 18px;font: 21pt sans;
+
+background:#ffb28c;color: white;
+margin:1em 2em; --r:45deg
+}
+#阵 b {
+width: 96%;height: 96%;
+border-radius: 12px;font-weight: 900;
+
+text-align: center;line-height:calc(var(--L) / var(--n) - 1pt)
+}
+
+#cod{float:right}
+body{overflow:hidden} main{height:90vh}
+*{margin:0}
+
+.n256{background: linear-gradient(var(--r), #e32929, #00fff9f0);}
+.n512{background: linear-gradient(var(--r), #2196f3, #4900c9);}
+.n1024{background: linear-gradient(var(--r), #ef4545,#46d546,#6c4ed4);}
+.n2048{background: radial-gradient(#673ab7, #9c27b0,#2a659d99);}
+.n4096{background: radial-gradient(#673ab7, #e91e63,#2a659dab);}
+.n8192,.n32768{background: linear-gradient(red,green,yellow,blue,cyan);}
+.n16384,.n65536{background: linear-gradient(var(--r),red,green,yellow,blue,cyan); filter:drop-shadow(2px 4px 6px black);}
+.n0::selection{background:teal}
+
+.kts{
+outline-offset: 4px;
+outline: dotted; animation:1s kts infinite alternate cubic-bezier(0, 0, 0.6, -0.77);
+}@keyframes kts{to{
+outline-offset:9px; outline-color:red}}
+
+.kts,.sline{border: 6px dashed;
+white-space: pre; border-inline: none;
+filter: drop-shadow(-2px 9px 6px black);}
+
+.sizer{overflow:inherit;resize:both}
+.sizer *{line-height:unset !important}
+@media not{
+#阵{backdrop-filter: blur(13px);filter: opacity(0.8);}
+body{background: linear-gradient(134deg, #009688,#ff9800,red,#4caf50);}
+#阵>* {
+  filter: hue-rotate(var(--r)) opacity(0.8); text-shadow: -2px 3px 6px black;
+}
+}
+@media not{
+#阵 {background:whitesmoke;color:#333; border: dashed orangered}
+#阵 *{border:1px solid}
+}
+@media not{ body{background:#263238} #阵{background:#545a5d; filter:saturate(0.7)} }
+@media not{ .n0{visibility:hidden}}
+@media not{
+#阵{padding:0} #阵 b{border-radius:0; width:100%;height:100%}
+}
+</style>
+<script>
+滑s=
+[(e0,p1)=>{let e=e0.cloneNode(1);e0.append(e);e0.className="n0"; xyBond(e0,e.style); return e.animate(p1,cfg.an).finished.then(_=>e.remove())}
+,(e,p)=>{let c={},v=k=>`calc(${p[k]} - ${c[k]})`;xyBond(e,c);return e.animate({transform:`translate(${v("left")},${v("top")})`},cfg.an).finished}
+,()=>Promise.resolve() ]
+//https://css-tricks.com/almanac/properties/p/perspective-origin/
+
+配0=(w,h, n,x)=>asig(cfg,{l:[h,w],nr:n,radd:()=>x})&&顺滑(_2048)
+配1=(i,a,b)=>{let f=du=> e=>e.animate({transform:`scale(1.2)`}, {duration:du,easing:`cubic-bezier(0.6, -1.34, 0.42, 1.15)`}), C=doc.styleSheets[0]
+滑=滑s[i];cfg.appear=f(a);cfg.bump=f(b) ; if(i==0)C.addRule(".n0",`background:bisque`)
+for(i=1;i<8;i++)C.addRule(".n"+2**i, `background:hsl(${cfg.bg} ${73-4*i}%)`)
+配2=i=> [...C.rules].filter(x=>x.media) [i].media.mediaText="all"
+}
+
+s盘=(ma,[N,M]=cfg.l)=>newA(n(ma)/M>>0, i=>ma.slice(i*M, i*M+M) ); fAll=(...f)=>(x,r)=>f.forEach(f=>r=f(x))||r
+if(this.process){let co=require("repl").REPLServer(""),{input:sI,output:sO}=co, w=s=>sO.write(s), wa=(v,n)=>w('\x1b['+ (n?n+"":"")+v);
+  co.useGlobal=1; co.historySize=0; (({rows:n,columns:m})=>cfg.lTe=[n,m] )(sO) //曾用ffi 查user32/ioctl_tty 做过 con buffer winsz 和tcattr=async, 但node有绑定
+  cfg.bump=cfg.appear=e=>{}; 阵分=sco={}; 阵n=nth={value:0}; localStorage={}
+
+  棋盘=()=>{let[n,m]=cfg.l,i, a=Array(n*m).fill(0)
+  a.ok0=()=>Promise.resolve()
+  a.ok=()=>{for(i=0;i<n;i++){wa('A',1);wa('K')} for(let ln of s盘(A))w(ln.join(" ")+"\n")}
+  let f=()=>w("\n".repeat(n)); f();co.writer=fAll(f,co.writer)
+  return a}
+
+  eval(process.argv[1]||'顺滑(_2048)')
+  sI.on("keypress", doc.onkeydown)
+//Thread-main: wait
+//node -e 'fs.readFileSync("2048.htm").toString().replace(/<script>(.*?)<\/script>/sg, (_,s)=>eval(s))'
+}else{
+
+
+setTimeout(()=>{
+ cfg.要滑格=x=>x!=0
+ 配1(1,200,170)
+ 顺滑(_2048) //单推 http://ovolve.github.io/2048-AI/
+eval(decodeURI(location.search.slice(1)))
+})
+
+
+触向=(e,c)=>{
+  let v=(P,f)=>E=>{P[0]=E.x,P[1]=E.y; if(f)f.call(c,E)},
+  q=navigator.maxTouchPoints,//兼容点距离
+  on=(PC,M,f)=>e.addEventListener((q?"touch"+M:"mouse"+PC),q?tap(f):f, {passive:false}),
+  tap=f=>E=>{let p=E.changedTouches[0]||E.touches[0]; E.x=p.clientX,E.y=p.clientY;f(E)}
+
+  asig(c,{p0:[],p:[]})
+  on("down","start",v(c.p0)); on("up","end",v(c.p,c.fU))
+  if(c.fM!=null)on("move","move",v(c.p,c.fM||c.fU))
+}
+
+
+doc.body.addEventListener("click",()=>{
+let c={fU(){
+  let{p:[x,y], p0:[X,Y]}=this,f=Math.abs, q=f(x-X)<f(y-Y)
+  doc.onkeydown({keyCode:37+q+2*(q?y>Y:x>X) })//LURD
+}}; if(cfg.动感)c.fM=0;
+触向(阵.parentNode,c)}, {once:true})
+
+
+}
+
+</script>

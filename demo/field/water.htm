@@ -1,82 +1,202 @@
 <body style=margin:0;background:#000;overflow:hidden><canvas id=v></canvas>
+<script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
 <script>
-let c=document.getElementById('v'), x=c.getContext('2d'), md=0
-window.oncontextmenu = e => { e.preventDefault(); md^=1; md ? setFluid() : setDots() }
+let c=document.getElementById('v'), x=c.getContext('2d'), w, h
+let grid, next, cols, rows, m={x:0,y:0,down:0,v:0}
 
-// Mode 0: Dots Wave Vars
-let w1, h1, res=20, p=[], o=[], m1={x:300/10, y:10}
-// Mode 1: Fluid Wave Vars
-let w2, h2, H, P, N, img, d, m2={x:300, y:10, v:50}
+// Dots Wave vars
+let p, o
+// Fluid Wave vars  
+let H, P, N, img, d
 
-let resize = () => {
-  // Pre-allocate for Dots
-  w1=innerWidth; h1=innerHeight
-  let cols=Math.ceil(w1/res), rows=Math.ceil(h1/res)
-  p=Array(cols).fill(0).map(()=>Array(rows).fill(0))
-  o=Array(cols).fill(0).map(()=>Array(rows).fill(0))
-
-  // Pre-allocate for Fluid (Downscaled)
-  w2=innerWidth/2|0; h2=innerHeight/2|0
-  H=new Float32Array(w2*h2); P=new Float32Array(w2*h2); N=new Float32Array(w2*h2)
-  img=x.createImageData(w2,h2); d=img.data
-  for(let i=3; i<d.length; i+=4) d[i]=255 
-  
-  md ? setFluid() : setDots()
+let cfg = {
+  mode: 'dots',
+  waveRes: 17,
+  fluidRes: 6,
+  stiffness: 0.06,
+  damping: 0.95,
+  viscosity: 0.5,
+  force: 24,
+  hue: 94,
+  inflow: 0.03,
+  obstacleSize: 20,
+  dotsRes: 14,
+  dotsForce: 266,
+  dotsDamping: 0.97,
+  fluidWaveForce: 5,
+  fluidWaveDamping: 0.99,
+  fluidWaveStiffness: 0.49
 }
 
-// Canvas state switches
-let setDots = () => { c.width=w1; c.height=h1; c.style.width=''; c.style.height='' }
-let setFluid = () => { c.width=w2; c.height=h2; c.style.width='100vw'; c.style.height='100vh' }
+let resize = () => {
+  let r = {wave:'waveRes', fluid:'fluidRes', dots:'dotsRes', fluidWave:2}
+  let res = cfg[r[cfg.mode]] || r[cfg.mode]
+  let isFluid = cfg.mode=='fluid' || cfg.mode=='fluidWave'
+  
+  w=c.width = isFluid ? innerWidth/res|0 : innerWidth
+  h=c.height = isFluid ? innerHeight/res|0 : innerHeight
+  c.style.width = isFluid ? '100vw' : ''
+  c.style.height = isFluid ? '100vh' : ''
+  
+  if(cfg.mode=='fluid') {
+    cols=w; rows=h
+    grid=new Float32Array(cols*rows*9).fill(0.1)
+    next=new Float32Array(cols*rows*9)
+  } else if(cfg.mode=='fluidWave') {
+    H=new Float32Array(w*h); P=new Float32Array(w*h); N=new Float32Array(w*h)
+    img=x.createImageData(w,h); d=img.data
+    for(let i=3; i<d.length; i+=4) d[i]=255
+  } else {
+    cols=Math.ceil(w/res); rows=Math.ceil(h/res)
+    cfg.mode=='wave' ? 
+      grid=new Float32Array(cols*rows*2) :
+      (p=Array(cols).fill(0).map(()=>Array(rows).fill(0)),
+       o=Array(cols).fill(0).map(()=>Array(rows).fill(0)))
+  }
+}
 
-window.onresize=resize;
-onmousemove = e => { 
-  m1={x:e.clientX/res|0, y:e.clientY/res|0}
-  m2={x:e.clientX/2|0, y:e.clientY/2|0, v:Math.abs(e.movementX||0)+Math.abs(e.movementY||0)}
+onmousemove = e => {
+  let r = {wave:'waveRes', fluid:'fluidRes', dots:'dotsRes', fluidWave:2}
+  let res = cfg[r[cfg.mode]] || r[cfg.mode]
+  m.x = e.clientX/res|0
+  m.y = e.clientY/res|0
+  if(cfg.mode=='fluidWave') m.v = Math.abs(e.movementX||0)+Math.abs(e.movementY||0)
+}
+onmousedown = () => m.down=1
+onmouseup = () => m.down=0
+
+let waveStep = () => {
+  x.fillStyle='#000'; x.fillRect(0,0,w,h)
+  
+  let mid=(m.x+m.y*cols)*2
+  grid[mid] += cfg.force * m.down
+
+  for(let j=1; j<rows-1; j++) {
+    for(let i=1; i<cols-1; i++) {
+      let id=(i+j*cols)*2, n=id-cols*2, s=id+cols*2, l=id-2, r=id+2
+      let force = (grid[n]+grid[s]+grid[l]+grid[r]) - 4*grid[id]
+      grid[id+1] += force * cfg.stiffness
+      grid[id+1] *= cfg.damping
+    }
+  }
+
+  for(let i=0; i<grid.length; i+=2) {
+    grid[i] += grid[i+1]
+    let col=i/2%cols, row=i/2/cols|0, z=grid[i], amp=Math.abs(z)*5
+    x.fillStyle=`hsla(${cfg.hue+z*2}, 70%, ${20+amp}%, 1)`
+    x.fillRect(col*cfg.waveRes, row*cfg.waveRes, cfg.waveRes-1, cfg.waveRes-1)
+  }
+}
+
+let fluidStep = () => {
+  let img=x.createImageData(w,h), d=img.data
+  let df=[[0,0],[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]]
+  let wt=[4/9,1/9,1/9,1/9,1/9,1/36,1/36,1/36,1/36]
+
+  for(let j=0; j<rows; j++) {
+    for(let i=0; i<cols; i++) {
+      let id=(i+j*cols)*9, rho=0, ux=0, uy=0
+      for(let k=0; k<9; k++) {
+        rho+=grid[id+k]; ux+=grid[id+k]*df[k][0]; uy+=grid[id+k]*df[k][1]
+      }
+      ux/=rho; uy/=rho
+
+      let isWall = Math.hypot(i-m.x, j-m.y) < cfg.obstacleSize
+      
+      for(let k=0; k<9; k++) {
+        let dot=df[k][0]*ux+df[k][1]*uy, usq=ux*ux+uy*uy
+        let feq=rho*wt[k]*(1+3*dot+4.5*dot*dot-1.5*usq)
+        let fnew = grid[id+k] + cfg.viscosity*(feq-grid[id+k]) + (i==0)*cfg.inflow
+        
+        let opp=[0,3,4,1,2,7,8,5,6][k]
+        let ni=(i+df[k][0]+cols)%cols, nj=(j+df[k][1]+rows)%rows
+        let target = isWall ? id+opp : (ni+nj*cols)*9+k
+        next[target]=fnew
+      }
+
+      let curl=Math.abs(ux+uy)*500
+      let px=(i+j*w)*4
+      d[px]=curl*0.2; d[px+1]=curl*0.5; d[px+2]=curl; d[px+3]=255
+    }
+  }
+  grid.set(next); x.putImageData(img,0,0)
+}
+
+let dotsStep = () => {
+  x.fillStyle='#000'; x.fillRect(0,0,w,h)
+  
+  if(m.x>0 && m.x<cols-1 && m.y>0 && m.y<rows-1 && m.down) 
+    o[m.x][m.y]=cfg.dotsForce
+
+  for(let i=1; i<cols-1; i++) {
+    for(let j=1; j<rows-1; j++) {
+      p[i][j] = (o[i-1][j] + o[i+1][j] + o[i][j-1] + o[i][j+1])/2 - p[i][j]
+      p[i][j] *= cfg.dotsDamping
+    }
+  }
+
+  for(let i=0; i<cols; i++) {
+    for(let j=0; j<rows; j++) {
+      let v=p[i][j], lum=Math.min(255, Math.abs(v)*2)
+      if(lum>1) {
+        x.fillStyle = `hsla(${200+v}, 80%, ${30+lum/5}%, ${Math.abs(v)/50})`
+        x.beginPath(); x.arc(i*cfg.dotsRes, j*cfg.dotsRes, Math.abs(v)*0.06, 0, 7); x.fill()
+      }
+    }
+  }
+  let t=o; o=p; p=t
+}
+
+let fluidWaveStep = () => {
+  let midx = m.x + m.y * w
+  if(H[midx] !== undefined && m.down) H[midx] += m.v * cfg.fluidWaveForce
+  m.v *= 0.8
+
+  for(let i=w; i<w*h-w; i++) {
+    let e = (i%w === 0) + ((i+1)%w === 0)
+    let lap = H[i-1] + H[i+1] + H[i-w] + H[i+w] - 4*H[i]
+    N[i] = (H[i]*2 - P[i] + lap * cfg.fluidWaveStiffness) * cfg.fluidWaveDamping * (1-e)
+    
+    let v = N[i], idx = i*4
+    d[idx] = v*3; d[idx+1] = v*5+30; d[idx+2] = v*10+80
+  }
+  let tmp = P; P = H; H = N; N = tmp
+  x.putImageData(img, 0, 0)
 }
 
 let loop = () => {
-  if(!md) {
-    // Mode 0: Dots Wave Logic
-    x.fillStyle='#000'; x.fillRect(0,0,w1,h1)
-    
-    if(m1.x>0 && m1.x<p.length-1 && m1.y>0 && m1.y<p[0].length-1) o[m1.x][m1.y]=150 
-
-    for(let i=1; i<p.length-1; i++) {
-      for(let j=1; j<p[i].length-1; j++) {
-        p[i][j] = (o[i-1][j] + o[i+1][j] + o[i][j-1] + o[i][j+1])/2 - p[i][j]
-        p[i][j] *= 0.96 
-      }
-    }
-
-    for(let i=0; i<p.length; i++) {
-      for(let j=0; j<p[i].length; j++) {
-        let v=p[i][j], lum=Math.min(255, Math.abs(v)*2)
-        if(lum>1) {
-          x.fillStyle = `hsla(${200+v}, 80%, ${30+lum/5}%, ${Math.abs(v)/50})`
-          x.beginPath(); x.arc(i*res, j*res, Math.abs(v)*0.06, 0, 7); x.fill()
-        }
-      }
-    }
-    let t=o; o=p; p=t
-  } else {
-    // Mode 1: Fluid Wave Logic
-    let midx = m2.x + m2.y * w2
-    if(H[midx] !== undefined) H[midx] += m2.v * 5
-    m2.v *= 0.8 
-
-    for(let i=w2; i<w2*h2-w2; i++) {
-      let e = (i%w2 === 0) + ((i+1)%w2 === 0)
-      let lap = H[i-1] + H[i+1] + H[i-w2] + H[i+w2] - 4*H[i]
-      N[i] = (H[i]*2 - P[i] + lap * 0.49) * 0.99 * (1-e)
-      
-      let v = N[i], idx = i*4
-      d[idx] = v*3; d[idx+1] = v*5+30; d[idx+2] = v*10+80
-    }
-    let tmp = P; P = H; H = N; N = tmp
-    x.putImageData(img, 0, 0)
-  }
+  if(cfg.mode=='wave') waveStep()
+  else if(cfg.mode=='fluid') fluidStep()
+  else if(cfg.mode=='dots') dotsStep()
+  else if(cfg.mode=='fluidWave') fluidWaveStep()
   requestAnimationFrame(loop)
 }
+
+let gui = new lil.GUI()
+gui.add(cfg, 'mode', ['wave', 'fluid', 'dots', 'fluidWave']).onChange(resize)
+
+let wave = gui.addFolder('Wave')
+wave.add(cfg, 'waveRes', 4, 30, 1).name('resolution').onChange(resize)
+wave.add(cfg, 'stiffness', 0.01, 0.3)
+wave.add(cfg, 'damping', 0.8, 0.99)
+wave.add(cfg, 'force', 1, 50)
+wave.add(cfg, 'hue', 0, 360)
+
+let fluid = gui.addFolder('Fluid')
+fluid.add(cfg, 'fluidRes', 2, 10, 1).name('resolution').onChange(resize)
+fluid.add(cfg, 'viscosity', 0.1, 1.0)
+fluid.add(cfg, 'inflow', 0, 0.05)
+fluid.add(cfg, 'obstacleSize', 2, 30)
+
+let dots = gui.addFolder('Dots')
+dots.add(cfg, 'dotsRes', 10, 40, 1).name('resolution').onChange(resize)
+dots.add(cfg, 'dotsForce', 50, 300)
+dots.add(cfg, 'dotsDamping', 0.9, 0.99)
+
+let fluidWave = gui.addFolder('Fluid Wave')
+fluidWave.add(cfg, 'fluidWaveForce', 1, 10)
+fluidWave.add(cfg, 'fluidWaveDamping', 0.95, 0.999)
+fluidWave.add(cfg, 'fluidWaveStiffness', 0.1, 0.8)
 
 resize(); loop()
 </script>
