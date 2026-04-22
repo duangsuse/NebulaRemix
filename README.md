@@ -12,23 +12,28 @@ more retro-goods like Phase Beam、Bubble、Nexus、Water Ripple、Grass can be 
 
 - [🧬c_life](./c_life.html)
 - [🦢 Boids](./my_boids.htm)
-- [⏳c_sand](./c_sand.html), [heat_death](./demo/field/heat_death.htm)
+- [💧 Liquid Glass](./c_glass.htm)
 
 normal phys:
 
 - [🔴balls_bezier](./demo/balls_bezier.htm)
-- [🔴balls](./demo/balls.htm)... [`D2(x,y)` func](https://editor.p5js.org/duangsuse/sketches/bwMmjzmX_), [👍 Sandboxels](https://neal.fun/sandboxels/)
-- [🧷box_bezier](./demo/box_bezier.htm)
-- [🖥cmatrix](./demo/cmatrix.htm), [👍 Game 2048](./study/2048.htm)
+- [🔴balls](./demo/balls.htm)... [`D2(x,y)(runs,turn)` func](https://editor.p5js.org/duangsuse/sketches/bwMmjzmX_), [🏀 Box 3D balls](https://codepen.io/duangsuz/pen/OPRzoBL)
+- [🧷box_bezier](./demo/box_bezier.htm), [👍 Sandboxels](https://neal.fun/sandboxels/)
+- [🖥cmatrix](./demo/cmatrix.htm), [👍 GUI+TUI Game 2048](./study/2048.htm)
 - [🍥fft](./demo/fft.htm)
-- [🏙van_gogh](./demo/van_gogh.htm)
-- [🏙van_sfx](./demo/van_sfx.htm)
+
 
 field:
 
-- [Water](./demo/field/water.htm) & [Holo Cesmos](./cosmos.html)
-- [Clothes/Jelly 🎄 Blob Opera](https://www.youtube.com/watch?v=U4xafX1jR3c)
+- [⏳c_sand](./c_sand.html), [heat_death](./demo/field/heat_death.htm)
+- [Water](./demo/field/water.htm) & [Our Holo Cosmos](./cosmos.html): [☯️](./study/yinyang.htm) [🍩](https://codepen.io/duangsuz/full/NPRmwYv)
 - [hair_style](./demo/field/hair_style.htm), [👍 xyz Voxels(Minecraft)](https://mrdoob.com/#/129/voxels)
+- [🏙van_gogh](./demo/van_gogh.htm)
+- [🏙van_sfx](./demo/van_sfx.htm)
+
+field(hard):
+
+- [Clothes/Jelly 🎄 Blob Opera](https://www.youtube.com/watch?v=U4xafX1jR3c)
 - [💦flow](./demo/field/flow.htm), [👍 WASM phys](https://oimo.io/works/water/), [🎄 XMas tree/z-index](./study/xmas.htm)
 - [Clothes](https://codepen.io/duangsuz/pen/OPXrgVy?editors=1000) & [👕 ⛈Live2D/Piecewise-Affine trans](https://codepen.io/duangsuz/pen/QwEzgWG?editors=1000) drop a image, mid-click!
 
