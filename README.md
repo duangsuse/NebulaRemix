@@ -1,6 +1,6 @@
 # Nebula Remix
 
-[Green Fog wallpaper](https://duangsuse.github.io/NebulaRemix/live/?algo=A%3A+Cotton&color=Toxic+Bio&M=1&W=9.4&S=8&K=1.2&G=0.43&O=10&flu=3&b=0%2C0.1%2C0.05&f=0.3%2C0.8%2C0.2&h=0.9%2C1%2C0.8), [Try Mandelbrot Fractals!](https://duangsuse.github.io/NebulaRemix/mandel.html)
+[🍏 Green Fog wallpaper](https://duangsuse.github.io/NebulaRemix/live/?algo=A%3A+Cotton&color=Toxic+Bio&M=1&W=9.4&S=8&K=1.2&G=0.43&O=10&flu=3&b=0%2C0.1%2C0.05&f=0.3%2C0.8%2C0.2&h=0.9%2C1%2C0.8), [🦜🎩 Try Mandelbrot Fractals!](https://duangsuse.github.io/NebulaRemix/mandel.html)
 
 A WebGL reconstruction of the recursive domain warping technique found in Android's ["Magic Smoke" live wallpaper](https://live-wallpaper.fandom.com/wiki/Magic_Smoke).
 
@@ -12,24 +12,23 @@ more retro-goods like Phase Beam、Bubble、Nexus、Water Ripple、Grass can be 
 
 - [🧬c_life](./c_life.html)
 - [🦢 Boids](./my_boids.htm)
-- [💧 Liquid Glass](./c_glass.htm)
+- [💧 Liquid Glass](./c_glass.htm), try Damp=.99, Brush large
 
 normal phys:
 
-- [🔴balls_bezier](./demo/balls_bezier.htm)
-- [🔴balls](./demo/balls.htm)... [`D2(x,y)(runs,turn)` func](https://editor.p5js.org/duangsuse/sketches/bwMmjzmX_), [🏀 Box 3D balls](https://codepen.io/duangsuz/pen/OPRzoBL)
-- [🧷box_bezier](./demo/box_bezier.htm), [👍 Sandboxels](https://neal.fun/sandboxels/)
+- [🔴balls_bezier](./demo/balls_bezier.htm), Classic.
+- [🔴balls](./demo/balls.htm)... [`D2(x,y)(runs,turn)` func](https://editor.p5js.org/duangsuse/sketches/bwMmjzmX_), [🏀 Box 3D balls!](https://codepen.io/duangsuz/full/OPRzoBL)
 - [🖥cmatrix](./demo/cmatrix.htm), [👍 GUI+TUI Game 2048](./study/2048.htm)
-- [🍥fft](./demo/fft.htm)
-
+- [🍥fft](./demo/fft.htm), [(equations used)](https://paidax01.github.io/math-curve-loaders/)
+- [🧷box_bezier](./demo/box_bezier.htm), [👍 Sandboxels](https://neal.fun/sandboxels/)
 
 field:
 
 - [⏳c_sand](./c_sand.html), [heat_death](./demo/field/heat_death.htm)
-- [Water](./demo/field/water.htm) & [Our Holo Cosmos](./cosmos.html): [☯️](./study/yinyang.htm) [🍩](https://codepen.io/duangsuz/full/NPRmwYv)
-- [hair_style](./demo/field/hair_style.htm), [👍 xyz Voxels(Minecraft)](https://mrdoob.com/#/129/voxels)
-- [🏙van_gogh](./demo/van_gogh.htm)
-- [🏙van_sfx](./demo/van_sfx.htm)
+- [💦JS Water](./demo/field/water.htm) & [Our Holo Cosmos](./cosmos.html): [☯️！](./study/yinyang.htm) [🍩！](https://codepen.io/duangsuz/full/NPRmwYv) [👑](https://codepen.io/duangsuz/full/qEavQLd)
+- [💈hair_style](./demo/field/hair_style.htm), [👍 xyz Voxels(Minecraft)](https://mrdoob.com/#/129/voxels)
+- [🏙van_gogh: Starry night](./demo/van_gogh.htm)
+- [🏙van_sfx: Math-ic carpet](./demo/van_sfx.htm)
 
 field(hard):
 
@@ -39,7 +38,7 @@ field(hard):
 
 ## See Also
 
-* [📚 Good First DSP - 👍👍👍](./study/)
+* [**📚 Good First DSP** - 👍👍👍](./study/)
 * [Inigo Quilez: Domain Warping](https://iquilezles.org/articles/warp/) - The foundational article on this technique.
 * [The Book of Shaders: Fractal Brownian Motion](https://thebookofshaders.com/13/) - Visual guide to noise layering.
 * [Curl Noise](https://www.overdraw.xyz/blog/tag/Curl+Noise) - An alternative approach for divergence-free fluid simulation.
@@ -52,7 +51,7 @@ field(hard):
 
 [Stalin & PNG bars sort](https://www.bilibili.com/video/BV1od9KB2ENd), [With sound](https://www.bilibili.com/video/BV1j6mVBJELL) + [🐧 Giegie](https://www.bilibili.com/video/BV1h1muB8EA4)
 
-[🧷 Trie URL/Dict tokenizer & `basenc --help` impl](./study/trie.htm) _逆波兰带步骤计算器、Trie后缀压缩树、cubic-bezier()，这些拓扑排序（可视化）日用算法_
+[🧷 **Trie URL/Dict tokenizer & `basenc --help` impl**](./study/trie.htm) _逆波兰带步骤计算器、Trie后缀压缩树、cubic-bezier()，这些拓扑排序（可视化）日用算法_
 
 ^ [tutour](./demo/)
 
