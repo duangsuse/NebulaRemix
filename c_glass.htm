@@ -6,65 +6,83 @@
 
 <style>
 .grip{overflow:hidden;resize:both}
-.pool{position:relative;height:100vh}
+.pool{position:absolute;width:100vw;height:100vh}
 .pool *{width:100%;height:100%;touch-action:none;position:absolute}
 /*
 .pool{display: grid;height:100vh}
 .pool *{width:100%;height:100%;touch-action:none;grid-area: 1 / 1;}
-*/</style>
-<script type="module">
+*/
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .3s; }</style>
+<script type="module">//波动方程: 折射+色散+菲涅尔+虹彩+高光。学习yx动态规划+Verlet外插
+
 import createREGL from 'https://esm.sh/regl';
 import GUI from 'https://esm.sh/lil-gui';
 
 
 const demoImgs = `https://cdn.geckoandfly.com/wp-content/uploads/2018/03/ios-11-3840x2160-4k-5k-beach-ocean-13655.jpg
-https://cdn.geckoandfly.com/wp-content/uploads/2018/03/macos_high_sierra_stock_5k-5120x2880.jpg
+https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1280px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg
 https://wallpaperaccess.com/full/350192.jpg
+https://cdn.geckoandfly.com/wp-content/uploads/2018/03/macos_high_sierra_stock_5k-5120x2880.jpg
+https://images3.alphacoders.com/116/thumb-1920-1163803.jpg
+https://images.alphacoders.com/104/1042234.jpg
+https://images3.alphacoders.com/109/thumb-1920-1092990.png
+https://images7.alphacoders.com/736/thumb-1920-736462.png
 https://wallpaperaccess.com/full/1213880.jpg
-https://wallpaperaccess.com/full/3457246.jpg
-https://cdn3.geckoandfly.com/wp-content/uploads/2016/06/sierra.jpg
+https://images2.alphacoders.com/467/thumb-1920-467642.jpg
+https://images8.alphacoders.com/532/thumb-1920-532985.jpg
+https://images4.alphacoders.com/973/thumb-1920-973967.jpg
+https://images4.alphacoders.com/867/thumb-1920-867976.jpg
 https://cdn4.geckoandfly.com/wp-content/uploads/2018/03/osx-5120x2880-5k-4k-wallpaper-8k-rolling-waves-blue-sunset-180.jpg
-https://wallpapercave.com/wp/wp7119360.jpg`.split('\n');
+https://cdn3.geckoandfly.com/wp-content/uploads/2016/06/sierra.jpg`.split('\n');
 
 window.C = {
     img: demoImgs[0], url: '',
-    bru: 0.04, frc: 0.04, dmp: 0.98, ref: 0.08, chr: 0.03, shi: 70,
-    lgt: 1.5, iri: 1.2, frs: 1.5, bld: true
+    bru: 0.1, frc: 0.04, dmp: 0.98, ref: 0.08, chr: 0.03, shi: 60,
+    lgt: 1.5, iri: 1.4, frs: 0.6, bld: true,
+
+    Add1(e){e=document.body.appendChild(p1.cloneNode(1)); e.id=`p${++bkIDn}`;bkID.max(bkIDn); posPut(e)({offsetX:bkIDn*100});liquidPool(e);},
+    _bg:0, get bg(){return document.getElementById('p'+C._bg)?? p1}
 };
 
-const gui = new GUI({ title: 'Liquid Glass Rainbowdash' }), fx = gui.addFolder('Liquid Hills / 水面波峰光学').open(0),
-load=u=>eBg.src = u
+const gui = new GUI({ title: 'Liquid Glass Rainbowdash' }),
+fx = gui.addFolder('Liquid Hills / 水面波峰光学').open(0),
+bk = gui.addFolder('Layers / 可拖放粘贴层叠').open(0),
+load=u=>C.bg.children[0].src = u,
+posPut=$0=>ev=>{$0.style.translate=`${ev.offsetX}px ${ev.offsetY??0}px`}
+
 
 gui.add(C, 'img', demoImgs).name('Demo / 电脑壁纸').onChange(load);
-gui.add(C, 'url').name('img URL').onFinishChange(load);
+bk.add(C, 'url').name('img URL').onFinishChange(load);
+let bkID=bk.add(C, '_bg').step(1).min(0).name('MouseR 定位'), bkIDn=1
+bk.add(C, 'Add1')
 fx.add(C, 'frc', 0.005, 0.2).name('Force / 波纹疾走');
-fx.add(C, 'shi', 10, 128).name('Shininess / 高光修理');
-fx.add(C, 'iri', 0, 3).name('Iridescence / ✨菲涅虹圈');
-fx.add(C, 'lgt', 0, 3).name('Light / ✨透亮度');
+fx.add(C, 'shi', 10, 77).name('HiShini/ ✨透亮修理');
+fx.add(C, 'frs', 0, 3).name('Fresnel / 菲涅泡泡圈');
+fx.add(C, 'iri', 0, 3).name('IR / ✨水或菲涅尔');
 fx.add(C, 'bld').name('Blend / 叠底');
-gui.add(C, 'dmp', 0.9, 0.999).name('Damping / 阻尼');
-gui.add(C, 'frs', 0, 8).name('Fresnel / 水或菲涅尔');
-gui.add(C, 'ref', 0, 0.5).name('Refraction / 🍑果冻反应');
-gui.add(C, 'bru', 0.005, 0.15).name('Brush / 笔触');
+gui.add(C, 'dmp', 0.9, 0.996).name('Damp(.75~.99)😋冰粉融化');
+gui.add(C, 'lgt', 0, 3).name('HiLight / 透亮度');
+gui.add(C, 'ref', 0, 0.35).name('Refraction / 🍑果冻反应');
+gui.add(C, 'bru', 0.005, 0.25).name('Brush / 笔触');
 
 load(C.img)
 
 ;(window.liquidPool=(e0,C=window.C)=>{
 const
     [eBg,v]=e0.children,
-    regl = createREGL({ canvas: v, extensions: ['OES_texture_float', 'OES_texture_float_linear'] })
+    regl = createREGL({ canvas: v, extensions: ['OES_texture_float', 'OES_texture_float_linear'] }),
+    wide = { vert:'(Lerp)', attributes: { p: [-4, -4, 4, -4, 0, 4] }, count: 3, depth: { enable: false } }
 
 // 预置 1x1 黑底防报错，图片加载完成后更新纹理
 let bg = regl.texture({ shape: [1, 1], data: [0, 0, 0, 255] });
 eBg.onload = () => bg = regl.texture({ data: eBg, mag: 'linear', min: 'linear' });
 eBg.onerror=()=>{alert("install Header Editor, put Resp:access-control-allow-origin=*, Match:all"); eBg.removeAttribute('crossOrigin');C.bld=null; eBg.src=eBg.src;}
 
-
 // 📐 R(esolution) 与 F(ramebuffer) 状态管理
 // R: [width, height] 存储当前画布的精确物理像素尺寸
-// F: [fb1, fb2] 乒乓(Ping-Pong)双缓冲，用于保存"上一帧"和"当前帧"的流体高度数据，实现物理迭代
-// M/pM: 鼠标当前位置与上一帧位置
-let R = [0, 0], F = [], M = [-1, -1], pM = [-1, -1];
+// F: [fb1, fb2] 物理意义的线程。乒乓(Ping-Pong)双缓冲，用于保存"上一帧"和"当前帧"的流体高度数据，return 未来帧
+// A/M/pM: 鼠标当前位置与上一帧位置，加速度A
+let R = [0, 0], M = [-1, -1], pM = [-1, -1], F = [];
 const resize = () => {
     const dpr = devicePixelRatio || 1
     const w = v.width = Math.floor(v.clientWidth * dpr), h = v.height = Math.floor(v.clientHeight * dpr);
@@ -89,24 +107,28 @@ const Pass = ({tag,...kws} = {}) => (code, ...argFns) => {
         frag = frag_std+code.reduce((s, t, i) => s + t + (!A[i]?"": (U[A[i].k = (A[i]+'').match(/\.(\w+)/)[1]] = A[i], A[i].k)), "")
     return regl({ ...kws, uniforms: U, ...(tag && { framebuffer: regl.prop(tag) }), frag});
 }
-const regl_CV = (el, F, FBO='web image/fbo') => {
+const regl_CV = (el, F, FBO='web image/raw') => {
     el.oncopy = e => (e.preventDefault(), F[0].use(() =>
         navigator.clipboard.write([new ClipboardItem({ [FBO]: new Blob([regl.read().buffer], { type: FBO }) })])));
     el.onpaste = async(e, d) => {
         d = new Float32Array(await (await (await navigator.clipboard.read())[0].getType(FBO)).arrayBuffer());
-        F.forEach(f => f.color[0].subimage({ data: d }));
+        document.startViewTransition(()=>{
+            F[(t)%2].color[0].subimage({ data: d });
+            draw({S: F[(t)%2]});
+        })
     };
 }
 regl_CV(v,F) // 位置 FBO、速度 FBO、属性 FBO…… ti.types.struct 本来就支持非单纯数值的场，原生支持多维 [i, j, k...]，没什么RGBA32F or Lum
 
-const
-    vert = `precision highp float; attribute vec2 p; varying vec2 u; void main() { u = 0.5 * (p + 1.0); gl_Position = vec4(p, 0, 1); }`,
-    wide = { vert, attributes: { p: [-4, -4, 4, -4, 0, 4] }, count: 3, depth: { enable: false } };
+wide.
+    vert = `precision highp float; attribute vec2 p; varying vec2 u; void main() { u = 0.5 * (p + 1.0); gl_Position = vec4(p, 0, 1); }`
+    ;
+let t = 0;
 
 const sim = Pass({...wide, tag: 'N'})`
 uniform float ${_=>C.bru}, ${_=>C.frc}, ${_=>C.dmp};
 
-float sd(vec2 p, vec2 a, vec2 B) {
+float sd(vec2 p, vec2 a, vec2 B) { //线段笔刷！拖拽时产生连续轨迹而非离散 Hugo Ripple，平滑 vec2 A 过渡边缘
     vec2 pa = p - a, ba = B - a;
     return length(pa - ba * clamp(dot(pa, ba) / max(dot(ba, ba), 1e-6), 0.0, 1.0));
 }
@@ -117,6 +139,7 @@ void main() {
     float p = texture2D(S, u).g;
     float n = (texture2D(S, u + e.xz).r + texture2D(S, u - e.xz).r +
                 texture2D(S, u + e.zy).r + texture2D(S, u - e.zy).r) * 0.5 - p;
+    //float n = (上 + 下 + 左 + 右) * 0.5 - 当前值即惯性;
     n *= dmp;
 
     // 🖱️ 注入外力：鼠标划过产生新波源，按距离，不按打点计时器
@@ -125,7 +148,7 @@ void main() {
         float dist = sd(u * A, M * A, pM * A);
         if (dist < bru) n += frc * (1.0 - smoothstep(0.0, bru, dist));
     }
-    gl_FragColor = vec4(n, texture2D(S, u).r, 0.0, 1.0);
+    gl_FragColor = vec4(n, texture2D(S, u).r, 0.0, 1.0); //R->G通道是Verlet积分 B:null A:局部阻尼 ✅<.5为果冻
 }`
 const draw = Pass(wide)`
 uniform float ${_=>C.ref}, ${_=>C.chr}, ${_=>C.shi}, ${_=>C.lgt}, ${_=>C.iri}, ${_=>C.frs}, ${_=>C.bld ? 1.0 : 0.0};
@@ -139,13 +162,16 @@ void main() {
     vec2 hxy = vec2(texture2D(S, u + e.xz).r, texture2D(S, u + e.zy).r);
     vec3 n = normalize(vec3(hxy - h, 0.012)), vDir = vec3(0, 0, 1), lDir = normalize(vec3(0.5, 0.5, 0.8));
 
-    // 折射与 📐 三棱镜色散：
+    // 折射与 📐 三棱镜色散：模拟三棱镜效应：不同波长光折射率不同，绿光不偏
     vec2 off = n.xy * ref, uB = P + off;
     vec3 bg = vec3(texture2D(B, uB - off * chr).r, texture2D(B, uB).g, texture2D(B, uB + off * chr).b);
 
+    // dot(法线, 视线) 垂直看水面：透明，倾斜看水面：反射增强
+    // dot(法线, 半角向量), shininess: Blinn-Phong模型
     float f = pow(1.0 - max(dot(n, vDir), 0.0), 2.5), spec = pow(max(dot(n, normalize(lDir + vDir)), 0.0), shi);
-    vec3 cIri = pal(dot(n.xy, vec2(0.5)) + h * 3.0);
-    vec3 rip = spec * lgt * mix(vec3(1), cIri, 0.5) + f * frs * cIri * iri;
+    vec3 cIri = pal(dot(n.xy, vec2(0.5)) + h * frs);
+    vec3 rip = spec * lgt * mix(vec3(1), cIri, 0.5) + f * cIri * iri;
+    // mix(纯波纹, 波纹+背景, bld)，防止bg加载失败全黑
     gl_FragColor = mix(vec4(rip, max(max(rip.r, rip.g), rip.b)), vec4(rip + bg, 1.0), bld);
 }`
 
@@ -163,7 +189,6 @@ const evts = {
 };
 for (let k in evts) v.addEventListener(k, evts[k]);
 
-let t = 0;
 regl.frame(() => {
     const prev = F[t % 2], next = F[++t % 2];
     sim({ S: prev, N: next });
@@ -171,5 +196,7 @@ regl.frame(() => {
     draw({ S: next });
 });
 
-})(p1)</script>
+})(p1)
+
+window.oncontextmenu=e=>{C._bg? (e.preventDefault(),posPut(C.bg)(e)) :0}</script>
 </body>
