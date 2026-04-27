@@ -38,32 +38,34 @@ https://cdn3.geckoandfly.com/wp-content/uploads/2016/06/sierra.jpg`.split('\n');
 window.C = {
     img: demoImgs[0], url: '',
     bru: 0.1, frc: 0.04, dmp: 0.98, ref: 0.08, chr: 0.03, shi: 60,
-    lgt: 1.5, iri: 1.4, frs: 0.6, bld: true,
+    lgt: 1.5, iri: 1.4, frs: 0.6, bld: true, Ajel: true,
 
-    Add1(e){e=document.body.appendChild(p1.cloneNode(1)); e.id=`p${++bkIDn}`;bkID.max(bkIDn); posPut(e)({offsetX:bkIDn*100});liquidPool(e);},
+    Add1(e){e=document.body.appendChild(p1.cloneNode(1)); e.id=`p${++bkIDn}`;bkID.max(bkIDn); posPut(e)({clientX:bkIDn*100});liquidPool(e);},
     _bg:0, get bg(){return document.getElementById('p'+C._bg)?? p1}
 };
 
 const gui = new GUI({ title: 'Liquid Glass Rainbowdash' }),
 fx = gui.addFolder('Liquid Hills / 水面波峰光学').open(0),
 bk = gui.addFolder('Layers / 可拖放粘贴层叠').open(0),
-load=u=>C.bg.children[0].src = u,
-posPut=$0=>ev=>{$0.style.translate=`${ev.offsetX}px ${ev.offsetY??0}px`}
+load=u=>document.startViewTransition(()=>C.bg.children[0].src = u),
+posPut=$0=>ev=>{$0.style.translate=`${ev.clientX}px ${ev.clientY??0}px`}
 
 
 gui.add(C, 'img', demoImgs).name('Demo / 电脑壁纸').onChange(load);
 bk.add(C, 'url').name('img URL').onFinishChange(load);
+bk.add(C, 'Ajel').name('A通道防锯齿🏳️‍🌈');
 let bkID=bk.add(C, '_bg').step(1).min(0).name('MouseR 定位'), bkIDn=1
 bk.add(C, 'Add1')
 fx.add(C, 'frc', 0.005, 0.2).name('Force / 波纹疾走');
 fx.add(C, 'shi', 10, 77).name('HiShini/ ✨透亮修理');
 fx.add(C, 'frs', 0, 3).name('Fresnel / 菲涅泡泡圈');
 fx.add(C, 'iri', 0, 3).name('IR / ✨水或菲涅尔');
-fx.add(C, 'bld').name('Blend / 叠底');
-gui.add(C, 'dmp', 0.9, 0.996).name('Damp(.75~.99)😋冰粉融化');
+fx.add(C, 'bld').name('Blender / 法线管线');
+gui.add(C, 'dmp', 0.9, 0.996).name('Damp(.87~.99)😋冰粉融化');
 gui.add(C, 'lgt', 0, 3).name('HiLight / 透亮度');
 gui.add(C, 'ref', 0, 0.35).name('Refraction / 🍑果冻反应');
 gui.add(C, 'bru', 0.005, 0.25).name('Brush / 笔触');
+document.getElementById('lil-gui-name-3').innerHTML+=`<a target=_blank href=https://codepen.io/duangsuz/full/RNGXXxP>🔗</a>`
 
 load(C.img)
 
@@ -89,7 +91,7 @@ const resize = () => {
     R = [w, h];
     F.length ? F.forEach(f => f.resize(w, h)) : F = [0, 1].map(() => regl.framebuffer({ width: w, height: h, colorType: 'float' }));
 },
-    //pos = e => [e.clientX / v.clientWidth, 1 - e.clientY / v.clientHeight],
+    //pos = e => [e.clientX / v.clientWidth, 1 - e.clientY / v.clientHeight], //不考虑pageY的滚动
     pos = e => (r => [(e.clientX - r.left) / r.width, 1 - (e.clientY - r.top) / r.height])(v.getBoundingClientRect()),
 
     cls = () => F.forEach(f => f.use(() => regl.clear({color: [0, 0, 0, 0]})))
@@ -126,21 +128,22 @@ wide.
 let t = 0;
 
 const sim = Pass({...wide, tag: 'N'})`
-uniform float ${_=>C.bru}, ${_=>C.frc}, ${_=>C.dmp};
+uniform float ${_=>C.bru}, ${_=>C.frc}, ${_=>C.dmp}, ${_=>C.Ajel ? 1.0 : 0.0};
 
 float sd(vec2 p, vec2 a, vec2 B) { //线段笔刷！拖拽时产生连续轨迹而非离散 Hugo Ripple，平滑 vec2 A 过渡边缘
     vec2 pa = p - a, ba = B - a;
     return length(pa - ba * clamp(dot(pa, ba) / max(dot(ba, ba), 1e-6), 0.0, 1.0));
 }
 void main() {
-    vec3 e = vec3(1.0 / R, 0.0);
+    vec3 e = vec3(1.0 / R, 0.0); vec2 P = vec2(u.x, 1.0 - u.y);
+    vec4 st=texture2D(S, u);
 
     // 💧 拉普拉斯算子：一帧四个邻居平均衰减一次
-    float p = texture2D(S, u).g;
     float n = (texture2D(S, u + e.xz).r + texture2D(S, u - e.xz).r +
-                texture2D(S, u + e.zy).r + texture2D(S, u - e.zy).r) * 0.5 - p;
+                texture2D(S, u + e.zy).r + texture2D(S, u - e.zy).r) * 0.5 - st.t;
     //float n = (上 + 下 + 左 + 右) * 0.5 - 当前值即惯性;
-    n *= dmp;
+    float px=texture2D(B, P).a;
+    n *= (px >= 0.999) ? dmp : mix((Ajel>.5)?.87:.75,.99,px);
 
     // 🖱️ 注入外力：鼠标划过产生新波源，按距离，不按打点计时器
     if (M.x > -0.5) {
@@ -148,7 +151,7 @@ void main() {
         float dist = sd(u * A, M * A, pM * A);
         if (dist < bru) n += frc * (1.0 - smoothstep(0.0, bru, dist));
     }
-    gl_FragColor = vec4(n, texture2D(S, u).r, 0.0, 1.0); //R->G通道是Verlet积分 B:null A:局部阻尼 ✅<.5为果冻
+    gl_FragColor = vec4(n, st.s, 0.,0.); //R->G通道是Verlet积分
 }`
 const draw = Pass(wide)`
 uniform float ${_=>C.ref}, ${_=>C.chr}, ${_=>C.shi}, ${_=>C.lgt}, ${_=>C.iri}, ${_=>C.frs}, ${_=>C.bld ? 1.0 : 0.0};
@@ -172,7 +175,7 @@ void main() {
     vec3 cIri = pal(dot(n.xy, vec2(0.5)) + h * frs);
     vec3 rip = spec * lgt * mix(vec3(1), cIri, 0.5) + f * cIri * iri;
     // mix(纯波纹, 波纹+背景, bld)，防止bg加载失败全黑
-    gl_FragColor = mix(vec4(rip, max(max(rip.r, rip.g), rip.b)), vec4(rip + bg, 1.0), bld);
+    gl_FragColor = mix(vec4(rip, max(max(rip.r, rip.g), rip.b)), vec4(rip + bg, ceil(texture2D(B,P).a)), bld);
 }`
 
 const evts = {
