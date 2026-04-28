@@ -25,8 +25,8 @@ let init = () => {
 window.onresize=init; init()
 
 window.onmousedown = e => {
-  if(e.button===2) init() 
-  else if(e.button===1) {
+  if(e.button===1) init()
+  else if(e.button===2) {
     conf.n=(Math.random()*15+1).toFixed(1); conf.m=(Math.random()*15+1).toFixed(1)
     gui.controllers.forEach(c=>c.updateDisplay())
   } else mouse.down=true
@@ -36,18 +36,18 @@ window.onmousemove=e=>{mouse.x=e.clientX; mouse.y=e.clientY}
 
 let loop = () => {
   x.fillStyle='rgba(0,0,0,0.2)'; x.fillRect(0,0,w,h)
-  
+
   let rSq = conf.ptrRadius ** 2
   let absF = Math.abs(conf.friction)
-  
+
   for(let i=0; i<conf.nAtom; i++) {
     let k=i*4, px=pts[k], py=pts[k+1]
-    
+
     // A. 物理波函数 (Entropy)
-    let wave = conf.isCircle 
+    let wave = conf.isCircle
       ? Math.sin(Math.sqrt((px-w/2)**2+(py-h/2)**2)*conf.n*.05)*Math.sin(Math.atan2(py-h/2,px-w/2)*conf.m)
       : Math.cos(conf.n*Math.PI/w*px)*Math.cos(conf.m*Math.PI/h*py) - Math.cos(conf.m*Math.PI/h*px)*Math.cos(conf.n*Math.PI/w*py)
-    
+
     let f = (Math.random()-.5) * conf.shake * Math.abs(wave)
     pts[k+2]+=f; pts[k+3]+=f
 
@@ -58,29 +58,29 @@ let loop = () => {
     let dx = px - mouse.x, dy = py - mouse.y
     let distSq = dx*dx + dy*dy
     let rSq = conf.ptrRadius * conf.ptrRadius
-    
+
     // 是否应用强交互 (鼠标力场)
     // 触发条件：要么是全局模式，要么是局部模式且在圈内
 
     if (!conf.ptrForce || distSq < rSq) {
       let absF = Math.abs(conf.friction)
-      
+
       if (conf.friction < 0) {
         // --- 负数逻辑：吸引 (Attract) ---
         // 按下时引力 x4
         let s = absF * (mouse.down ? 4 : 1) * 0.02
-        pts[k+2] -= dx*s; pts[k+3] -= dy*s 
+        pts[k+2] -= dx*s; pts[k+3] -= dy*s
       } else {
         // --- 正数逻辑：排斥 或 冻结 ---
         if (mouse.down) {
            // [关键修改] 冻结：只在这里生效
            // 强力阻尼：乘以一个很小的数 迅速降速
-           pts[k+2] *= 0.7; pts[k+3] *= 0.7; 
+           pts[k+2] *= 0.7; pts[k+3] *= 0.7;
         } else
         if (conf.ptrForce) {
            // 悬停：排斥
            let s = absF * 0.05
-           pts[k+2] += dx*s; pts[k+3] += dy*s 
+           pts[k+2] += dx*s; pts[k+3] += dy*s
         } else {
            // 全局模式：不要使用斥力（否则会炸飞所有粒子）
            pts[k + 2] *= (1 - conf.friction * 0.5);
@@ -90,7 +90,7 @@ let loop = () => {
     }
 
     // C. 位置更新
-    pts[k] += pts[k+2] * conf.speed; 
+    pts[k] += pts[k+2] * conf.speed;
     pts[k+1] += pts[k+3] * conf.speed
 
     // 渲染
@@ -100,14 +100,14 @@ let loop = () => {
     } else x.fillStyle=bg0
     x.fillRect(pts[k], pts[k+1], 1.5, 1.5)
   }
-  
+
   if(conf.ptrForce && mouse.x>0) {
     x.beginPath(); x.strokeStyle='#333'; x.arc(mouse.x,mouse.y,conf.ptrRadius,0,7); x.stroke()
   }
   requestAnimationFrame(loop)
 }
 
-let gui = new GUI({ title: 'Chladni Plates' })
+let gui = new GUI({ title: 'Chladni Plates' }), g1
 gui.add(conf, 'nAtom', 1000, 50000, 1000).onFinishChange(init)
 gui.add(conf, 'speed', 0, 1).name('Approx')
 gui.add(conf, 'n', 1, 30, 0.1).listen()
@@ -117,8 +117,9 @@ f.add(conf, 'shake', 0, 50)
 f.add(conf, 'heatmap')
 f.add(conf, 'isCircle')
 f.add(conf, 'ptrRadius', 10, 500)
-f.add(conf, 'friction', -0.1, 0.2, 0.001).name('-Friction / +Attract')
-f.add(conf, 'ptrForce').name('Pointer Mode (tap2freeze)')
+g1=gui.addFolder('Be Physics -MouseR,M')
+g1.add(conf, 'friction', -0.1, 0.2, 0.001).name('-P.Friction / +Attract')
+g1.add(conf, 'ptrForce').name('Pointer P. (tap2freeze)')
 
 loop()
 </script>

@@ -38,20 +38,19 @@ field(hard):
 
 ## See Also
 
-* [**📚 Good First DSP** - 👍👍👍](./study/)
 * [Inigo Quilez: Domain Warping](https://iquilezles.org/articles/warp/) - The foundational article on this technique.
 * [The Book of Shaders: Fractal Brownian Motion](https://thebookofshaders.com/13/) - Visual guide to noise layering.
 * [Curl Noise](https://www.overdraw.xyz/blog/tag/Curl+Noise) - An alternative approach for divergence-free fluid simulation.
 * [CURL Noise function](https://observablehq.com/@hellonearthis/curl-noise-function)
 
-
-## Algorithm
+## Zen Algorithm
 
 [Sorting Vis (Text mode)](https://duangsuse.github.io/mkey/making_reco/#sorts3) 玩法：tap【记录】，tap播放。
 
 [Stalin & PNG bars sort](https://www.bilibili.com/video/BV1od9KB2ENd), [With sound](https://www.bilibili.com/video/BV1j6mVBJELL) + [🐧 Giegie](https://www.bilibili.com/video/BV1h1muB8EA4)
 
-[🧷 **Trie URL/Dict tokenizer & `basenc --help` impl**](./study/trie.htm) _逆波兰带步骤计算器、Trie后缀压缩树、cubic-bezier()，这些拓扑排序（可视化）日用算法_
+* [🧷 **Trie URL/Dict tokenizer & `basenc --help` impl**](./study/trie.htm) _逆波兰带步骤计算器、Trie后缀压缩树、cubic-bezier()，这些拓扑排序（可视化）日用算法_
+* [**📚 Good First DSP** - `禅` 👍👍👍](./study/)
 
 ^ [tutour](./demo/)
 

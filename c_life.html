@@ -1,4 +1,4 @@
-<head>
+<!DOCTYPE html><head>
 <meta charset=utf-8>
 <link rel=icon id=favicon></head>
 <body style="margin:0;background:#000;overflow:hidden"><canvas id="c" style="touch-action: none; will-change: filter;"></canvas>
@@ -41,7 +41,7 @@ mc.on("panmove pinchmove", (e) => {
     view.x += e.deltaX;
     view.y += e.deltaY;
     tx.k *= e.scale;
-    v.updateMouse(m.sx, m.sy); 
+    v.updateMouse(m.sx, m.sy);
 });
 }
 
@@ -78,7 +78,7 @@ endBible=()=>{
 
   S = [...p.seed].reduce((a, v) => Math.imul(31, a) + v.charCodeAt(0) | 0, 0);
   // 极简兽核 PRNG Mulberry32 伪随机数生成器 (替换 Math.random 以支持 S seed)
-  krnl = Array.from({length: p.taoKrnl}, () => Array.from({length: p.taoKrnl}, () => (R() - 0.5) * 2.5));  
+  krnl = Array.from({length: p.taoKrnl}, () => Array.from({length: p.taoKrnl}, () => (R() - 0.5) * 2.5));
   v.angel()
 }
 v.angel=()=>{krnl_tau = Array.from({length: p.taoKrnl}, () => Array.from({length: p.taoKrnl}, () => (R() * 2 - 1) * 0.9));}
@@ -91,7 +91,7 @@ let gui = new GUI({ title: "Laplace's Demon" }), g1,g2, ctrlD='WTF favicon!', pw
     h = h|| R_entropy(); t_in_Share=+t||-1;
     p.seed = h; // 同步到GUI和 Ctrl+D
     history.replaceState(null, '', ctrlD? `?_=${h.slice(5)}#${h}` : `#${h}`);
-    
+
     endBible()
 })()
 
@@ -117,10 +117,10 @@ gui.add(p, 'svgFx', {
   "Micro显微镜": "url(#cellr-glow)",
   "Hyper纠缠辉光": "url(#hyper-glow)",
   "Slime粘菌放大镜": "url(#cell-glow)",
+  "Lenia惨白": "url(#pale-glow)",
   "Glitch抖音": "url(#douyin-glow)",
   "CSS暗场/高对比": "contrast(2.5) brightness(2.2) blur(2px)",
   "Gray": "sepia(1)",
-  "Micro惨白": "url(#pale-glow)",
 }).onChange(css=>v.style.filter = css+p.svgFx1).setValue("url(#hyper-glow)");
 g1.add(p, 'svgFx1').onChange(css=>{
   v.style.filter = p.svgFx+css;
@@ -134,7 +134,7 @@ v.oncontextmenu = e => { e.preventDefault(); p.endEpoch(); v.onmousemove(e); ini
 v.onauxclick()
 {
 let actx, sfx;
-gui.add(p, 'osc').name('🔊 盖革计数器').onChange(k => {
+gui.add(p, 'osc').name('🔊 盖革计数器[sewq]').onChange(k => {
     if(k && !sfx) actx = new AudioContext();
     sfx=({e:'triangle', w:'sawtooth',q:'square'})[k.at(-1)] ?? 'sine'
     if(actx) k ? actx.resume() : actx.suspend();
@@ -142,23 +142,23 @@ gui.add(p, 'osc').name('🔊 盖革计数器').onChange(k => {
 pwm=(hits, panX)=>{
     if(hits>p.count*1.23) { if(v.isShiftDown) hits/=p.count*.3; else return; }
     // 映射：碰撞越多，这一帧内生成的“水滴”颗粒就越密集 (最多限制5个防爆音)
-    let drops = Math.min(Math.ceil(hits / 5), 5); 
+    let drops = Math.min(Math.ceil(hits / 5), 5);
     let pan = (panX / hits / w + tx.x) * 2 - 1;
 
     for (let i = 0; i < drops; i++) {
         // 将声音随机打散在当前帧的 16ms 内，避免声波重叠变成电子嗡嗡声
-        let t = actx.currentTime + Math.random() * 0.016; 
-        
+        let t = actx.currentTime + Math.random() * 0.016;
+
         let o = actx.createOscillator(), g = actx.createGain(), p_ = actx.createStereoPanner();
         o.type = sfx
         o.frequency.value = 300 + Math.random() * 500 + hits * 2; // 碰撞越剧烈，音调微高
         p_.pan.value = pan;
-        
+
         // 【核心魔法】ADSL loop：瞬间发声，然后以指数级极速衰减，形成“清脆感”
         g.gain.setValueAtTime(0, t);
         g.gain.linearRampToValueAtTime(0.1, t + 0.002);
         g.gain.exponentialRampToValueAtTime(0.001, t + 0.04); // 40毫秒内瞬间寂静 (Decay)
-        
+
         o.connect(p_).connect(g).connect(actx.destination);
         o.start(t); o.stop(t + 0.05); // 发声后立刻销毁节点，释放内存
     }
@@ -193,7 +193,7 @@ let scrcat=((fv = document.createElement('canvas'), fx = fv.getContext('2d'))=>
 
   // 核心：从主画布 c 中，以鼠标屏幕坐标 m.sx/sy 为中心截取内容，确保鼠标点在截取区域的正中心
   fx.drawImage(c,
-      m.sx - size/2, m.sy - size/2, size, size, 
+      m.sx - size/2, m.sy - size/2, size, size,
       0, 0, size, size
   );
   return fv.toDataURL()
@@ -233,7 +233,7 @@ let epoch = () => {
               let r = Math.atan2(dy, dx), r0=krnl_tau[p_.c][q.c];
 
               // 磁性耦合：首尾相连，dipole 为正 (增强引力)；如果肩并肩，dipole 为负 (转为斥力) 1 + dipole 决定了磁极的放大效应
-              let dipole = Math.cos(p_.a - r -r0) * Math.cos(q.a - r +r0); 
+              let dipole = Math.cos(p_.a - r -r0) * Math.cos(q.a - r +r0);
               Fma = (d2 < c_in_Emc) * (p.repulsion / (d2 + 1) +  pain * (1 + dipole * 1.5));
 
               // 粒子会被迫向受力的方向偏转自旋角度，不再是各向同性 (Isotropy 2~5%)同色流沙，而是拼装成了坚硬的【大分子骨架】。
@@ -246,22 +246,22 @@ let mx = p_.x - m.x, my = p_.y - m.y;
 let md2 = mx * mx + my * my + 100;
 fx += (mx / md2) * p.mouseForce;
 
-// 【神迹判定】：如果请求Shift，鼠标所在位置变为“奇点”，打破第四面墙！
+// 【神迹判定】：鼠标所在位置变为“奇点”，打破第四面墙！
 if (v.isShiftDown) {
     let dx = p_.x - m.x, dy = p_.y - m.y;
     let d2 = dx * dx + dy * dy;
-    
+
     // 只有在神迹半径 (例如 40000，即距离 200) 内的生命受到影响
     if (d2 < Math.abs(p.mouseForce*200)) {
         let d = Math.sqrt(d2) + 0.1;
         // 1. 绝对吸引：无视原有规则，施加极强的向心力
-        let divineForce = -500 / d; 
+        let divineForce = -500 / d;
         fx += (dx / d) * divineForce;
         fy += (dy / d) * divineForce;
-        
+
         // 2. 熵减冷却：强行剥夺动能，建立秩序
-        p_.vx *= 0.05; 
-        p_.vy *= 0.05; 
+        p_.vx *= 0.05;
+        p_.vy *= 0.05;
         p_.C=p_.c
     }
 }
@@ -274,7 +274,7 @@ if (v.isShiftDown) {
           if (p_.x < 0 || p_.x > w) { p_.vx *= -1; p_.x = p_.x < 0 ? 0 : w; }
           if (p_.y < 0 || p_.y > h) { p_.vy *= -1; p_.y = p_.y < 0 ? 0 : h; }
         }
-        
+
 
         //if(p.planck<t_in_Share)continue
         if(p.vxyOnly) { x.fillStyle = _4fg[p_.c]; x.fillRect(p_.x, p_.y, 3, 3); }
@@ -284,7 +284,7 @@ if (v.isShiftDown) {
           x.moveTo(p_.x, p_.y);
           // 画一条长为 6 的线段，代表磁极的 N 极指向
           x.lineTo(p_.x + Math.cos(p_.a) * 5, p_.y + Math.sin(p_.a) * 5);
-          x.strokeStyle = _4fg[p_.c]; 
+          x.strokeStyle = _4fg[p_.c];
           x.stroke();
         }
     }
@@ -310,7 +310,7 @@ select(v).call(zoomer);
 
 //ctrlD
 window.onkeydown=e=>{
-  // 1024 即 (64/2)^2，确保抓取范围刚好是 Favicon 那个方框的内切圆    
+  // 1024 即 (64/2)^2，确保抓取范围刚好是 Favicon 那个方框的内切圆
   if (e.ctrlKey && e.key.toLowerCase() === 'd'){v.snap(); let uv=v.snapPts(mSel,32**2); if (uv.length) navigator.clipboard.writeText(JSON.stringify({uv})) }
 }
 v.snap=()=>{
@@ -323,10 +323,10 @@ v.snap=()=>{
   <defs>
     <filter id="cell-glow">
       <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
-      <feColorMatrix in="blur" mode="matrix" 
-                     values="1 0 0 0 0  
-                             0 1 0 0 0  
-                             0 0 1 0 0  
+      <feColorMatrix in="blur" mode="matrix"
+                     values="1 0 0 0 0
+                             0 1 0 0 0
+                             0 0 1 0 0
                              0 0 0 12 -4" result="goo" />
       <feComposite in="SourceGraphic" in2="goo" operator="atop" />
     </filter>
@@ -344,14 +344,14 @@ v.snap=()=>{
     </filter>
 
     <filter id="pale-glow">
-      <feColorMatrix type="matrix" 
-                     values="1 0 0 0 0  
-                             0 0 0 0 0  
-                             0 0 0 0 0  
+      <feColorMatrix type="matrix"
+                     values="1 0 0 0 0
+                             0 0 0 0 0
+                             0 0 0 0 0
                              0 0 0 1 0" in="SourceGraphic" result="grayscale" />
-      
+
       <feGaussianBlur stdDeviation="1" in="grayscale" result="blur" />
-      
+
       <feConvolveMatrix order="3 3" kernelMatrix="-1 -.5 0
                                                     -1  0 1
                                                      0  1 1" divisor="1" bias="0.3" in="blur" result="emboss" />
@@ -361,28 +361,28 @@ v.snap=()=>{
 
     <filter id="douyin-glow">
       <feOffset in="SourceGraphic" dx="-4" dy="0" result="red-shift" />
-      <feColorMatrix in="red-shift" type="matrix" 
-                     values="1 0 0 0 0  
-                             0 0 0 0 0  
-                             0 0 0 0 0  
+      <feColorMatrix in="red-shift" type="matrix"
+                     values="1 0 0 0 0
+                             0 0 0 0 0
+                             0 0 0 0 0
                              0 0 0 1 0" result="red-only" />
-                             
+
       <feOffset in="SourceGraphic" dx="4" dy="0" result="cyan-shift" />
-      <feColorMatrix in="cyan-shift" type="matrix" 
-                     values="0 0 0 0 0  
-                             0 1 0 0 0  
-                             0 0 1 0 0  
+      <feColorMatrix in="cyan-shift" type="matrix"
+                     values="0 0 0 0 0
+                             0 1 0 0 0
+                             0 0 1 0 0
                              0 0 0 1 0" result="cyan-only" />
-                             
+
       <feBlend in="red-only" in2="cyan-only" mode="screen" />
     </filter>
 
     <filter id="cellr-glow">
       <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
-      <feColorMatrix in="blur" mode="matrix" 
-                     values="1 0 0 0 0  
-                             0 1 0 0 0  
-                             0 0 1 0 0  
+      <feColorMatrix in="blur" mode="matrix"
+                     values="1 0 0 0 0
+                             0 1 0 0 0
+                             0 0 1 0 0
                              0 0 0 18 -8" result="goo" />
       <feComposite in="SourceGraphic" in2="goo" operator="atop" result="goo-shape" />
 
@@ -394,13 +394,13 @@ v.snap=()=>{
                                                   1 0 1 0 0
                                                   0 0 0 1 0" result="color1" />
       <feGaussianBlur in="color1" stdDeviation="4" result="glow1" />
-      
+
       <feColorMatrix in="SourceGraphic" values="0 1 1 0 0
                                                   1 0 1 0 0
                                                   1 1 0 0 0
                                                   0 0 0 1 0" result="color2" />
       <feGaussianBlur in="color2" stdDeviation="4" result="glow2" />
-      
+
       <feComposite in="glow2" in2="noise-mask" operator="in" result="glow2-masked" />
       <feComposite in="glow1" in2="glow2-masked" operator="xor" result="pingpong-mixed" />
 
