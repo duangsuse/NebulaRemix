@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Verlet Physics - Rainbow Circle Jelly</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #1a1a1a; cursor: crosshair; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
+
+let w, h, ctx, pts = [], lnks = [];
+let dragPt = null;
+
+// 配置参数
+const config = {
+  shape: '布料 (Cloth)',
+  rainbow: true, // 彩虹渲染开关
+  renderMode: '线段',
+  gravity: 0.5,
+  friction: 0.99,
+  bounce: 0.8,
+  iterations: 4,
+  tearThreshold: 25,
+  reset: () => initShape()
+};
+
+const c = document.getElementById('c');
+ctx = c.getContext('2d');
+
+const resize = () => { w = c.width = innerWidth; h = c.height = innerHeight; };
+window.addEventListener('resize', resize);
+resize();
+
+const addPt = (x, y, pinned = false) => {
+  let p = { x, y, ox: x, oy: y, pinned };
+  pts.push(p);
+  return p;
+};
+
+// 【核心升级】增加了 stiffness (刚度) 参数，默认值为 1 (绝对刚性)
+const addLnk = (a, b, d, stiffness = 1) => lnks.push({ a, b, d, stiffness });
+
+const initShape = () => {
+  pts = []; lnks = [];
+  let cx = w / 2, cy = 150;
+
+  if (config.shape === '圆形果冻 (Circle Jelly)') {
+      config.iterations=1
+    let segments = 16, radius = 80;
+    // 稍微调高一点生成位置
+    let centerPt = addPt(cx, cy);
+
+    for (let i = 0; i < segments; i++) {
+      let angle = (i / segments) * Math.PI * 2;
+      addPt(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+    }
+
+    // 外圈连接与辐射约束
+    for (let i = 0; i < segments; i++) {
+      addLnk(pts[i + 1], pts[(i + 1) % segments + 1], radius * 2 * Math.sin(Math.PI / segments));
+      addLnk(pts[i + 1], centerPt, radius, 0.5); // 软辐射约束
+    }
+
+    // 交叉约束
+    for (let i = 0; i < segments; i++) {
+      addLnk(pts[i + 1], pts[(i + 2) % segments + 1], radius * 2 * Math.sin(Math.PI * 2 / segments), 0.3); // 更软的交叉约束
+    }
+  }
+  else if (config.shape === '绳索 (Rope)') {
+    // 单线连结，顶部固定
+    let len = 30, sp = 15;
+    for (let i = 0; i < len; i++) {
+      addPt(cx, cy + i * sp, i === 0);
+    }
+    for (let i = 0; i < len - 1; i++) {
+      addLnk(pts[i], pts[i + 1], sp);
+    }
+  }
+
+  else if (config.shape === '布料 (Cloth)') {
+    let cols = 15, rows = 15, sp = 20;
+    cx -= (cols * sp) / 2;
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) addPt(cx + x * sp, cy + y * sp, y === 0);
+    }
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        let i = y * cols + x;
+        if (x < cols - 1) addLnk(pts[i], pts[i + 1], sp);
+        if (y < rows - 1) addLnk(pts[i], pts[i + cols], sp);
+      }
+    }
+  }
+  else if (config.shape === '果冻方块 (Jelly Box)') {
+    config.iterations=1
+    let size = 6, sp = 90;
+    cx -= (size * sp) / 2;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) addPt(cx + x * sp, cy + y * sp, false);
+    }
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        let i = y * size + x;
+        if (x < size - 1) addLnk(pts[i], pts[i + 1], sp);
+        if (y < size - 1) addLnk(pts[i], pts[i + size], sp);
+        if (x < size - 1 && y < size - 1) {
+          addLnk(pts[i], pts[i + size + 1], sp * Math.SQRT2);
+          addLnk(pts[i + 1], pts[i + size], sp * Math.SQRT2);
+        }
+        if (x < size - 2) addLnk(pts[i], pts[i + 2], sp * 2);
+        if (y < size - 2) addLnk(pts[i], pts[i + size * 2], sp * 2);
+      }
+    }
+  }
+  else if (config.shape === '桥梁 (Bridge)') {
+    let cols = 20, sp = 30;
+    cx -= (cols * sp) / 2; cy = h / 2 - 50;
+    let bp = [];
+    for(let i = 0; i < cols; i++) bp.push(addPt(cx + i * sp, cy, i === 0 || i === cols - 1));
+    for(let i = 1; i < cols - 1; i++) bp.push(addPt(cx + i * sp, cy - sp, false));
+    for(let i = 0; i < cols - 1; i++) addLnk(bp[i], bp[i+1], sp);
+    for(let i = 0; i < cols - 3; i++) addLnk(bp[cols + i], bp[cols + i + 1], sp);
+    for(let i = 1; i < cols - 1; i++) {
+        let b = i, t = cols + i - 1;
+        addLnk(bp[b], bp[t], sp);
+        if (i < cols - 2) {
+            addLnk(bp[b], bp[t + 1], sp * Math.SQRT2);
+            addLnk(bp[b + 1], bp[t], sp * Math.SQRT2);
+        }
+    }
+    addLnk(bp[0], bp[cols], sp * Math.SQRT2);
+    addLnk(bp[cols - 1], bp[bp.length - 1], sp * Math.SQRT2);
+  }
+};
+
+// 变更 1：初始化重力变量与撕裂残影池，绑定陀螺仪
+let gx=0, gy=0, mouseXY=[0,0],tears=[]; if(navigator.maxTouchPoints)window.ondeviceorientation=e=>{ gx=e.gamma/45; gy=e.beta/45 };
+
+const update = () => {
+  pts.forEach(p => {
+    if (p.pinned) return;
+    let vx = (p.x - p.ox) * config.friction;
+    let vy = (p.y - p.oy) * config.friction;
+    p.ox = p.x; p.oy = p.y;
+    // 变更 2：应用陀螺仪偏移量 gx, gy
+    p.x += vx + gx; p.y += vy + gy + config.gravity;
+    if (p.y > h) { p.y = h; p.oy = p.y + (p.y - p.oy) * config.bounce; }
+    if (p.x < 0) { p.x = 0; p.ox = p.x + (p.x - p.ox) * config.bounce; }
+    if (p.x > w) { p.x = w; p.ox = p.x + (p.x - p.ox) * config.bounce; }
+  });
+
+  for (let i = 0; i < config.iterations; i++) {
+    for (let j = lnks.length - 1; j >= 0; j--) {
+      let l = lnks[j];
+      let dx = l.b.x - l.a.x, dy = l.b.y - l.a.y;
+      let dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 0.0001) continue;
+
+      if (dist > l.d * config.tearThreshold) {
+        lnks.splice(j, 1);
+        continue;
+      }
+
+      // 【核心升级】在松弛法中乘上 stiffness (刚度)，数值越小，弹簧越有弹性
+      let diff = (l.d - dist) / dist * 0.5 * l.stiffness;
+      let offsetX = dx * diff, offsetY = dy * diff;
+
+      if (!l.a.pinned) { l.a.x -= offsetX; l.a.y -= offsetY; }
+      if (!l.b.pinned) { l.b.x += offsetX; l.b.y += offsetY; }
+    }
+  }
+};
+
+const draw = () => {
+  ctx.clearRect(0, 0, w, h);
+
+  // 【视觉升级】根据 rainbow 开关决定绘制单色还是彩虹色线段
+  ctx.lineWidth = 1.5;
+  if (config.rainbow) {
+    lnks.forEach((l, idx) => {
+      ctx.beginPath();
+      let hue = (idx * 360 / lnks.length) % 360;
+      ctx.strokeStyle = `hsla(${hue}, 100%, 60%, 0.8)`;
+      ctx.moveTo(l.a.x, l.a.y);
+      ctx.lineTo(l.b.x, l.b.y);
+      ctx.stroke();
+    });
+  } else {
+    ctx.strokeStyle = 'rgba(0, 170, 255, 0.6)';
+    ctx.beginPath();
+    lnks.forEach(l => { ctx.moveTo(l.a.x, l.a.y); ctx.lineTo(l.b.x, l.b.y); });
+    ctx.stroke();
+  }
+
+  if (config.renderMode[1] !== '框') {
+    if (config.renderMode === '线段')  ctx.setLineDash([5, 5]);
+    ctx.fillStyle = '#fff';
+    pts.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.pinned ? 4 : 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  // 👇 新增：绘制拖拽线
+  if (dragPt) lnks.filter(l => l.a === dragPt || l.b === dragPt).forEach(l => {
+    let dx = l.b.x - l.a.x, dy = l.b.y - l.a.y, dist = Math.sqrt(dx*dx + dy*dy), tension = Math.min(dist / l.d, 2);
+    ctx.strokeStyle = `hsla(${(2-tension)*60}, 100%, 60%, 0.9)`; ctx.lineWidth = 2 + tension; ctx.beginPath(); ctx.moveTo(l.a.x, l.a.y); ctx.lineTo(l.b.x, l.b.y); ctx.stroke();
+
+
+  ctx.beginPath();
+  ctx.moveTo(dragPt.x, dragPt.y);
+  ctx.lineTo(...mouseXY);
+  // 根据距离改变颜色：绿→黄→红
+  let hue = (2 - tension) * 120;
+  ctx.strokeStyle = `hsla(${hue}, 100%, 60%, 0.8)`;
+  ctx.lineWidth = 2 + tension * 2;
+  ctx.setLineDash([5, 5]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+
+  });
+
+
+
+  requestAnimationFrame(() => { update(); draw(); });
+};
+
+window.addEventListener('mousedown', e => {
+  let minDist = 1200;
+  pts.forEach(p => {
+    let d = (p.x - e.clientX)**2 + (p.y - e.clientY)**2;
+    if (d < minDist) { minDist = d; dragPt = p; }
+  });
+  if(e.shiftKey)dragPt.pinned^=1
+});
+window.addEventListener('mousemove', e => {
+  mouseXY = [e.clientX,e.clientY]
+  if (dragPt) {
+    dragPt.x = e.clientX; dragPt.y = e.clientY;
+    dragPt.ox = dragPt.x; dragPt.oy = dragPt.y;
+  }
+});
+window.addEventListener('mouseup', () => dragPt = null);
+
+const gui = new GUI({ title: '物理引擎控制台' }),g1=gui.addFolder('TODO').open(0);
+gui.add(config, 'shape', ['圆形果冻 (Circle Jelly)', '绳索 (Rope)','布料 (Cloth)', '果冻方块 (Jelly Box)', '桥梁 (Bridge)']).name('形状').onChange(() => initShape());
+gui.add(config, 'gravity', 0, 2).name('重力 (Gravity)');
+gui.add(config, 'friction', 0.9, 1).name('空气阻力 (Friction)');
+gui.add(config, 'reset').name('重置场景');
+
+g1.add(config, 'rainbow').name('彩虹色连线 (Rainbow)');
+g1.add(config, 'renderMode', ['线框', '线段','线段和质点']).name('渲染模式');
+g1.add(config, 'bounce', 0.1, 1).name('边界反弹系数 (Bounce)');
+g1.add(config, 'iterations', 1, 25, 1).name('刚性帧率 (Iterations)');
+gui.add(config, 'tearThreshold', 1.1, 25).name('撕裂阈值Shift+Drag');
+window.addEventListener('contextmenu',config.reset)
+
+initShape();
+draw();
+</script>
+</body>
+</html>

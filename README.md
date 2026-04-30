@@ -18,6 +18,7 @@ normal phys:
 
 - [🔴balls_bezier](./demo/balls_bezier.htm), Classic.
 - [🔴balls](./demo/balls.htm)... [`D2(x,y)(runs,turn)` func](https://editor.p5js.org/duangsuse/sketches/bwMmjzmX_), [🏀 Box 3D balls!](https://codepen.io/duangsuz/full/OPRzoBL)
+- [👠Constraint P/Link](./demo/field/cstr.htm)
 - [🖥cmatrix](./demo/cmatrix.htm), [👍 GUI+TUI Game 2048](./study/2048.htm)
 - [🍥fft](./demo/fft.htm), [(equations used)](https://paidax01.github.io/math-curve-loaders/)
 - [🧷box_bezier](./demo/box_bezier.htm), [👍 Sandboxels](https://neal.fun/sandboxels/)
