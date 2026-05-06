@@ -14,26 +14,26 @@ more retro-goods like Phase Beam、Bubble、Nexus、Water Ripple、Grass can be 
 - [🦢 Boids](./my_boids.htm)
 - [💧 Liquid Glass](./c_glass.htm), try Damp=.99, Brush large
 
-normal phys:
+normal phys(**gravity sensors supported!**):
 
 - [🔴balls_bezier](./demo/balls_bezier.htm), Classic.
-- [🔴balls](./demo/balls.htm)... [`D2(x,y)(runs,turn)` func](https://editor.p5js.org/duangsuse/sketches/bwMmjzmX_), [🏀 Box 3D balls!](https://codepen.io/duangsuz/full/OPRzoBL)
+- [🔴balls](./demo/balls.htm)... [🏀 Box 3D balls!](https://codepen.io/duangsuz/full/OPRzoBL), [CG101: `D2(x,y)(runs,turn)` func](https://editor.p5js.org/duangsuse/sketches/bwMmjzmX_)
 - [👠Constraint P/Link](./demo/field/cstr.htm)
+- [🍥fft XYs2rhoTaus](./demo/fft.htm), [(Eq. used)](https://paidax01.github.io/math-curve-loaders/)
 - [🖥cmatrix](./demo/cmatrix.htm), [👍 GUI+TUI Game 2048](./study/2048.htm)
-- [🍥fft](./demo/fft.htm), [(equations used)](https://paidax01.github.io/math-curve-loaders/)
 - [🧷box_bezier](./demo/box_bezier.htm), [👍 Sandboxels](https://neal.fun/sandboxels/)
 
 field:
 
+- [💦JS Water](./demo/field/water.htm) & [Our Holo Cosmos(3)](./cosmos.html): [☯️！](./study/yinyang.htm) [🍩！](https://codepen.io/duangsuz/full/NPRmwYv) [👑！](https://codepen.io/duangsuz/full/qEavQLd)
 - [⏳c_sand](./c_sand.html), [heat_death](./demo/field/heat_death.htm)
-- [💦JS Water](./demo/field/water.htm) & [Our Holo Cosmos](./cosmos.html): [☯️！](./study/yinyang.htm) [🍩！](https://codepen.io/duangsuz/full/NPRmwYv) [👑](https://codepen.io/duangsuz/full/qEavQLd)
-- [💈hair_style](./demo/field/hair_style.htm), [👍 xyz Voxels(Minecraft)](https://mrdoob.com/#/129/voxels)
+- [💈hair_style (MouseR)](./demo/field/hair_style.htm), [👍 xyz Voxels(Minecraft)](https://mrdoob.com/#/129/voxels)
 - [🏙van_gogh: Starry night](./demo/van_gogh.htm)
 - [🏙van_sfx: Math-ic carpet](./demo/van_sfx.htm)
 
 field(hard):
 
-- [Clothes/Jelly 🎄 Blob Opera](https://www.youtube.com/watch?v=U4xafX1jR3c)
+- [Vid: Clothes/Jelly 🎄 Blob Opera](https://www.youtube.com/watch?v=U4xafX1jR3c)
 - [💦flow](./demo/field/flow.htm), [👍 WASM phys](https://oimo.io/works/water/), [🎄 XMas tree/z-index](./study/xmas.htm)
 - [Clothes](https://codepen.io/duangsuz/pen/OPXrgVy?editors=1000) & [👕 ⛈Live2D/Piecewise-Affine trans](https://codepen.io/duangsuz/pen/QwEzgWG?editors=1000) drop a image, mid-click!
 
@@ -48,12 +48,12 @@ field(hard):
 
 [Sorting Vis (Text mode)](https://duangsuse.github.io/mkey/making_reco/#sorts3) 玩法：tap【记录】，tap播放。
 
-[Stalin & PNG bars sort](https://www.bilibili.com/video/BV1od9KB2ENd), [With sound](https://www.bilibili.com/video/BV1j6mVBJELL) + [🐧 Giegie](https://www.bilibili.com/video/BV1h1muB8EA4)
+[Vid: Stalin & PNG bars sort](https://www.bilibili.com/video/BV1od9KB2ENd), [With sound](https://www.bilibili.com/video/BV1j6mVBJELL) + [🐧 Gogo Giegie](https://www.bilibili.com/video/BV1h1muB8EA4)
 
 * [🧷 **Trie URL/Dict tokenizer & `basenc --help` impl**](./study/trie.htm) _逆波兰带步骤计算器、Trie后缀压缩树、cubic-bezier()，这些拓扑排序（可视化）日用算法_
 * [**📚 Good First DSP** - `禅` 👍👍👍](./study/)
 
-^ [tutour](./demo/)
+^ [tutour (PPT)](./demo/)
 
 ## Game-Life
 
@@ -68,6 +68,7 @@ field(hard):
 > Cool [📊 PoV display, Holographic Volume](https://jsbin.com/sowamo/edit?output), Open Menu&"Apply", idShape=SDF Voxel
 
 ```py
+# ipy Ctrl-K image viewer
 import os, cv2, numpy as np
 grays = [*" .-:=*+%@#"]
 def ascii(img, wh=np.int32(os.popen('stty size', 'r').read().split()[::-1])  ):
@@ -78,9 +79,9 @@ def ascii(img, wh=np.int32(os.popen('stty size', 'r').read().split()[::-1])  ):
     (''.join(y) for y in g[b] )
   ]
 
-s=os.popen('ls ~/Pictures/Screenshots/*').read()[:-1]
 @get_ipython().pt_app.key_bindings.add('c-k')
 def f(ev):
+  s=os.popen('ls -t ~/Pictures/Screenshots/* | head -n 1').read().strip()
   print(*ascii(cv2.imread(s)), sep="\n")
 
 # Heart anim
@@ -114,7 +115,10 @@ except:
 
 ### FBm
 
-Logic projection of the shader's `main()` loop.
+Logic projection of the "Magic Smoke" shader's `main()` loop.
+
+* [Recursive FBM (numpy-cpu notebook)](https://colab.research.google.com/drive/1wL-9bIQgehS4ODqVP93FZsja-0g6CJlk?usp=sharing)
+* [that .zip: Android Live Wallpapers](https://www.reddit.com/r/Android/comments/1jxajwi/here_are_all_the_stock_live_wallpapers_from/)
 
 ```python
 import numpy as np
@@ -125,7 +129,7 @@ def noise(p):
   i = np.floor(p).astype(int); f = p - i
   f = f*f*(3 - 2*f) # Hermite smoothing
   
-  # Hashing logic (Vectorized)
+  # Hashing logic (Vectorized py random)
   def h(c):
     return (np.sin(c[...,0]*12.9898 + c[...,1]*78.233) * 43758.5453) % 1
 
@@ -146,7 +150,7 @@ def warp(p, t):
   q = np.stack([fbm(p + t), fbm(p + t + 5.2)], axis=-1)
   # r = f(p + 4q + d2)
   r = np.stack([fbm(p + 4*q + 1.7), fbm(p + 4*q + 9.2)], axis=-1)
-  # output = f(p + 4r)
+  # smokeFlavor = f(p + 4r)
   return fbm(p + 4*r)
 
 # Execute
@@ -160,5 +164,4 @@ plt.axis('off')
 plt.show()
 ```
 
-* [Recursive FBM (numpy-cpu notebook)](https://colab.research.google.com/drive/1wL-9bIQgehS4ODqVP93FZsja-0g6CJlk?usp=sharing)
-* [that .zip: Android Live Wallpapers](https://www.reddit.com/r/Android/comments/1jxajwi/here_are_all_the_stock_live_wallpapers_from/)
+Have fun!

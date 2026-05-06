@@ -5,7 +5,7 @@
   <title>Verlet Physics - Rainbow Circle Jelly</title>
   <style>
     body { margin: 0; overflow: hidden; background: #1a1a1a; cursor: crosshair; }
-    canvas { display: block; }
+    canvas { display: block; touch-action:none; }
   </style>
 </head>
 <body>
@@ -23,9 +23,9 @@ const config = {
   renderMode: '线段',
   gravity: 0.5,
   friction: 0.99,
-  bounce: 0.8,
+  bounce: 1.1,
   iterations: 4,
-  tearThreshold: 25,
+  tearThreshold: 25,sft:0,
   reset: () => initShape()
 };
 
@@ -36,7 +36,8 @@ const resize = () => { w = c.width = innerWidth; h = c.height = innerHeight; };
 window.addEventListener('resize', resize);
 resize();
 
-const addPt = (x, y, pinned = false) => {
+//world: UV{x,y} Gnd{A} Ln{A,B,d,sti}
+const addPt = (x, y, pinned = 0b0) => {
   let p = { x, y, ox: x, oy: y, pinned };
   pts.push(p);
   return p;
@@ -198,7 +199,7 @@ const draw = () => {
     ctx.stroke();
   }
 
-  if (config.renderMode[1] !== '框') {
+  if (config.renderMode !== '线框无点') {
     if (config.renderMode === '线段')  ctx.setLineDash([5, 5]);
     ctx.fillStyle = '#fff';
     pts.forEach(p => {
@@ -233,34 +234,37 @@ const draw = () => {
   requestAnimationFrame(() => { update(); draw(); });
 };
 
-window.addEventListener('mousedown', e => {
+window.addEventListener('pointerdown', e => {
   let minDist = 1200;
   pts.forEach(p => {
     let d = (p.x - e.clientX)**2 + (p.y - e.clientY)**2;
     if (d < minDist) { minDist = d; dragPt = p; }
   });
-  if(e.shiftKey)dragPt.pinned^=1
+  if(e.shiftKey||config.sft)dragPt.pinned^=1
 });
-window.addEventListener('mousemove', e => {
+window.addEventListener('pointermove', e => {
   mouseXY = [e.clientX,e.clientY]
   if (dragPt) {
     dragPt.x = e.clientX; dragPt.y = e.clientY;
     dragPt.ox = dragPt.x; dragPt.oy = dragPt.y;
   }
 });
-window.addEventListener('mouseup', () => dragPt = null);
+window.addEventListener('pointerup', e =>{ if(config.sft==1)dragPt.pinned=0;  dragPt = null });
 
 const gui = new GUI({ title: '物理引擎控制台' }),g1=gui.addFolder('TODO').open(0);
 gui.add(config, 'shape', ['圆形果冻 (Circle Jelly)', '绳索 (Rope)','布料 (Cloth)', '果冻方块 (Jelly Box)', '桥梁 (Bridge)']).name('形状').onChange(() => initShape());
+gui.add(config, 'renderMode', ['线段','线框', '线框无点']).name('渲染模式');
+
 gui.add(config, 'gravity', 0, 2).name('重力 (Gravity)');
-gui.add(config, 'friction', 0.9, 1).name('空气阻力 (Friction)');
+g1.add(config, 'friction', 0.9, 1).name('允许震荡 (Friction)');
 gui.add(config, 'reset').name('重置场景');
 
 g1.add(config, 'rainbow').name('彩虹色连线 (Rainbow)');
-g1.add(config, 'renderMode', ['线框', '线段','线段和质点']).name('渲染模式');
-g1.add(config, 'bounce', 0.1, 1).name('边界反弹系数 (Bounce)');
+g1.add(config, 'bounce', 0.9, 2.7).name('边界反弹系数 (Bounce)');
 g1.add(config, 'iterations', 1, 25, 1).name('刚性帧率 (Iterations)');
-gui.add(config, 'tearThreshold', 1.1, 25).name('撕裂阈值Shift+Drag');
+gui.add(config, 'tearThreshold', 1.1, 25).name('撕裂阈值');
+gui.add(config, 'sft', 0,2, 1).name('稳固性 (Shift+Drag)');
+
 window.addEventListener('contextmenu',config.reset)
 
 initShape();
