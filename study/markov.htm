@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Markov Chain</title>
+<script>
+/*
+Markov(['.', 'Hi','Jack']) → 训练模型 → (maxLen, temp) → 生成文本
+
+model    // Map: "tok1|tok2|tok3" → {next_token: count}  用前N个token预测下一个
+q0       // Array: 句首（用于生成开口词）
+qkv      // Map: token → Set(states)  记录token出现过的上下文（KN平滑）
+
+🔬 训练 ["春","眠","不","觉","晓"], n=2
+  i=0: state="春|眠", next="不" → model["春|眠"]["不"]=1
+  i=1: state="眠|不", next="觉" → model["眠|不"]["觉"]=1
+  i=2: state="不|觉", next="晓" → ...
+
+*/
+
+const Markov = (az, n = 3) => {
+  let model = new Map(), q0 = [], qkv = new Map(), i, state, next, counts;
+  
+  for (i = 0; i < az.length - n; i++)
+    state = az.slice(i, i + n).join('|'),
+    next = az[i + n],
+    (i === 0 || /[。！？\.\!\?]/.test(az[i - 1])) && q0.push(state),
+    model.has(state) || model.set(state, {}),
+    counts = model.get(state),
+    counts[next] = (counts[next] || 0) + 1,
+    qkv.has(next) || qkv.set(next, new Set()),
+    qkv.get(next).add(state);
+  
+  return (maxLen = 80, temp = 2.0) => {
+    // 奖励"万金油"词汇。权重W = (原始频率 + KN平滑 × 0.5) ^ (1/temp)
+    let randomness = (freq, t) => {
+      let items = Object.entries(freq), weights, total, rand, i;
+      return !items.length ? null : (
+        weights = items.map(([tok, f]) => Math.pow(f + (qkv.get(tok)?.size || 1) / model.size * 0.5, 1 / t)),
+        total = weights.reduce((a, b) => a + b, 0),
+        rand = Math.random() * total,
+        items[weights.findIndex(w => (rand -= w) <= 0) >>> 0] || items[items.length - 1] // 轮盘赌采样
+      )[0];
+    }, state = q0[~~(Math.random() * q0.length)] || "", aigc = state.split('|'), backoff = 0, cando, nxt;
+    
+    for (i = 0; i < maxLen && q0.length; i++)
+      (cando = model.get(state)) && Object.keys(cando).length && (nxt = randomness(cando, temp)) ? (
+        aigc.push(nxt),
+        state = aigc.slice(-n).join('|'),
+        backoff = 0,
+        /[。！？]/.test(nxt) && aigc.length > 15 && Math.random() < 0.6 && (i = maxLen)
+        // temp 平衡创造性与连贯性→ 遇句尾60%概率停止
+      ) : aigc.length >= n - 1 ? (
+        state = aigc.slice(-(n - 1)).join('|'),
+        ++backoff > 3 && (i = maxLen)
+        //缩窄窗口到(n-1)-gram重试【输入法候选】，3次
+      ) : i = maxLen;
+    
+    return aigc.join('').replace(/##/g, '').replace(/\[(CLS|SEP|PAD)\]/g, '');
+  };
+};
+</script>
+
+<style>
+body{padding:20px;min-height:101vh;
+  font:14px/1.8 monospace;background:#fafafa}
+#inp{width:100%;height:180px;resize:vertical}
+#r{margin-top:20px}
+.item{padding:15px;margin:8px 0;background:#fff;border-left:4px solid #4CAF50;box-shadow:0 2px 4px rgba(0,0,0,.1);border-radius:4px}
+</style>
+
+<textarea id=inp placeholder="👆 MouseR 右键选择示例文本，然后向下滚动生成内容..."></textarea>
+<div id=r></div>
+
+<script src="https://cdn.jsdelivr.net/npm/rita"></script>
+<script>
+const demos=[
+  `
+    人工智能是计算机科学的一个分支。它企图了解智能的实质，并生产出一种新的能以人类智能相似的方式做出反应的智能机器，该领域的研究包括机器人、语言识别、图像识别、自然语言处理和专家系统等。
+    人工智能从诞生以来，理论和技术日益成熟，应用领域也不断扩大，可以设想，未来人工智能带来的科技产品，将会是人类智慧的“容器”。
+    马尔可夫链是一组离散分布的随机变量。机器学习在数据分析中有着广泛的应用。自然语言处理让计算机能够理解人类语言。
+  `,
+  '春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。床前明月光，疑是地上霜。举头望明月，低头思故乡。',
+  '人工智能改变世界。机器学习推动创新。深度学习模拟大脑。神经网络构建未来。自然语言处理连接人机。',
+  'The quick brown fox jumps over the lazy dog. The dog barks at the fox. The fox runs away quickly.',
+  '今天天气真好，阳光明媚。明天也会很好，万里无云。后天可能下雨，记得带伞。大后天会放晴，适合出游。',
+  '代码改变世界！创新驱动未来！技术创造价值！梦想照进现实！坚持终将成功！',
+  "小明和某不知名程序员在机房里看电视，那只橘猫却悄悄地喜欢上了孙悟空的金箍棒。",
+  "诸葛亮看着电视里的孙悟空，旁边的小红正在和一台生锈的机器人练习唱跳Rap。",
+  "我是一只神秘的猫咪，我不仅喜欢看电视，还喜欢看着某不知名程序员疯狂改Bug。",
+  "孙悟空在花果山吃大西瓜，而那只疯狂的橘猫却把机器人的键盘给吃掉了。",
+  "小红和诸葛亮在思考人生，某不知名程序员看着我，觉得比起写代码，还是做一只猫咪感觉非常满足。"
+], rep=(n,f)=>{while(n-->0)f()},
+noDup=(f, rs=new Set,r)=>()=>{while(rs.has(r)){r=f()} rs.add(r); return r }
+
+toWords = ((u=new Intl.Segmenter('zh', { granularity: /^#long/.test(location.hash)? 'word':'grapheme' }))=>
+(corpusToWTF = (az, kN = 2) => az.reduce((rm, s) => rm.addText(Array.from(u.segment(s)).flatMap(w => w.isWordLike ? [w.segment] : []).join(' ')), RiTa.markov(kN)).generate()?.replace(/\s+/g, '') || '语料不足'
+,
+s=>[...u.segment(s)].flatMap(w => w.isWordLike!==false ? [w.segment] : [])
+))()
+
+
+
+;(inp.oncontextmenu=inp.onblur=(ev, i0)=>{
+  ev.preventDefault?.();
+  if(ev.type=='blur') i0=-1
+  let s, id=i0?? +prompt('🎲 选择示例 (0-4):\n\n'+demos.map((d,i)=>`${i}. ${d.slice(0,30)}...`).join('\n\n'));
+  if(s=demos[id])inp.value=s
+
+  gen=(Markov(toWords(inp.value))),r.innerHTML='✨ Random scroll enabled. <a target=_ href=#longer>Try RiTa?</a>'
+  if(/er/.test(location.hash))gen=corpusToWTF.bind(0, inp.value.split(/[。！？\.\!\?]/g))
+
+  let e=window, i=1
+  rep(30, e.onscroll=(ev)=>{
+    if(ev) if(e.scrollTop + e.offsetHeight + 40 > e.scrollHeight) return
+    r.insertAdjacentHTML('beforeEnd', `<p class="item">${i++}. ${gen()}</p>`)
+  });
+
+})({}, 0)
+
+oncontextmenu=()=>scroll({top:0, behavior:'smooth'})
+</script>

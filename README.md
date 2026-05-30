@@ -51,6 +51,7 @@ field(hard):
 [Vid: Stalin & PNG bars sort](https://www.bilibili.com/video/BV1od9KB2ENd), [With sound](https://www.bilibili.com/video/BV1j6mVBJELL) + [🐧 Gogo Giegie](https://www.bilibili.com/video/BV1h1muB8EA4)
 
 * [🧷 **Trie URL/Dict tokenizer & `basenc --help` impl**](./study/trie.htm) _逆波兰带步骤计算器、Trie后缀压缩树、cubic-bezier()，这些拓扑排序（可视化）日用算法_
+* [🤖 文字探索游戏](./study/markov.htm) _单字ngram kNN平滑混乱文本生成（输入法算法）_
 * [**📚 Good First DSP** - `禅` 👍👍👍](./study/)
 
 ^ [tutour (PPT)](./demo/)
