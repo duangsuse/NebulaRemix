@@ -1073,8 +1073,1326 @@ WH.initCartesianCanvas('viz', ({ ctx, width, height, minDim }) => {
     };
 });
 </script>
+<script type=x>
+/**
+ * QUADTREE SPACE PRUNING VISUALIZATION
+ * Demonstrates recursive spatial subdivision for rendering implicit mathematical functions.
+ * prunes regions that do not contain the curve, focusing resolution where needed.
+ */
 
+const EQUATIONS = {
+    "Circle": (x, y) => x * x + y * y - 1,
+    "Heart Curve": (x, y) => Math.pow(x * x + y * y - 1, 3) - x * x * Math.pow(y, 3),
+    "Complex Ripple: sin(x²+y²)-cos(x*y)=0": (x, y) => Math.sin(x * x + y * y) - Math.cos(x * y)
+};
 
+const runReset = (s) => {
+    s.depth = 3;
+    s.equation = "Circle";
+};
+
+const { state, ui } = WH.createApp({
+    title: "Quadtree Space Pruning",
+    params: {
+        depth: { value: 3, min: 1, max: 7, step: 1, label: "Quadtree Depth" },
+        equation: { 
+            value: "Circle", 
+            options: ["Circle", "Heart Curve", "Complex Ripple: sin(x²+y²)-cos(x*y)=0"], 
+            label: "Equation" 
+        },
+        reset: { type: 'button', label: "Reset", onClick: runReset }
+    },
+    editorial: {
+        hud: [
+            { label: "Active Cells", value: "0" },
+            { label: "Pruning Efficiency", value: "0%" }
+        ]
+    }
+});
+
+// Internal storage for the calculated nodes
+let quadtreeNodes = [];
+
+/**
+ * Heuristic intersection check:
+ * Samples the sign of the implicit function at the center and corners of the cell.
+ * If signs differ, a zero-crossing (the curve) is likely inside the AABB.
+ */
+const checkIntersection = (x, y, size, eqFunc) => {
+    const half = size / 2;
+    const samples = [
+        eqFunc(x, y),                  // Center
+        eqFunc(x - half, y - half),    // Bottom-Left
+        eqFunc(x + half, y - half),    // Bottom-Right
+        eqFunc(x - half, y + half),    // Top-Left
+        eqFunc(x + half, y + half)     // Top-Right
+    ];
+    
+    const signs = samples.map(Math.sign);
+    // If any sample is exactly 0, or if not all signs are the same, there's an intersection
+    return signs.includes(0) || !signs.every(v => v === signs[0]);
+};
+
+/**
+ * Recursive subdivision generator
+ */
+const updateQuadtree = () => {
+    const nodes = [];
+    const eqFunc = EQUATIONS[state.equation];
+    const targetDepth = state.depth;
+    let activeCount = 0;
+
+    const subdivide = (x, y, size, currentDepth) => {
+        const intersects = checkIntersection(x, y, size, eqFunc);
+        
+        // Base case: Pruned (empty) or max depth reached
+        if (!intersects || currentDepth === targetDepth) {
+            nodes.push({ x, y, size, intersects });
+            if (intersects) activeCount++;
+            return;
+        }
+
+        // Recursive case: Subdivide into 4 quadrants
+        const nextSize = size / 2;
+        const offset = size / 4;
+        
+        subdivide(x - offset, y + offset, nextSize, currentDepth + 1); // Top Left
+        subdivide(x + offset, y + offset, nextSize, currentDepth + 1); // Top Right
+        subdivide(x - offset, y - offset, nextSize, currentDepth + 1); // Bottom Left
+        subdivide(x + offset, y - offset, nextSize, currentDepth + 1); // Bottom Right
+    };
+
+    // Start with a single root cell covering [-2, 2] space
+    subdivide(0, 0, 4, 0);
+    quadtreeNodes = nodes;
+
+    // Update Editorial HUD
+    const totalPotential = Math.pow(4, targetDepth);
+    const efficiency = (1 - (nodes.length / totalPotential)) * 100;
+    
+    ui.setEditorial({
+        hud: [
+            { label: "Active Cells", value: activeCount.toLocaleString() },
+            { label: "Pruning Efficiency", value: efficiency.toFixed(1) + "%" }
+        ]
+    });
+};
+
+// Initial state synchronization
+state._subscribe('depth', updateQuadtree);
+state._subscribe('equation', updateQuadtree);
+updateQuadtree();
+
+// Rendering Engine
+WH.initCartesianCanvas('viz', ({ ctx, minDim }) => {
+    
+    // Static Legend setup
+    ui.setLegend([
+        { label: 'Occupied (Active)', color: '--chart-2' },
+        { label: 'Pruned (Empty)', color: '--negative' }
+    ]);
+
+    // The scale factor: map [-2, 2] to a comfortable viewport size
+    // We use a square grid centered at (0,0)
+    const worldToPx = (minDim * 0.8) / 4;
+
+    return ({ width, height }) => {
+        // Draw coordinate axes
+        ctx.strokeStyle = WH.getColor('--stroke-default');
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(-width/2, 0); ctx.lineTo(width/2, 0);
+        ctx.moveTo(0, -height/2); ctx.lineTo(0, height/2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Label Axes
+        ctx.fillStyle = WH.getColor('--on-surface-default');
+        ctx.font = '12px sans-serif';
+        ctx.fillText('-2', -2 * worldToPx, 15);
+        ctx.fillText('2', 2 * worldToPx, 15);
+        ctx.fillText('x', width/2 - 20, 15);
+        ctx.fillText('y', 10, height/2 - 20);
+
+        // Draw Quadtree Nodes
+        const activeColor = WH.getColor('--chart-2');
+        const prunedColor = WH.transparent(WH.getColor('--negative'), 0.15);
+        const prunedStroke = WH.transparent(WH.getColor('--negative'), 0.3);
+
+        for (const node of quadtreeNodes) {
+            const pxX = node.x * worldToPx;
+            const pxY = node.y * worldToPx;
+            const pxSize = node.size * worldToPx;
+
+            if (node.intersects) {
+                // Occupied cell: Sharp green outline
+                ctx.strokeStyle = activeColor;
+                ctx.lineWidth = node.size < 0.2 ? 1 : 2;
+                ctx.strokeRect(pxX - pxSize/2, pxY - pxSize/2, pxSize, pxSize);
+                
+                // If it's a leaf node at max depth, fill it slightly
+                if (node.size < 0.1) {
+                    ctx.fillStyle = WH.transparent(activeColor, 0.4);
+                    ctx.fillRect(pxX - pxSize/2, pxY - pxSize/2, pxSize, pxSize);
+                }
+            } else {
+                // Pruned cell: Faint red tint
+                ctx.fillStyle = prunedColor;
+                ctx.fillRect(pxX - pxSize/2, pxY - pxSize/2, pxSize, pxSize);
+                ctx.strokeStyle = prunedStroke;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(pxX - pxSize/2, pxY - pxSize/2, pxSize, pxSize);
+            }
+        }
+    };
+});
+</script><script type=x>
+const resetSim = (s) => {
+    s.yaw = 0;
+    s.pitch = 0;
+    s.roll = 0;
+};
+
+const { state, ui } = WH.createApp({
+    title: "坐标系拆解的雪崩：万向节死锁 (Gimbal Lock)",
+    params: {
+        yaw: { value: 0, min: -180, max: 180, step: 1, label: "外环 Z (Yaw)" },
+        pitch: { value: 0, min: -90, max: 90, step: 1, label: "中环 X (Pitch)" },
+        roll: { value: 0, min: -180, max: 180, step: 1, label: "内环 Y (Roll)" },
+        reset: { type: 'button', label: '重置', onClick: resetSim }
+    },
+    editorial: {
+        hud: [
+            { label: "状态", value: "正常" }
+        ]
+    }
+});
+
+// Internal state tracking
+state.isLocked = false;
+
+// Subscribe to status changes to update UI safely (outside 60fps loop)
+state._subscribe('isLocked', (locked) => {
+    const statusText = locked 
+        ? "警告：发生万向节死锁！外环和内环共面，丢失一个自由度。" 
+        : "正常。三个自由度独立。";
+    ui.setEditorial({
+        hud: [{ label: "状态", value: statusText }]
+    });
+});
+
+WH.initThree('viz', ({ scene, camera, renderer, controls }) => {
+    // Scene setup
+    scene.background = new THREE.Color(WH.getColor('--surface-container-low'));
+    camera.position.set(40, 30, 50);
+    camera.lookAt(0, 0, 0);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(10, 20, 10);
+    scene.add(dirLight);
+
+    // Helpers: Grid
+    const grid = new THREE.GridHelper(100, 20, 0x888888, 0xcccccc);
+    grid.position.y = -25;
+    scene.add(grid);
+
+    // Create Nested Gimbals
+    // Order: Yaw (Z) -> Pitch (X) -> Roll (Y)
+    const yawGroup = new THREE.Group();   // Outer (Blue)
+    const pitchGroup = new THREE.Group(); // Middle (Red)
+    const rollGroup = new THREE.Group();  // Inner (Green)
+
+    scene.add(yawGroup);
+    yawGroup.add(pitchGroup);
+    pitchGroup.add(rollGroup);
+
+    // Ring Materials & Geometries
+    const ringGeoOuter = new THREE.TorusGeometry(20, 0.4, 16, 100);
+    const ringGeoMid = new THREE.TorusGeometry(16, 0.4, 16, 100);
+    const ringGeoInner = new THREE.TorusGeometry(12, 0.4, 16, 100);
+
+    const blueMat = new THREE.MeshStandardMaterial({ color: 0x2196f3, metalness: 0.5, roughness: 0.2 });
+    const redMat = new THREE.MeshStandardMaterial({ color: 0xf44336, metalness: 0.5, roughness: 0.2 });
+    const greenMat = new THREE.MeshStandardMaterial({ color: 0x4caf50, metalness: 0.5, roughness: 0.2 });
+
+    const ringYaw = new THREE.Mesh(ringGeoOuter, blueMat);
+    // Outer ring rotates around Z axis (rim in XY plane)
+    yawGroup.add(ringYaw);
+
+    const ringPitch = new THREE.Mesh(ringGeoMid, redMat);
+    // Middle ring rotates around X axis (rim in YZ plane)
+    ringPitch.rotation.y = Math.PI / 2; 
+    pitchGroup.add(ringPitch);
+
+    const ringRoll = new THREE.Mesh(ringGeoInner, greenMat);
+    // Inner ring rotates around Y axis (rim in XZ plane)
+    ringRoll.rotation.x = Math.PI / 2;
+    rollGroup.add(ringRoll);
+
+    // Center Object (Aircraft-like pointer)
+    const bodyGeo = new THREE.ConeGeometry(2, 10, 8);
+    const wingGeo = new THREE.BoxGeometry(12, 0.5, 3);
+    const aircraftGroup = new THREE.Group();
+    
+    const body = new THREE.Mesh(bodyGeo, new THREE.MeshStandardMaterial({ color: 0xffffff }));
+    body.rotation.x = Math.PI / 2;
+    aircraftGroup.add(body);
+
+    const wings = new THREE.Mesh(wingGeo, new THREE.MeshStandardMaterial({ color: 0xeeeeee }));
+    aircraftGroup.add(wings);
+    
+    rollGroup.add(aircraftGroup);
+
+    let frameCount = 0;
+
+    return ({ dt, state }) => {
+        // Apply rotations from state (Degrees to Radians)
+        yawGroup.rotation.z = THREE.MathUtils.degToRad(state.yaw);
+        pitchGroup.rotation.x = THREE.MathUtils.degToRad(state.pitch);
+        rollGroup.rotation.y = THREE.MathUtils.degToRad(state.roll);
+
+        // Update Controls
+        controls.update();
+
+        // Sample logic for Gimbal Lock detection (Throttled update)
+        frameCount++;
+        if (frameCount % 10 === 0) {
+            const isNowLocked = Math.abs(state.pitch) >= 88; // Dead zone near 90
+            if (state.isLocked !== isNowLocked) {
+                state.isLocked = isNowLocked;
+            }
+        }
+
+        // Visual feedback: Highlight rings if locked
+        if (state.isLocked) {
+            blueMat.emissive.setHex(0x330000);
+            greenMat.emissive.setHex(0x330000);
+        } else {
+            blueMat.emissive.setHex(0x000000);
+            greenMat.emissive.setHex(0x000000);
+        }
+    };
+});
+</script><script type=x>
+/**
+ * 游戏引擎中的真实积分：重力与离散时间
+ * 
+ * 本可视化演示了物理引擎如何利用欧拉积分（Euler Integration）
+ * 在离散的时间步长内模拟连续的物理运动。
+ */
+
+// 1. 定义顶层操作逻辑
+const spawnBalls = (s) => {
+    // 通过更新 state 触发 onReady 中的订阅者
+    s.spawnTrigger = Date.now();
+};
+
+const resetSim = (s) => {
+    s.resetTrigger = Date.now();
+};
+
+// 2. 初始化应用状态与 UI
+const { state, ui } = WH.createApp({
+    title: "游戏引擎中的真实积分：重力与离散时间",
+    params: {
+        spawn: { type: 'button', label: '生成小球', onClick: spawnBalls },
+        gravity: { value: 1, min: -2, max: 2, step: 0.1, label: "重力场" },
+        dt: { value: 0.016, min: 0.001, max: 0.1, step: 0.001, label: "时间步长 (dt)" },
+        restitution: { value: 0.8, min: 0, max: 1, step: 0.05, label: "恢复系数" },
+        play: { type: 'play', value: true, label: "运行模拟" },
+        reset: { type: 'button', label: '重置', onClick: resetSim }
+    },
+    editorial: {
+        hud: [
+            { label: "速度积分", value: "v = v + a * dt" },
+            { label: "位置积分", value: "p = p + v * dt" }
+        ]
+    }
+});
+
+// 3. 物理引擎实现
+WH.initPhysics('viz', {
+    viewport: { 
+        width: 1000, 
+        height: 450, 
+        showBounds: true // 开启碰撞边界
+    },
+    onReady: ({ world, engine, width, height, clearWorld }) => {
+        const { Bodies, Composite, Body } = Matter;
+
+        // 内部状态维护
+        const colorScale = WH.createScale(['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5']);
+        
+        const createBall = (x, y) => {
+            const radius = 20 + Math.random() * 15;
+            const ball = Bodies.circle(x, y, radius, {
+                restitution: state.restitution,
+                friction: 0.005,
+                render: {
+                    fillStyle: colorScale(Math.random())
+                }
+            });
+            // 给一个小随机初始推力
+            Body.setVelocity(ball, { x: (Math.random() - 0.5) * 10, y: 0 });
+            Composite.add(world, ball);
+        };
+
+        const initScene = () => {
+            clearWorld(); // 保持边界，清除物体
+            for(let i = 0; i < 5; i++) {
+                createBall(width * (0.2 + i * 0.15), 100);
+            }
+        };
+
+        // 初始场景
+        initScene();
+
+        // 监听按钮触发器
+        state._subscribe('spawnTrigger', () => {
+            for(let i = 0; i < 3; i++) {
+                createBall(width / 2 + (Math.random() - 0.5) * 100, 50);
+            }
+        });
+
+        state._subscribe('resetTrigger', initScene);
+
+        // 实时更新恢复系数
+        state._subscribe('restitution', (val) => {
+            Composite.allBodies(world).forEach(body => {
+                if (!body.isStatic) body.restitution = val;
+            });
+        });
+
+        // 增加物理步长迭代次数以保证高 dt 下的稳定性
+        engine.positionIterations = 10;
+        engine.velocityIterations = 10;
+
+        WH.addBadge('touch_app', '拖拽小球以互动');
+    },
+
+    onUpdate: ({ engine, state }) => {
+        if (!state.play) return;
+
+        // 映射重力
+        engine.world.gravity.y = state.gravity;
+
+        /**
+         * 离散积分核心逻辑：
+         * 我们通过调整 engine.timing.timeScale 来模拟不同 dt 的物理效果。
+         * 在游戏引擎中，dt 越小，积分越精确但计算开销越大；
+         * dt 越大，物体可能产生“穿透”或跳动。
+         */
+        // Matter.js 默认步长约 16.66ms (1/60s)
+        const baseDt = 0.0166;
+        engine.timing.timeScale = state.dt / baseDt;
+    },
+
+    onRender: ({ ctx, width, height, world, state }) => {
+        // 绘制背景
+        ctx.clearRect(0, 0, width, height);
+
+        // 绘制可视化的物理边界（Shell生成的物理边界是不可见的）
+        ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+        ctx.lineWidth = 4;
+        ctx.strokeRect(0, 0, width, height);
+
+        // 绘制物理对象
+        const bodies = Matter.Composite.allBodies(world);
+        
+        bodies.forEach(body => {
+            // 跳过厚度为500的侧壁边界，只画用户创建的物体
+            if (body.label === 'Rectangle Body') return;
+
+            const { vertices, render } = body;
+            
+            ctx.beginPath();
+            ctx.moveTo(vertices[0].x, vertices[0].y);
+            for (let i = 1; i < vertices.length; i++) {
+                ctx.lineTo(vertices[i].x, vertices[i].y);
+            }
+            ctx.closePath();
+
+            ctx.fillStyle = render.fillStyle || WH.getColor('--chart-1');
+            ctx.fill();
+            
+            ctx.strokeStyle = WH.getColor('--surface');
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 如果速度较快，绘制一个简单的速度向量标识
+            const speed = Math.hypot(body.velocity.x, body.velocity.y);
+            if (speed > 2) {
+                const angle = Math.atan2(body.velocity.y, body.velocity.x);
+                ctx.beginPath();
+                ctx.moveTo(body.position.x, body.position.y);
+                ctx.lineTo(
+                    body.position.x + Math.cos(angle) * speed * 2,
+                    body.position.y + Math.sin(angle) * speed * 2
+                );
+                ctx.strokeStyle = WH.transparent(WH.getColor('--on-surface-default'), 0.3);
+                ctx.stroke();
+            }
+        });
+
+        // 标注离散步长信息
+        if (state.dt > 0.05) {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = WH.getColor('--on-surface-default');
+            ctx.font = 'bold 16px sans-serif';
+            ctx.fillText("大步长 (dt) 导致积分不稳定", width / 2, 40);
+        }
+    }
+});
+</script>
+<script type=x>
+/**
+ * 真实的物理底层：方圆碰撞与法线解析 (AABB & Circle Collision)
+ * 本交互演示展示了游戏开发中常用的圆与轴对齐矩形 (AABB) 的碰撞检测逻辑。
+ * 核心逻辑：Clamping (钳位函数) 与 向量长度。
+ */
+
+// 1. 定义顶层执行逻辑：重置函数
+const resetSimulation = () => {
+    state.circleX = 150;
+    state.circleY = 150;
+};
+
+// 2. 初始化应用状态与 UI
+const { state, ui } = WH.createApp({
+    title: "方圆碰撞检测 (AABB & Circle Collision)",
+    params: {
+        reset: { type: 'button', label: '重置', onClick: resetSimulation }
+    },
+    editorial: {
+        hud: [
+            { label: "圆心坐标", value: "(0, 0)" },
+            { label: "矩形最近点", value: "(0, 0)" },
+            { label: "状态", value: "无碰撞" },
+            { label: "法线向量", value: "(0, 0)" }
+        ]
+    }
+});
+
+// 3. 内部状态初始化
+state.circleX = 150;
+state.circleY = 150;
+state.radius = 50;
+
+// 订阅状态更新 HUD
+state._subscribe('collisionData', (data) => {
+    ui.setEditorial({
+        hud: [
+            { label: "圆心坐标", value: `(${data.cx.toFixed(0)}, ${data.cy.toFixed(0)})` },
+            { label: "矩形最近点", value: `(${data.px.toFixed(0)}, ${data.py.toFixed(0)})` },
+            { label: "状态", value: data.colliding ? `发生碰撞 (穿透: ${data.depth.toFixed(1)})` : "未碰撞" },
+            { label: "法线向量", value: `(${data.nx.toFixed(2)}, ${data.ny.toFixed(2)})` }
+        ]
+    });
+});
+
+// 4. 初始化画布引擎
+WH.initCanvas('viz', ({ ctx, cx, cy, minDim, state }) => {
+    
+    // 设置图例
+    ui.setLegend([
+        { label: '碰撞法线 (Normal)', color: '--negative' },
+        { label: '距离向量 (Distance)', color: '--chart-2' },
+        { label: '矩形 (AABB)', color: '--surface-container-highest' }
+    ]);
+
+    // 每一帧的渲染循环
+    return ({ width, height, pointer, frameCount }) => {
+        // --- A. 更新逻辑 ---
+        if (pointer.isDown) {
+            state.circleX = pointer.x;
+            state.circleY = pointer.y;
+        }
+
+        const radius = minDim * 0.12;
+        state.radius = radius;
+
+        // 矩形定义 (居中)
+        const rectW = minDim * 0.4;
+        const rectH = minDim * 0.4;
+        const minX = cx - rectW / 2;
+        const maxX = cx + rectW / 2;
+        const minY = cy - rectH / 2;
+        const maxY = cy + rectH / 2;
+
+        // 核心算法：计算矩形上距离圆心最近的点 (Clamping)
+        const closestX = Math.max(minX, Math.min(state.circleX, maxX));
+        const closestY = Math.max(minY, Math.min(state.circleY, maxY));
+
+        // 计算距离向量
+        const dx = state.circleX - closestX;
+        const dy = state.circleY - closestY;
+        const distSq = dx * dx + dy * dy;
+        const dist = Math.sqrt(distSq);
+        
+        let colliding = dist < radius;
+        let nx = 0, ny = 0, depth = 0;
+
+        // 计算法线与穿透深度
+        if (dist > 0) {
+            // 圆心在矩形外或边缘
+            nx = dx / dist;
+            ny = dy / dist;
+            depth = radius - dist;
+        } else {
+            // 特殊情况：圆心完全在矩形内部
+            // 此时最近点就是圆心，距离为0，需寻找最近的边缘进行排斥
+            const dl = state.circleX - minX;
+            const dr = maxX - state.circleX;
+            const dt = state.circleY - minY;
+            const db = maxY - state.circleY;
+            const minDist = Math.min(dl, dr, dt, db);
+            
+            colliding = true;
+            if (minDist === dl) { nx = -1; ny = 0; depth = radius + dl; }
+            else if (minDist === dr) { nx = 1; ny = 0; depth = radius + dr; }
+            else if (minDist === dt) { nx = 0; ny = -1; depth = radius + dt; }
+            else { nx = 0; ny = 1; depth = radius + db; }
+        }
+
+        // 采样更新 HUD
+        if (frameCount % 6 === 0) {
+            state.collisionData = {
+                cx: state.circleX, cy: state.circleY,
+                px: closestX, py: closestY,
+                colliding, depth, nx, ny
+            };
+        }
+
+        // --- B. 绘图逻辑 ---
+        
+        // 1. 绘制矩形 (AABB)
+        ctx.fillStyle = WH.getColor('--surface-container-high');
+        ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.rect(minX, minY, rectW, rectH);
+        ctx.fill();
+        ctx.stroke();
+
+        // 2. 绘制圆
+        ctx.save();
+        ctx.globalAlpha = colliding ? 0.8 : 0.4;
+        ctx.fillStyle = colliding ? WH.getColor('--chart-1') : WH.getColor('--on-surface-default');
+        ctx.beginPath();
+        ctx.arc(state.circleX, state.circleY, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        
+        // 绘制圆心和边框
+        ctx.beginPath();
+        ctx.arc(state.circleX, state.circleY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = WH.getColor('--on-surface-default');
+        ctx.fill();
+
+        // 3. 辅助线：圆心到最近点
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = WH.getColor('--chart-2');
+        ctx.beginPath();
+        ctx.moveTo(state.circleX, state.circleY);
+        ctx.lineTo(closestX, closestY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 4. 绘制最近点
+        ctx.fillStyle = WH.getColor('--chart-2');
+        ctx.beginPath();
+        ctx.arc(closestX, closestY, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 5. 如果碰撞，绘制法线箭头 (Normal)
+        if (colliding) {
+            const arrowLen = Math.max(depth * 2, minDim * 0.08);
+            ctx.drawArrow(closestX, closestY, nx * arrowLen, ny * arrowLen, '--negative');
+            
+            // 绘制穿透深度标注
+            ctx.drawTag('碰撞!', closestX, closestY);
+        }
+
+        // 6. 标注
+        ctx.fillStyle = WH.getColor('--on-surface-default');
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('矩形 (AABB)', cx, minY - 10);
+        
+        if (!colliding) {
+            ctx.drawTag(`距离: ${dist.toFixed(1)}`, (state.circleX + closestX) / 2, (state.circleY + closestY) / 2);
+        }
+    };
+});
+</script><script type=x>
+/**
+ * Visualization: Unpacking the Parameter '2'
+ * Deconstructing 2 as Scalar, Dimension, Symmetry, and Information.
+ */
+
+const MODES = ["标量算术", "二元空间", "镜像对称", "二进制信息树"];
+const DESCRIPTIONS = {
+    "标量算术": {
+        essence: "数量堆叠",
+        dim: "1D",
+        details: "<div>标量世界中的 '2' 仅仅是 $1+1$ 的累加。这是一种最基础的线性堆叠，反映了数学中的‘类型擦除’——将物体的独特性抹除，仅保留纯粹的数量属性。</div>"
+    },
+    "二元空间": {
+        essence: "自由度",
+        dim: "2D",
+        details: "<div>在线性代数中，'2' 意味着正交性。X 轴与 Y 轴之间 90 度的夹角代表了完全的独立性。这不再是数量的翻倍，而是存在维度的质变。</div>"
+    },
+    "镜像对称": {
+        essence: "结构算子",
+        dim: "1D -> 2支",
+        details: "<div>算子 $|x|$ 将一维直线折叠。这里的 '2' 是镜像操作产生的对称性，它揭示了‘2’作为一种结构生成力的本质：通过一个支点，分裂出完全对称的两个分支。</div>"
+    },
+    "二进制信息树": {
+        essence: "熵与抉择",
+        dim: "0/1",
+        details: "<div>在信息论中，'2' 是分叉的最小单位。香农熵定义了消除不确定性所需的最小选择。一个 Bit（二进制位）就是‘2’，它是构建一切复杂信息的原子。</div>"
+    }
+};
+
+let animT = 0;
+
+const runReset = () => {
+    animT = 0;
+};
+
+const { state, ui } = WH.createApp({
+    title: "解包参数 2：标量、维度、对称与信息树",
+    params: {
+        mode: {
+            type: 'stepper',
+            value: MODES[0],
+            options: MODES,
+            label: '视角切换'
+        },
+        play: { type: 'play', value: true, label: '播放动画' },
+        reset: { type: 'button', label: '重置', onClick: runReset }
+    },
+    editorial: {
+        hud: [
+            { label: "当前维度", value: "1D" },
+            { label: "数学本质", value: "标量堆叠" }
+        ]
+    }
+});
+
+// Update editorial when mode changes
+state._subscribe('mode', (val) => {
+    const info = DESCRIPTIONS[val];
+    ui.setEditorial({
+        hud: [
+            { label: "空间维度", value: info.dim },
+            { label: "结构本质", value: info.essence }
+        ],
+        details: info.details.slice(4,-6)
+    });
+    animT = 0; // Reset animation on mode switch
+});
+
+// Initial call to sync editorial
+const initEditorial = () => {
+    const info = DESCRIPTIONS[state.mode];
+    ui.setEditorial({
+        hud: [
+            { label: "空间维度", value: info.dim },
+            { label: "结构本质", value: info.essence }
+        ],
+        details: info.details
+    });
+};
+initEditorial();
+
+WH.initCanvas('viz', ({ ctx, cx, cy, width, height, minDim }) => {
+    
+    // Draw Mode 1: Scalar Blocks
+    const drawMode1 = (t) => {
+        const size = minDim * 0.15;
+        const ground = cy + size;
+        
+        // Block 1
+        const b1T = Math.min(1, t * 2);
+        const b1Y = (cy + size) - (cy + size) * (1 - Math.pow(b1T, 2));
+        ctx.fillStyle = WH.getColor('--chart-1');
+        ctx.fillRect(cx - size / 2, Math.min(b1Y, ground - size), size, size);
+        ctx.strokeStyle = WH.getColor('--on-surface-default');
+        ctx.strokeRect(cx - size / 2, Math.min(b1Y, ground - size), size, size);
+        
+        // Block 2
+        const b2T = Math.max(0, Math.min(1, (t - 0.5) * 2));
+        const b2Y = (cy) - (cy) * (1 - Math.pow(b2T, 2));
+        if (b2T > 0) {
+            ctx.fillStyle = WH.getColor('--chart-2');
+            ctx.fillRect(cx - size / 2, Math.min(b2Y, ground - size * 2), size, size);
+            ctx.strokeRect(cx - size / 2, Math.min(b2Y, ground - size * 2), size, size);
+        }
+        
+        // Labels
+        if (b1T >= 1) ctx.fillText("1", cx + size, ground - size / 2);
+        if (b2T >= 1) ctx.fillText("+ 1 = 2", cx + size, ground - size * 1.5);
+    };
+
+    // Draw Mode 2: Orthogonal Space
+    const drawMode2 = (t) => {
+        const len = minDim * 0.35;
+        const xT = Math.min(1, t * 2);
+        const yT = Math.max(0, Math.min(1, (t - 0.5) * 2));
+        
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = WH.transparent(WH.getColor('--on-surface-default'), 0.2);
+        // Grid
+        if (yT > 0.1) {
+            for(let i = -3; i <= 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(cx + i * len/3, cy - len);
+                ctx.lineTo(cx + i * len/3, cy + len);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cx - len, cy + i * len/3);
+                ctx.lineTo(cx + len, cy + i * len/3);
+                ctx.stroke();
+            }
+        }
+        ctx.setLineDash([]);
+
+        // X Axis
+        ctx.lineWidth = 3;
+        ctx.drawArrow(cx, cy, len * xT, 0, '--chart-1');
+        if (xT > 0.1) ctx.drawTag("X轴 (1st Dim)", cx + len * xT, cy);
+
+        // Y Axis
+        if (yT > 0) {
+            ctx.drawArrow(cx, cy, 0, -len * yT, '--chart-2');
+            ctx.drawTag("Y轴 (2nd Dim)", cx, cy - len * yT);
+        }
+        
+        ctx.lineWidth = 1;
+    };
+
+    // Draw Mode 3: Mirror Symmetry
+    const drawMode3 = (t) => {
+        const len = minDim * 0.4;
+        const foldT = Math.max(0, Math.min(1, (t - 0.2) * 1.5));
+        
+        // Base Line
+        ctx.beginPath();
+        ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+        ctx.setLineDash([5, 2]);
+        ctx.moveTo(cx - len, cy + len);
+        ctx.lineTo(cx + len, cy - len);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Folded V
+        ctx.lineWidth = 4;
+        // Right side (stays)
+        ctx.strokeStyle = WH.getColor('--chart-3');
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + len, cy - len);
+        ctx.stroke();
+
+        // Left side (folds)
+        ctx.save();
+        ctx.translate(cx, cy);
+        // At foldT=0, it's at angle PI/4. At foldT=1, it's at -PI/4 relative to center.
+        // Or simply mirror y coordinate.
+        const leftX = -len;
+        const leftY = len - (len * 2 * foldT);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(leftX, leftY);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.drawTag("f(x) = |x|", cx, cy - 40);
+        ctx.lineWidth = 1;
+        
+        // Mirror plane visual
+        if (foldT > 0 && foldT < 1) {
+            ctx.fillStyle = WH.transparent(WH.getColor('--primary'), 0.1);
+            ctx.fillRect(cx - len, cy - 2, len * 2, 4);
+        }
+    };
+
+    // Draw Mode 4: Information Tree
+    const drawMode4 = (t) => {
+        const rootY = cy - minDim * 0.2;
+        const splitT = Math.min(1, t * 1.5);
+        const nodeSize = 12;
+        const spread = minDim * 0.25;
+        const depth = minDim * 0.35;
+
+        // Root
+        ctx.fillStyle = WH.getColor('--on-surface-default');
+        ctx.beginPath();
+        ctx.arc(cx, rootY, nodeSize, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillText("Entropy Root", cx, rootY - 20);
+
+        if (splitT > 0) {
+            const curY = rootY + depth * splitT;
+            const curXOffset = spread * splitT;
+
+            // Left Branch (0)
+            ctx.strokeStyle = WH.getColor('--chart-4');
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(cx, rootY);
+            ctx.lineTo(cx - curXOffset, curY);
+            ctx.stroke();
+            
+            // Right Branch (1)
+            ctx.strokeStyle = WH.getColor('--chart-5');
+            ctx.beginPath();
+            ctx.moveTo(cx, rootY);
+            ctx.lineTo(cx + curXOffset, curY);
+            ctx.stroke();
+
+            if (splitT >= 1) {
+                ctx.fillStyle = WH.getColor('--chart-4');
+                ctx.beginPath(); ctx.arc(cx - spread, rootY + depth, nodeSize, 0, Math.PI * 2); ctx.fill();
+                ctx.drawTag("BIT: 0", cx - spread, rootY + depth);
+
+                ctx.fillStyle = WH.getColor('--chart-5');
+                ctx.beginPath(); ctx.arc(cx + spread, rootY + depth, nodeSize, 0, Math.PI * 2); ctx.fill();
+                ctx.drawTag("BIT: 1", cx + spread, rootY + depth);
+            }
+        }
+        ctx.lineWidth = 1;
+        ctx.textAlign = 'center';
+        ctx.fillText("1 Bit = log₂(2) 状态", cx, rootY + depth + 40);
+    };
+
+    return ({ dt, state }) => {
+        if (state.play) {
+            animT += dt * 0.5;
+            if (animT > 2) animT = 0; // Loop with pause
+        }
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '14px sans-serif';
+
+        const t = Math.min(1, animT);
+
+        switch (state.mode) {
+            case "标量算术":
+                drawMode1(t);
+                break;
+            case "二元空间":
+                drawMode2(t);
+                break;
+            case "镜像对称":
+                drawMode3(t);
+                break;
+            case "二进制信息树":
+                drawMode4(t);
+                break;
+        }
+    };
+});
+</script><script type=x>
+/**
+ * 万物皆数组：载荷与基底的投影
+ * Payload & Basis Projection
+ * 
+ * 展示相同向量 [C1, C2, C3] 在不同基底下的数学形态。
+ */
+
+const { state, ui } = WH.createApp({
+    title: "万物皆数组：载荷与基底的投影",
+    params: {
+        c1: { value: 1, min: -5, max: 5, step: 1, label: "组件 C1" },
+        c2: { value: 2, min: -5, max: 5, step: 1, label: "组件 C2" },
+        c3: { value: 3, min: -5, max: 5, step: 1, label: "组件 C3" },
+        basis: { 
+            value: "十进制", 
+            type: 'select',
+            options: ["十进制", "多项式", "傅里叶"], 
+            label: "选择基底" 
+        }
+    },
+    editorial: {
+        hud: [
+            { label: "当前向量", value: "N = [1, 2, 3]" }
+        ]
+    }
+});
+
+/**
+ * 状态订阅：更新 HUD 数据
+ */
+const syncHUD = () => {
+    const vectorStr = `N = [${state.c1}, ${state.c2}, ${state.c3}]`;
+    let resultStr = "";
+    
+    if (state.basis === "十进制") {
+        const total = state.c1 * 100 + state.c2 * 10 + state.c3;
+        resultStr = `结果: ${total}`;
+    } else if (state.basis === "多项式") {
+        resultStr = "函数: f(x) = C1·x² + C2·x + C3";
+    } else {
+        resultStr = "信号: f(t) = C1·sin(3t) + C2·sin(2t) + C3·sin(t)";
+    }
+
+    ui.setEditorial({
+        hud: [
+            { label: "当前向量", value: vectorStr },
+            { label: "基底解释", value: resultStr }
+        ]
+    });
+};
+
+state._subscribe('c1', syncHUD);
+state._subscribe('c2', syncHUD);
+state._subscribe('c3', syncHUD);
+state._subscribe('basis', syncHUD);
+
+// 初始化执行
+syncHUD();
+
+/**
+ * 初始化绘图引擎 (Observable Plot)
+ */
+WH.initPlot('viz', ({ width, state }) => {
+    const { c1, c2, c3, basis } = state;
+
+    // --- 场景 1: 十进制基底 ---
+    if (basis === "十进制") {
+        const data = [
+            { unit: "百位 (×100)", val: c1 * 100, color: WH.getColor('--chart-1') },
+            { unit: "十位 (×10)", val: c2 * 10, color: WH.getColor('--chart-2') },
+            { unit: "个位 (×1)", val: c3, color: WH.getColor('--chart-3') }
+        ];
+
+        return {
+            width,
+            x: { label: "数值贡献 (Value Contribution)", grid: true },
+            y: { label: null, domain: ["向量映射"] },
+            color: {
+                domain: data.map(d => d.unit),
+                range: data.map(d => d.color),
+                legend: true
+            },
+            marks: [
+                Plot.barX(data, {
+                    x: "val",
+                    y: () => "向量映射",
+                    fill: "unit",
+                    tip: true
+                }),
+                Plot.ruleX([0])
+            ]
+        };
+    }
+
+    // --- 场景 2: 多项式基底 ---
+    if (basis === "多项式") {
+        const points = [];
+        for (let x = -5; x <= 5; x += 0.1) {
+            points.push({
+                x: x,
+                y: c1 * Math.pow(x, 2) + c2 * x + c3
+            });
+        }
+
+        return {
+            width,
+            x: { label: "输入变量 (x)", grid: true },
+            y: { label: "函数值 f(x)", grid: true },
+            marks: [
+                Plot.lineY(points, {
+                    x: "x",
+                    y: "y",
+                    stroke: WH.getColor('--primary'),
+                    strokeWidth: 2
+                }),
+                Plot.areaY(points, {
+                    x: "x",
+                    y: "y",
+                    fill: WH.transparent(WH.getColor('--primary'), 0.1)
+                }),
+                Plot.ruleX([0], { strokeOpacity: 0.2 }),
+                Plot.ruleY([0], { strokeOpacity: 0.2 }),
+                // 关键点提示
+                Plot.dot(points.filter((_, i) => i % 10 === 0), {
+                    x: "x",
+                    y: "y",
+                    fill: WH.getColor('--primary'),
+                    tip: true
+                })
+            ]
+        };
+    }
+
+    // --- 场景 3: 傅里叶信号基底 ---
+    if (basis === "傅里叶") {
+        const samples = [];
+        const maxT = Math.PI * 4;
+        for (let t = 0; t <= maxT; t += 0.05) {
+            samples.push({
+                t: t,
+                y: c1 * Math.sin(3 * t) + c2 * Math.sin(2 * t) + c3 * Math.sin(t)
+            });
+        }
+
+        return {
+            width,
+            x: { label: "时间 (t)", grid: true, domain: [0, maxT] },
+            y: { label: "复合信号振幅 f(t)", grid: true },
+            marks: [
+                Plot.lineY(samples, {
+                    x: "t",
+                    y: "y",
+                    stroke: WH.getColor('--chart-2'),
+                    strokeWidth: 2
+                }),
+                Plot.areaY(samples, {
+                    x: "t",
+                    y: "y",
+                    fill: WH.transparent(WH.getColor('--chart-2'), 0.1)
+                }),
+                Plot.ruleY([0], { strokeOpacity: 0.3 }),
+                Plot.dot(samples.filter((_, i) => i % 20 === 0), {
+                    x: "t",
+                    y: "y",
+                    fill: WH.getColor('--chart-2'),
+                    tip: true
+                })
+            ]
+        };
+    }
+
+    return { marks: [] };
+});
+</script><script type=x>
+/**
+ * 信息的真面目：二进制路由树
+ * Logic: Binary as a routing path, not just a value.
+ */
+
+// Define helper to regenerate the tree layout
+const buildTree = (depth, width, height) => {
+    const nodes = [];
+    const levelHeight = (height - 150) / depth;
+    const padding = 40;
+
+    // Create Root
+    nodes.push({
+        id: 0,
+        x: width / 2,
+        y: 60,
+        level: 0,
+        bit: null,
+        parent: null,
+        path: []
+    });
+
+    // Create children level by level
+    let prevLevelNodes = [nodes[0]];
+    for (let d = 1; d <= depth; d++) {
+        const currentLevelNodes = [];
+        const levelWidth = width - padding * 2;
+        const spacing = levelWidth / Math.pow(2, d);
+
+        prevLevelNodes.forEach((parent, i) => {
+            const startX = parent.x - (spacing / 2);
+            
+            // Left Child (0)
+            const left = {
+                id: nodes.length,
+                x: parent.x - spacing / 2,
+                y: 60 + d * levelHeight,
+                level: d,
+                bit: 0,
+                parent: parent.id,
+                path: [...parent.path, 0]
+            };
+            nodes.push(left);
+            currentLevelNodes.push(left);
+
+            // Right Child (1)
+            const right = {
+                id: nodes.length,
+                x: parent.x + spacing / 2,
+                y: 60 + d * levelHeight,
+                level: d,
+                bit: 1,
+                parent: parent.id,
+                path: [...parent.path, 1]
+            };
+            nodes.push(right);
+            currentLevelNodes.push(right);
+        });
+        prevLevelNodes = currentLevelNodes;
+    }
+    return nodes;
+};
+
+const handleReset = (s) => {
+    s.selectedNode = null;
+    s.pathBuffer = [];
+};
+
+const { state, ui } = WH.createApp({title:"二分查找",
+    params: {
+        depth: { value: 3, min: 1, max: 5, step: 1, label: "信息深度 (Bit Depth N)" },
+        reset: { type: 'button', label: '重置', onClick: handleReset }
+    },
+    editorial: {
+        hud: [
+            { label: "寻址路径", value: "无" }
+        ]
+    }
+});
+
+// Initialize Internal State
+state.selectedNode = null;
+state.pathBuffer = [];
+state.treeStructure = [];
+
+// Legend for clarity
+ui.setLegend([
+    { label: '逻辑链路', color: '--stroke-emphasis' },
+    { label: '激活路径', color: '--chart-1' }
+]);
+
+// Subscribe to logic changes
+state._subscribe('depth', () => {
+    state.selectedNode = null;
+    state.pathBuffer = [];
+});
+
+state._subscribe('pathBuffer', (val) => {
+    const pathStr = val.length > 0 ? val.join(' - ') : "无";
+    ui.setEditorial({ hud: [{ label: "寻址路径", value: pathStr }] });
+});
+
+WH.initCanvas('viz', ({ ctx, width, height, cx, cy, minDim, pointer, state }) => {
+    
+    // Setup logic inside loop block for resizing safety
+    return ({ dt, time, frameCount, width, height }) => {
+        // Re-generate tree if dimensions or depth change
+        state.treeStructure = buildTree(state.depth, width, height);
+        
+        const nodes = state.treeStructure;
+        const nodeRadius = Math.max(6, 15 - state.depth * 2);
+        const leafLevel = state.depth;
+
+        // 1. Interaction: Detect clicks on leaf nodes
+        if (pointer.justPressed) {
+            let found = null;
+            nodes.forEach(node => {
+                if (node.level === leafLevel) {
+                    const dist = Math.hypot(pointer.x - node.x, pointer.y - node.y);
+                    if (dist < nodeRadius * 2.5) found = node;
+                }
+            });
+            if (found) {
+                state.selectedNode = found.id;
+                state.pathBuffer = found.path;
+            }
+        }
+
+        // 2. Rendering Background Connections (Inactive)
+        ctx.strokeStyle = WH.getColor('--stroke-subtle');
+        ctx.lineWidth = 1.5;
+        nodes.forEach(node => {
+            if (node.parent !== null) {
+                const parent = nodes[node.parent];
+                ctx.beginPath();
+                ctx.moveTo(parent.x, parent.y);
+                ctx.lineTo(node.x, node.y);
+                ctx.stroke();
+
+                // Draw labels 0 and 1 on branches
+                if (state.depth <= 4) {
+                    ctx.save();
+                    ctx.fillStyle = WH.getColor('--on-surface-variant');
+                    ctx.font = '10px monospace';
+                    ctx.textAlign = 'center';
+                    const midX = (parent.x + node.x) / 2;
+                    const midY = (parent.y + node.y) / 2;
+                    ctx.fillText(node.bit, midX + (node.bit === 0 ? -8 : 8), midY);
+                    ctx.restore();
+                }
+            }
+        });
+
+        // 3. Rendering Active Highlight Path
+        if (state.selectedNode !== null) {
+            ctx.strokeStyle = WH.getColor('--chart-1');
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            
+            let curr = nodes[state.selectedNode];
+            while (curr.parent !== null) {
+                const parent = nodes[curr.parent];
+                ctx.beginPath();
+                ctx.moveTo(parent.x, parent.y);
+                ctx.lineTo(curr.x, curr.y);
+                ctx.stroke();
+                curr = parent;
+            }
+        }
+
+        // 4. Drawing Nodes
+        nodes.forEach(node => {
+            const isActive = state.pathBuffer.every((b, i) => node.path[i] === b) && node.level <= state.pathBuffer.length && state.selectedNode !== null;
+            
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+            
+            if (node.level === leafLevel) {
+                // Leaf nodes are buttons
+                ctx.fillStyle = isActive ? WH.getColor('--chart-1') : WH.getColor('--surface-container-highest');
+                ctx.fill();
+                ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Label numerical value below leaf if depth is low
+                if (state.depth <= 4) {
+                    ctx.fillStyle = WH.getColor('--on-surface-default');
+                    ctx.font = '11px sans-serif';
+                    ctx.textAlign = 'center';
+                    const decimalVal = parseInt(node.path.join(''), 2);
+                    ctx.fillText(decimalVal, node.x, node.y + nodeRadius + 14);
+                }
+            } else {
+                // Intermediate routing nodes
+                ctx.fillStyle = isActive ? WH.getColor('--chart-1') : WH.getColor('--surface');
+                ctx.fill();
+                ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        });
+
+        // 5. Contextual Information Tag
+        if (state.selectedNode !== null) {
+            const leaf = nodes[state.selectedNode];
+            const decimal = parseInt(state.pathBuffer.join(''), 2);
+            const desc = `目标 ${decimal} 的物理本质：一条经过 ${state.depth} 次分叉的寻址路径`;
+            ctx.drawTag(desc, leaf.x, leaf.y + 25);
+        } else {
+            ctx.save();
+            ctx.fillStyle = WH.getColor('--on-surface-variant');
+            ctx.textAlign = 'center';
+            ctx.font = 'italic 14px sans-serif';
+            ctx.fillText('点击底部的叶子节点，观察寻址过程', width / 2, height - 30);
+            ctx.restore();
+        }
+    };
+});
+</script>
 
 
 
