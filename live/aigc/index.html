@@ -27,10 +27,22 @@
      //export(F12): $(`script:has(~ .widget-container)`).outerHTML.replace('<script', '<script type=x')
 
       parseInt.nul=function(s, r) {r=this(s); return isNaN(r)? null:r}
+      let ask=(es)=>{
+        let i0=0, idx, f=a=>[...a].map((e,i)=>`${i? i0+i:'↩️'}. ${/title:(.*?),/.exec(e.innerHTML.split('WH.createApp',2)[1])?.[1]}`).join('\n')
+        
+        while(''==(idx=prompt('Choose one (share with URL#idx):\n\n'+f([...es].slice(i0))))) i0+=10
+        let m,A,B; if(m=/(\d+)-(\d+)/.exec(idx)) {
+          [m,A,B]=m
+          m=[]; B=+B+1
+          for(let i=+A;i<B;i++) m.push(open(location+'#'+i, '', `top=0,left=${i*50}`))
+          onunload=()=>m.map(u=>u.close()); return
+        }
+        return idx
+      }
+
       onhashchange=()=>history.go(0)
-      onload=(_, e,es,f)=>{document.querySelector('.widget-container')?.remove(); es=document.querySelectorAll('script[type=x]');
-        f=a=>[...a].map((e,i)=>`${i? i:'↩️'}. ${/title:(.*?),/.exec(e.innerHTML.split('WH.createApp',2)[1])?.[1]}`).join('\n')
-        e=es[+(parseInt.nul(location.hash.slice(1))?? (prompt('Choose one (share with URL#idx):\n\n'+f(es))||0))]; e.type='module'; e.innerHTML=e.innerHTML}
+      onload=(_, e,es)=>{document.querySelector('.widget-container')?.remove(); es=document.querySelectorAll('script[type=x]');
+        e=es[+(parseInt.nul(location.hash.slice(1))?? ask(es))]; e.type='module'; e.innerHTML=e.innerHTML}
     </script>
     <script>
 
@@ -204,7 +216,6 @@ typeof a),()=>W("--primary");var c=a.map(f=>W(f)),d=a.map((f,e)=>e/(a.length-1))
 </script>
 </head>
 <body class="spark-widget-shell app-layout" style="height: 100%; overflow: hidden;">
-
 
 <script type=x>
 /**
@@ -2000,6 +2011,1081 @@ WH.initCanvas('viz', ({ ctx, cx, cy, width, height, minDim }) => {
 });
 </script><script type=x>
 /**
+ * 信息的真面目：二进制路由树
+ * Logic: Binary as a routing path, not just a value.
+ */
+
+// Define helper to regenerate the tree layout
+const buildTree = (depth, width, height) => {
+    const nodes = [];
+    const levelHeight = (height - 150) / depth;
+    const padding = 40;
+
+    // Create Root
+    nodes.push({
+        id: 0,
+        x: width / 2,
+        y: 60,
+        level: 0,
+        bit: null,
+        parent: null,
+        path: []
+    });
+
+    // Create children level by level
+    let prevLevelNodes = [nodes[0]];
+    for (let d = 1; d <= depth; d++) {
+        const currentLevelNodes = [];
+        const levelWidth = width - padding * 2;
+        const spacing = levelWidth / Math.pow(2, d);
+
+        prevLevelNodes.forEach((parent, i) => {
+            const startX = parent.x - (spacing / 2);
+            
+            // Left Child (0)
+            const left = {
+                id: nodes.length,
+                x: parent.x - spacing / 2,
+                y: 60 + d * levelHeight,
+                level: d,
+                bit: 0,
+                parent: parent.id,
+                path: [...parent.path, 0]
+            };
+            nodes.push(left);
+            currentLevelNodes.push(left);
+
+            // Right Child (1)
+            const right = {
+                id: nodes.length,
+                x: parent.x + spacing / 2,
+                y: 60 + d * levelHeight,
+                level: d,
+                bit: 1,
+                parent: parent.id,
+                path: [...parent.path, 1]
+            };
+            nodes.push(right);
+            currentLevelNodes.push(right);
+        });
+        prevLevelNodes = currentLevelNodes;
+    }
+    return nodes;
+};
+
+const handleReset = (s) => {
+    s.selectedNode = null;
+    s.pathBuffer = [];
+};
+
+const { state, ui } = WH.createApp({title:"二分查找",
+    params: {
+        depth: { value: 1, min: 1, max: 5, step: 1, label: "信息深度 (Bit Depth N)" },
+        reset: { type: 'button', label: '重置', onClick: handleReset }
+    },
+    editorial: {
+        hud: [
+            { label: "寻址路径", value: "无" }
+        ]
+    }
+});
+
+// Initialize Internal State
+state.selectedNode = null;
+state.pathBuffer = [];
+state.treeStructure = [];
+
+// Legend for clarity
+ui.setLegend([
+    { label: '逻辑链路', color: '--stroke-emphasis' },
+    { label: '激活路径', color: '--chart-1' }
+]);
+
+// Subscribe to logic changes
+state._subscribe('depth', () => {
+    state.selectedNode = null;
+    state.pathBuffer = [];
+});
+
+state._subscribe('pathBuffer', (val) => {
+    const pathStr = val.length > 0 ? val.join(' - ') : "无";
+    ui.setEditorial({ hud: [{ label: "寻址路径", value: pathStr }] });
+});
+
+WH.initCanvas('viz', ({ ctx, width, height, cx, cy, minDim, pointer, state }) => {
+    
+    // Setup logic inside loop block for resizing safety
+    return ({ dt, time, frameCount, width, height }) => {
+        // Re-generate tree if dimensions or depth change
+        state.treeStructure = buildTree(state.depth, width, height);
+        
+        const nodes = state.treeStructure;
+        const nodeRadius = Math.max(6, 15 - state.depth * 2);
+        const leafLevel = state.depth;
+
+        // 1. Interaction: Detect clicks on leaf nodes
+        if (pointer.pressed) {
+            let found = null;
+            nodes.forEach(node => {
+                if (node.level === leafLevel) {
+                    const dist = Math.hypot(pointer.x - node.x, pointer.y - node.y);
+                    if (dist < nodeRadius * 2.5) found = node;
+                }
+            });
+            if (found) {
+                state.selectedNode = found.id;
+                state.pathBuffer = found.path;
+            }
+        }
+
+        // 2. Rendering Background Connections (Inactive)
+        ctx.strokeStyle = WH.getColor('--stroke-subtle');
+        ctx.lineWidth = 1.5;
+        nodes.forEach(node => {
+            if (node.parent !== null) {
+                const parent = nodes[node.parent];
+                ctx.beginPath();
+                ctx.moveTo(parent.x, parent.y);
+                ctx.lineTo(node.x, node.y);
+                ctx.stroke();
+
+                // Draw labels 0 and 1 on branches
+                if (state.depth <= 4) {
+                    ctx.save();
+                    ctx.fillStyle = WH.getColor('--on-surface-variant');
+                    ctx.font = '10px monospace';
+                    ctx.textAlign = 'center';
+                    const midX = (parent.x + node.x) / 2;
+                    const midY = (parent.y + node.y) / 2;
+                    ctx.fillText(node.bit, midX + (node.bit === 0 ? -8 : 8), midY);
+                    ctx.restore();
+                }
+            }
+        });
+
+        // 3. Rendering Active Highlight Path
+        if (state.selectedNode !== null) {
+            ctx.strokeStyle = WH.getColor('--chart-1');
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            
+            let curr = nodes[state.selectedNode];
+            while (curr.parent !== null) {
+                const parent = nodes[curr.parent];
+                ctx.beginPath();
+                ctx.moveTo(parent.x, parent.y);
+                ctx.lineTo(curr.x, curr.y);
+                ctx.stroke();
+                curr = parent;
+            }
+        }
+
+        // 4. Drawing Nodes
+        nodes.forEach(node => {
+            const isActive = state.pathBuffer.every((b, i) => node.path[i] === b) && node.level <= state.pathBuffer.length && state.selectedNode !== null;
+            
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+            
+            if (node.level === leafLevel) {
+                // Leaf nodes are buttons
+                ctx.fillStyle = isActive ? WH.getColor('--chart-1') : WH.getColor('--surface-container-highest');
+                ctx.fill();
+                ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Label numerical value below leaf if depth is low
+                if (state.depth <= 4) {
+                    ctx.fillStyle = WH.getColor('--on-surface-default');
+                    ctx.font = '11px sans-serif';
+                    ctx.textAlign = 'center';
+                    const decimalVal = parseInt(node.path.join(''), 2);
+                    ctx.fillText(decimalVal, node.x, node.y + nodeRadius + 14);
+                }
+            } else {
+                // Intermediate routing nodes
+                ctx.fillStyle = isActive ? WH.getColor('--chart-1') : WH.getColor('--surface');
+                ctx.fill();
+                ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        });
+
+        // 5. Contextual Information Tag
+        if (state.selectedNode !== null) {
+            const leaf = nodes[state.selectedNode];
+            const decimal = parseInt(state.pathBuffer.join(''), 2);
+            const desc = `目标 ${decimal} 的物理本质：一条经过 ${state.depth} 次分叉的寻址路径`;
+            ctx.drawTag(desc, leaf.x, leaf.y + 25);
+        } else {
+            ctx.save();
+            ctx.fillStyle = WH.getColor('--on-surface-variant');
+            ctx.textAlign = 'center';
+            ctx.font = 'italic 14px sans-serif';
+            ctx.fillText('点击底部的叶子节点，观察寻址过程', width / 2, height - 30);
+            ctx.restore();
+        }
+    };
+});
+</script>
+
+<script type=x>
+/**
+ * L-p Norm Synthesis Visualizer
+ * Visualizes the transformation of a 2D boundary based on the p-norm equation x^p + y^p = 1.
+ */
+
+const { state, ui } = WH.createApp({
+    title: "L-p Norm Synthesis Visualizer",
+    params: {
+        p: { value: 1.0, min: 0.2, max: 15.0, step: 0.1, label: "Exponent (p)" }
+    },
+    editorial: {
+        hud: [
+            { label: "State", value: "线性零和 (p=1)" }
+        ]
+    }
+});
+
+// HUD Update Logic
+const updateHud = (p) => {
+    let status = "";
+    if (p < 0.95) {
+        status = "向内坍缩 (p < 1)";
+    } else if (p >= 0.95 && p <= 1.05) {
+        status = "↘ 线性零和 (p=1)";
+    } else if (p > 1.05 && p < 1.95) {
+        status = "外凸演化";
+    } else if (p >= 1.95 && p <= 2.05) {
+        status = "圆弧综合 (p=2)";
+    } else if (p > 2.05 && p <= 5.0) {
+        status = "趋向方阵";
+    } else {
+        status = "方阵壁垒 (p → ∞)";
+    }
+    
+    ui.setEditorial({
+        hud: [{ label: "State", value: status }]
+    });
+};
+
+state._subscribe('p', updateHud);
+updateHud(state.p);
+
+// Initialize Legend once
+ui.setLegend([
+    { label: 'Synthesis Curve', color: '--primary' },
+    { label: 'Linear Baseline', color: '--stroke-emphasis' }
+]);
+
+WH.initCartesianCanvas('viz', ({ ctx }) => {
+    
+    // Internal drawing helper for the L-p curve
+    const drawNormCurve = (p, size, originX, originY, resolution = 100) => {
+        ctx.beginPath();
+        for (let i = 0; i <= resolution; i++) {
+            const xVal = i / resolution;
+            // y = (1 - x^p)^(1/p)
+            // Use Math.max/min to prevent floating point errors leading to NaN
+            const yVal = Math.pow(Math.max(0, 1 - Math.pow(xVal, p)), 1 / p);
+            
+            const px = originX + xVal * size;
+            const py = originY + yVal * size;
+            
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+    };
+
+    return ({ width, height, minDim, state }) => {
+        const p = state.p;
+        const size = minDim * 0.7;
+        const originX = -size / 2;
+        const originY = -size / 2;
+
+        // 1. Draw Grid & Axes
+        ctx.strokeStyle = WH.getColor('--surface-container-highest');
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        // Horizontal lines
+        for(let i=0; i<=4; i++) {
+            const y = originY + (i/4) * size;
+            ctx.moveTo(originX, y);
+            ctx.lineTo(originX + size, y);
+        }
+        // Vertical lines
+        for(let i=0; i<=4; i++) {
+            const x = originX + (i/4) * size;
+            ctx.moveTo(x, originY);
+            ctx.lineTo(x, originY + size);
+        }
+        ctx.stroke();
+
+        // Main Axes
+        ctx.strokeStyle = WH.getColor('--on-surface-default');
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(originX, originY);
+        ctx.lineTo(originX + size + 20, originY);
+        ctx.moveTo(originX, originY);
+        ctx.lineTo(originX, originY + size + 20);
+        ctx.stroke();
+
+        // Axis Labels
+        ctx.fillStyle = WH.getColor('--on-surface-default');
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('0', originX, originY - 10);
+        ctx.fillText('1.0 (X)', originX + size, originY - 10);
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('1.0 (Y)', originX - 10, originY + size);
+
+        // 2. Draw Ghost Lines (Benchmarks)
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = WH.transparent(WH.getColor('--stroke-emphasis'), 0.4);
+
+        // p = 1: Linear
+        ctx.save();
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(originX, originY + size);
+        ctx.lineTo(originX + size, originY);
+        ctx.stroke();
+        ctx.restore();
+
+        // p = 2: Circle (Quarter Arc)
+        ctx.save();
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath();
+        ctx.arc(originX, originY, size, 0, Math.PI / 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // p = Infinity: Square
+        ctx.save();
+        ctx.setLineDash([8, 4, 2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(originX, originY + size);
+        ctx.lineTo(originX + size, originY + size);
+        ctx.lineTo(originX + size, originY);
+        ctx.stroke();
+        ctx.restore();
+
+        // 3. Draw Active Synthesis Curve
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = WH.getColor('--primary');
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        
+        // Add a slight glow to the primary curve
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = WH.transparent(WH.getColor('--primary'), 0.5);
+        
+        drawNormCurve(p, size, originX, originY, 120);
+        
+        ctx.shadowBlur = 0; // Reset shadow
+
+        // 4. Interactive Labels
+        // Label the midpoint of the curve
+        const midX = 0.5;
+        const midY = Math.pow(Math.max(0, 1 - Math.pow(midX, p)), 1 / p);
+        const tagX = originX + midX * size;
+        const tagY = originY + midY * size;
+        
+        // Only show tag if it's not too close to the origin to avoid clutter
+        if (p > 0.3) {
+            ctx.drawTag(`$x^{${p.toFixed(1)}} + y^{${p.toFixed(1)}} = 1$`, tagX, tagY);
+        }
+    };
+});
+</script><script type=x>
+/**
+ * 闵可夫斯基距离：形状演变演示
+ * 演示方程 |x|^p + |y|^p = R^p 随着 p 值的变化如何从菱形转变为圆形再转变为正方形
+ */
+
+const { state, ui } = WH.createApp({
+    title: "闵可夫斯基距离：形状演变演示",
+    params: {
+        p: { value: 2, min: 1, max: 40, step: 0.1, label: "参数 p" }
+    },
+    editorial: {
+        hud: [
+            { label: "当前 p 值", value: "2" },
+            { label: "形状描述", value: "自然界的圆 (欧几里得)" }
+        ]
+    }
+});
+
+// 初始化内部状态更新逻辑
+const updateHUD = () => {
+    const p = state.p;
+    let desc = "";
+    
+    if (p <= 1.05) {
+        desc = "菱形 [-1, -0=+0, +1] ";
+    } else if (p < 2) {
+        desc = "次欧几里得形状";
+    } else if (Math.abs(p - 2) < 0.05) {
+        desc = "L2最大对称 [+0, -0, +1, -1]震荡";
+    } else if (p < 5) {
+        desc = "超椭圆 (Lp 范数)";
+    } else if (p < 15) {
+        desc = "向正方形逼近：穷举回绕中";
+    } else {
+        desc = "L∞最大面积 [+0, 1, .. +∞=-0]";
+    }
+
+    ui.setEditorial({
+        hud: [
+            { label: "当前 p 值", value: p.toFixed(1) },
+            { label: "形状描述", value: desc }
+        ]
+    });
+};
+
+// 订阅参数变化
+state._subscribe('p', updateHUD);
+
+// 初始化图例
+ui.setLegend([
+    { label: '等距离曲线 (单位圆)', color: '--primary' }
+]);
+
+// 立即同步初始状态
+updateHUD();
+
+WH.initCanvas('viz', ({ ctx, cx, cy, minDim }) => {
+    // 基础视觉参数
+    const R = minDim * 0.35; // 基础半径
+    const axisColor = WH.getColor('--on-surface-default');
+    const gridColor = WH.transparent('--on-surface-default', 0.15);
+    const primaryColor = WH.getColor('--primary');
+
+    return ({ width, height, state }) => {
+        const p = state.p;
+
+        // 1. 绘制网格与坐标轴
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 1;
+        
+        // 绘制十字线
+        ctx.beginPath();
+        ctx.moveTo(0, cy); ctx.lineTo(width, cy);
+        ctx.moveTo(cx, 0); ctx.lineTo(cx, height);
+        ctx.stroke();
+
+        // 绘制主轴
+        ctx.strokeStyle = axisColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - R * 1.2, cy); ctx.lineTo(cx + R * 1.2, cy);
+        ctx.moveTo(cx, cy - R * 1.2); ctx.lineTo(cx, cy + R * 1.2);
+        ctx.stroke();
+
+        // 绘制刻度
+        ctx.fillStyle = axisColor;
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        
+        // X轴刻度
+        ctx.fillRect(cx + R, cy - 5, 2, 10);
+        ctx.fillRect(cx - R, cy - 5, 2, 10);
+        ctx.fillText("1", cx + R, cy + 20);
+        ctx.fillText("-1", cx - R, cy + 20);
+        
+        // Y轴刻度
+        ctx.fillRect(cx - 5, cy + R, 10, 2);
+        ctx.fillRect(cx - 5, cy - R, 10, 2);
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'right';
+        ctx.fillText("-1", cx - 10, cy + R);
+        ctx.fillText("1", cx - 10, cy - R);
+
+        // 轴标签
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText("x", cx + R * 1.2 + 5, cy);
+        ctx.textAlign = 'center';
+        ctx.fillText("y", cx, cy - R * 1.2 - 10);
+
+        // 2. 绘制闵可夫斯基形状 (|x|^p + |y|^p = R^p)
+        // 参数化方程: x = R * sgn(cos t) * |cos t|^(2/p), y = R * sgn(sin t) * |sin t|^(2/p)
+        ctx.beginPath();
+        const steps = 360;
+        const exponent = 2 / p;
+
+        for (let i = 0; i <= steps; i++) {
+            const t = (i / steps) * Math.PI * 2;
+            const cosT = Math.cos(t);
+            const sinT = Math.sin(t);
+
+            const x = R * Math.pow(Math.abs(cosT), exponent) * Math.sign(cosT);
+            const y = R * Math.pow(Math.abs(sinT), exponent) * Math.sign(sinT);
+
+            if (i === 0) {
+                ctx.moveTo(cx + x, cy - y); // Y 轴向上为正，Canvas 向上为负
+            } else {
+                ctx.lineTo(cx + x, cy - y);
+            }
+        }
+
+        ctx.closePath();
+        ctx.strokeStyle = primaryColor;
+        ctx.lineWidth = 4;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+
+        // 填充半透明色增强视觉效果
+        ctx.fillStyle = WH.transparent('--primary', 0.1);
+        ctx.fill();
+
+        // 3. 实时标注
+        // 在图形边界上绘制一个追踪点
+        const sampleT = Date.now() * 0.001; 
+        const sampleCos = Math.cos(sampleT);
+        const sampleSin = Math.sin(sampleT);
+        const dotX = R * Math.pow(Math.abs(sampleCos), exponent) * Math.sign(sampleCos);
+        const dotY = R * Math.pow(Math.abs(sampleSin), exponent) * Math.sign(sampleSin);
+        
+        ctx.fillStyle = primaryColor;
+        ctx.beginPath();
+        ctx.arc(cx + dotX, cy - dotY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 使用 drawTag 显示实时坐标或状态
+        if (p === 1) {
+            ctx.drawTag("L1: |x|+|y|=1", cx + dotX, cy - dotY);
+        } else if (p === 2) {
+            ctx.drawTag("L2: x²+y²=1", cx + dotX, cy - dotY);
+        } else if (p > 10) {
+            ctx.drawTag("L∞: max(|x|,|y|)=1", cx + dotX, cy - dotY);
+        }
+    };
+});
+</script><script type=x>
+/**
+ * 离散曲线步进与误差分析
+ * Discrete Curve Stepping and Error Analysis
+ */
+
+// --- Constants ---
+const STYLES = {
+  grid: '--stroke-default',
+  theoretical: '--stroke-emphasis',
+  discrete: '--primary',
+  point: '--chart-1',
+  text: '--on-surface-default'
+};
+
+const MAX_HISTORY = 100;
+const STEP_FREQUENCY = 2; // Sample every N frames for Plot
+
+// --- Core Logic Functions ---
+const getTheoreticalCoords = (theta, shape, R, a, b) => {
+  if (shape === '圆形') {
+    return { x: R * Math.cos(theta), y: R * Math.sin(theta) };
+  } else {
+    return { x: a * Math.cos(theta), y: b * Math.sin(theta) };
+  }
+};
+
+const getError = (x, y, shape, R, a, b) => {
+  if (shape === '圆形') {
+    // E = |x² + y² - R²| / R² for normalized visibility
+    return Math.abs((x * x + y * y) / (R * R) - 1);
+  } else {
+    // E = |(x²/a²) + (y²/b²) - 1|
+    return Math.abs((x * x) / (a * a) + (y * y) / (b * b) - 1);
+  }
+};
+
+const resetSim = (s) => {
+  s.t = 0;
+  s.points = [];
+  s.errorHistory = [];
+  s.lastGridPos = { x: null, y: null };
+  s.stepCount = 0;
+};
+
+// --- App Initialization ---
+const { state, ui } = WH.createApp({
+  title: "离散曲线步进与误差分析",
+  params: {
+    shape: { value: "圆形", options: ["圆形", "椭圆形"], label: "形状" },
+    resolution: { value: 20, min: 1, max: 50, step: 1, label: "步长精度" },
+    play: { type: 'play', value: false, label: "动画" },
+    reset: { type: 'button', label: "重置", onClick: resetSim }
+  },
+  editorial: {
+    hud: [
+      { label: "实时误差 (E)", value: "0.000" },
+      { label: "坐标 (x,y)", value: "(0,0)" }
+    ]
+  }
+});
+
+// Layout split
+const { vizTop, vizBottom } = ui.splitViz('60%');
+
+// Internal variables
+state.t = 0;
+state.points = [];
+state.errorHistory = [];
+state.lastGridPos = { x: null, y: null };
+state.stepCount = 0;
+
+// Update HUD when state variables change
+state._subscribe('stepCount', () => {
+  if (state.points.length === 0) return;
+  const last = state.points[state.points.length - 1];
+  ui.setEditorial({
+    hud: [
+      { label: "实时误差 (E)", value: last.e.toFixed(4) },
+      { label: "坐标 (x,y)", value: `(${last.x.toFixed(0)}, ${last.y.toFixed(0)})` }
+    ]
+  });
+});
+
+// --- Top Canvas: Animation ---
+WH.initCartesianCanvas(vizTop, ({ ctx, width, height, minDim }) => {
+  
+  // Set legend once
+  ui.setLegend([
+    { label: '理论曲线', color: STYLES.theoretical },
+    { label: '离散路径 (Manhattan)', color: STYLES.discrete },
+    { label: '步进动点', color: STYLES.point }
+  ]);
+
+  return ({ dt, frameCount, state }) => {
+    const R = minDim * 0.35;
+    const a = R;
+    const b = R * 0.6;
+    const gridSize = R / state.resolution;
+
+    // 1. Draw Grid
+    ctx.strokeStyle = WH.getColor(STYLES.grid);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = -width / 2; x <= width / 2; x += gridSize) {
+      ctx.moveTo(x, -height / 2); ctx.lineTo(x, height / 2);
+    }
+    for (let y = -height / 2; y <= height / 2; y += gridSize) {
+      ctx.moveTo(-width / 2, y); ctx.lineTo(width / 2, y);
+    }
+    ctx.stroke();
+
+    // 2. Draw Theoretical Path
+    ctx.strokeStyle = WH.transparent(WH.getColor(STYLES.theoretical), 0.3);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= 360; i += 2) {
+      const rad = (i * Math.PI) / 180;
+      const p = getTheoreticalCoords(rad, state.shape, R, a, b);
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+
+    // 3. Logic: Manhattan Stepping
+    if (state.play) {
+      state.t += dt * 0.5; // Speed
+      if (state.t > Math.PI * 2) state.t = 0;
+
+      const ideal = getTheoreticalCoords(state.t, state.shape, R, a, b);
+      const gx = Math.round(ideal.x / gridSize) * gridSize;
+      const gy = Math.round(ideal.y / gridSize) * gridSize;
+
+      // Check if grid position changed
+      if (state.lastGridPos.x !== gx || state.lastGridPos.y !== gy) {
+        // Enforce Manhattan: if diagonal change, add intermediate step
+        if (state.lastGridPos.x !== null && state.lastGridPos.x !== gx && state.lastGridPos.y !== gy) {
+          // Push X move first
+          const errX = getError(gx, state.lastGridPos.y, state.shape, R, a, b);
+          state.points.push({ x: gx, y: state.lastGridPos.y, e: errX });
+        }
+        
+        const errFinal = getError(gx, gy, state.shape, R, a, b);
+        state.points.push({ x: gx, y: gy, e: errFinal });
+        
+        state.lastGridPos = { x: gx, y: gy };
+        state.stepCount++;
+
+        // Sync to Plot History
+        if (state.stepCount % STEP_FREQUENCY === 0) {
+            state.errorHistory.push({ step: state.stepCount, error: errFinal });
+            if (state.errorHistory.length > MAX_HISTORY) state.errorHistory.shift();
+        }
+      }
+    }
+
+    // 4. Draw Manhattan Path
+    if (state.points.length > 1) {
+      ctx.strokeStyle = WH.getColor(STYLES.discrete);
+      ctx.lineWidth = 3;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(state.points[0].x, state.points[0].y);
+      for (let i = 1; i < state.points.length; i++) {
+        ctx.lineTo(state.points[i].x, state.points[i].y);
+      }
+      ctx.stroke();
+    }
+
+    // 5. Draw Active Point
+    if (state.lastGridPos.x !== null) {
+      ctx.fillStyle = WH.getColor(STYLES.point);
+      ctx.beginPath();
+      ctx.arc(state.lastGridPos.x, state.lastGridPos.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      
+      const lastE = state.points[state.points.length - 1].e;
+      ctx.drawTag(`E: ${lastE.toFixed(4)}`, state.lastGridPos.x, state.lastGridPos.y);
+    }
+
+    // 6. Draw Formula Text (Fixed Position)
+    ctx.fillStyle = WH.getColor(STYLES.text);
+    ctx.font = '500 14px sans-serif';
+    ctx.textAlign = 'left';
+    const formula = state.shape === '圆形' 
+      ? '误差公式: $E = |x^2 + y^2 - R^2| / R^2$' 
+      : '误差公式: $E = |(x/a)^2 + (y/b)^2 - 1|$';
+    ctx.fillText(formula, -width/2 + 20, height/2 - 30);
+  };
+});
+
+// --- Bottom Plot: Error History ---
+WH.initPlot(vizBottom, ({ width, state }) => {
+  const data = [...state.errorHistory];
+  
+  return {
+    width,
+    x: { label: "步进数 (Steps)", grid: true },
+    y: { label: "代数误差 (E)", grid: true, domain: [0, 0.15] },
+    marks: [
+      Plot.areaY(data, {
+        x: "step",
+        y: "error",
+        fill: WH.getColor('--primary'),
+        fillOpacity: 0.1
+      }),
+      Plot.lineY(data, {
+        x: "step",
+        y: "error",
+        stroke: WH.getColor('--primary'),
+        strokeWidth: 2
+      }),
+      // Highlight the current error
+      data.length > 0 ? Plot.dot([data[data.length - 1]], {
+        x: "step",
+        y: "error",
+        fill: WH.getColor('--chart-1'),
+        r: 4
+      }) : null
+    ]
+  };
+});
+
+// Trigger initial reset
+resetSim(state);
+</script><script type=x>
+const { state, ui } = WH.createApp({
+    title: "离散微分 Δ(x³) 几何意义",
+    params: {
+        showCore: { type: 'toggle', value: true, label: "内部核心 x³" },
+        showFaces: { type: 'toggle', value: !true, label: "3个面切片 (3x²)" },
+        showEdges: { type: 'toggle', value: !true, label: "3根边缘柱 (3x)" },
+        showCorner: { type: 'toggle', value: !true, label: "1个顶角块 (1)" }
+    },
+    editorial: {
+        hud: [
+            { label: "当前代数和", value: "(x+1)³" }
+        ]
+    }
+});
+
+// Internal state
+const X = 3; // Base dimension
+const GAP = 0.06; // Spacing to show the components separately
+const OFFSET = -(X + 1 + GAP) / 2; // Centering offset
+
+// Formula update logic
+const updateAlgebra = () => {
+    const parts = [];
+    if (state.showCore) parts.push("x³");
+    if (state.showFaces) parts.push("3x²");
+    if (state.showEdges) parts.push("3x¹");
+    if (state.showCorner) parts.push("1");
+    
+    let formula = parts.join(" + ");
+    if (parts.length === 4) formula = "(x+1)³";
+    if (parts.length === 0) formula = "0";
+    
+    // Check for the specific derivative case
+    if (!state.showCore && state.showFaces && state.showEdges && state.showCorner) {
+        formula = "Δ(x³) = 3x² + 3x + 1";
+    }
+
+    ui.setEditorial({ hud: [{ label: "当前代数和", value: formula }] });
+};
+
+// Register subscribers for UI
+['showCore', 'showFaces', 'showEdges', 'showCorner'].forEach(key => {
+    state._subscribe(key, updateAlgebra);
+});
+
+WH.initThree('viz', ({ scene, camera, renderer, controls }) => {
+    // Scene setup
+    scene.background = new THREE.Color(WH.getColor('--surface'));
+    camera.position.set(8, 8, 12);
+    camera.lookAt(0, 0, 0);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(10, 20, 10);
+    scene.add(dirLight);
+
+    // Materials
+    const matCore = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.7 });
+    const matFace = new THREE.MeshStandardMaterial({ color: 0x2196F3, roughness: 0.5 });
+    const matEdge = new THREE.MeshStandardMaterial({ color: 0xFF9800, roughness: 0.5 });
+    const matCorner = new THREE.MeshStandardMaterial({ color: 0xF44336, roughness: 0.3 });
+
+    // Groups for visibility control
+    const groupCore = new THREE.Group();
+    const groupFaces = new THREE.Group();
+    const groupEdges = new THREE.Group();
+    const groupCorner = new THREE.Group();
+    scene.add(groupCore, groupFaces, groupEdges, groupCorner);
+
+    // 1. Core (x^3)
+    const coreGeo = new THREE.BoxGeometry(X, X, X);
+    const coreMesh = new THREE.Mesh(coreGeo, matCore);
+    coreMesh.position.set(X/2 + OFFSET, X/2 + OFFSET, X/2 + OFFSET);
+    groupCore.add(coreMesh);
+
+    // 2. Faces (3x^2)
+    const faceThickness = 1;
+    // X-face (Right)
+    const fxGeo = new THREE.BoxGeometry(faceThickness, X, X);
+    const fxMesh = new THREE.Mesh(fxGeo, matFace);
+    fxMesh.position.set(X + faceThickness/2 + GAP + OFFSET, X/2 + OFFSET, X/2 + OFFSET);
+    groupFaces.add(fxMesh);
+    // Y-face (Top)
+    const fyGeo = new THREE.BoxGeometry(X, faceThickness, X);
+    const fyMesh = new THREE.Mesh(fyGeo, matFace);
+    fyMesh.position.set(X/2 + OFFSET, X + faceThickness/2 + GAP + OFFSET, X/2 + OFFSET);
+    groupFaces.add(fyMesh);
+    // Z-face (Front)
+    const fzGeo = new THREE.BoxGeometry(X, X, faceThickness);
+    const fzMesh = new THREE.Mesh(fzGeo, matFace);
+    fzMesh.position.set(X/2 + OFFSET, X/2 + OFFSET, X + faceThickness/2 + GAP + OFFSET);
+    groupFaces.add(fzMesh);
+
+    // 3. Edges (3x)
+    const edgeLen = X;
+    const et = 1; // thickness
+    // Edge XY (between X and Y faces)
+    const exyGeo = new THREE.BoxGeometry(edgeLen, et, et);
+    const exyMesh = new THREE.Mesh(exyGeo, matEdge);
+    exyMesh.position.set(edgeLen/2 + OFFSET, X + et/2 + GAP + OFFSET, X + et/2 + GAP + OFFSET);
+    groupEdges.add(exyMesh);
+    // Edge YZ
+    const eyzGeo = new THREE.BoxGeometry(et, edgeLen, et);
+    const eyzMesh = new THREE.Mesh(eyzGeo, matEdge);
+    eyzMesh.position.set(X + et/2 + GAP + OFFSET, edgeLen/2 + OFFSET, X + et/2 + GAP + OFFSET);
+    groupEdges.add(eyzMesh);
+    // Edge XZ
+    const exzGeo = new THREE.BoxGeometry(et, et, edgeLen);
+    const exzMesh = new THREE.Mesh(exzGeo, matEdge);
+    exzMesh.position.set(X + et/2 + GAP + OFFSET, X + et/2 + GAP + OFFSET, edgeLen/2 + OFFSET);
+    groupEdges.add(exzMesh);
+
+    // 4. Corner (1)
+    const cGeo = new THREE.BoxGeometry(et, et, et);
+    const cMesh = new THREE.Mesh(cGeo, matCorner);
+    cMesh.position.set(X + et/2 + GAP + OFFSET, X + et/2 + GAP + OFFSET, X + et/2 + GAP + OFFSET);
+    groupCorner.add(cMesh);
+
+    // Initial HUD trigger
+    updateAlgebra();
+
+    return ({ dt, state }) => {
+        // Sync visibility
+        groupCore.visible = state.showCore;
+        groupFaces.visible = state.showFaces;
+        groupEdges.visible = state.showEdges;
+        groupCorner.visible = state.showCorner;
+
+        controls.update();
+    };
+});
+</script>
+<script type=x>
+/**
+ * Geometric Coordinate Expansion
+ * A 3D visualization comparing spatial volumes in a polynomial expansion.
+ */
+
+// 1. App initialization with UI parameters and initial editorial state
+const { state, ui } = WH.createApp({
+    title: "Geometric Coordinate Expansion",
+    params: {
+        x: { value: 4, min: 2, max: 10, step: 1, label: "Base x（1📦=64）" },
+        a: { type: 'stepper', value: 1, min: 0, max: 5, step: 1, label: "Vol.体积 a (x³)" },
+        b: { type: 'stepper', value: 1, min: 0, max: 5, step: 1, label: "Area.面积 b (x²)" },
+        c: { type: 'stepper', value: 1, min: 0, max: 5, step: 1, label: "Length.长度 c (x¹)" },
+        d: { type: 'stepper', value: 1, min: 0, max: 5, step: 1, label: "Voxel.体素 d (x⁰)" }
+    },
+    editorial: {
+        hud: [
+            { label: "Equation", value: "a(x³) + b(x²) + c(x¹) + d(x⁰)" },
+            { label: "Total Value", value: "0" }
+        ]
+    }
+});
+
+// Internal state management (decoupled from reactive UI state where needed)
+let currentX = state.x;
+let targetX = state.x;
+
+/**
+ * Updates the HUD with the current calculation.
+ * Formula: a*x³ + b*x² + c*x + d
+ */
+const updateHUD = () => {
+    const { x, a, b, c, d } = state;
+    const v3 = a * Math.pow(x, 3);
+    const v2 = b * Math.pow(x, 2);
+    const v1 = c * x;
+    const v0 = d;
+    const total = v3 + v2 + v1 + v0;
+
+    const eqStr = `${a}(${x}³) + ${b}(${x}²) + ${c}(${x}¹) + ${d}(${x}⁰)`;
+    
+    ui.setEditorial({
+        hud: [
+            { label: "Equation", value: eqStr },
+            { label: "Total Value", value: total.toLocaleString() }
+        ]
+    });
+};
+
+// Subscribe to parameter changes
+['x', 'a', 'b', 'c', 'd'].forEach(key => {
+    state._subscribe(key, () => {
+        updateHUD();
+        if (key === 'x') targetX = state.x;
+    });
+});
+
+// Initial HUD sync
+updateHUD();
+
+/**
+ * 3D Engine Initialization
+ */
+WH.initThree('viz', ({ scene, camera, renderer, controls }) => {
+    
+    // Scene styling
+    scene.background = new THREE.Color(WH.getColor('--surface'));
+    
+    // Lighting for depth perception
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(20, 80, 30);
+    scene.add(dirLight);
+
+    // Camera setup for wide field of view
+    camera.position.set(0, 35, 80);
+    camera.lookAt(0, 0, 0);
+
+    // Materials
+    const mat3 = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.4, metalness: 0.1 }); // Blue
+    const mat2 = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.4, metalness: 0.1 }); // Green
+    const mat1 = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.4, metalness: 0.1 }); // Amber
+    const mat0 = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.4, metalness: 0.1 }); // Red
+
+    // Create Mesh pools (max 5 for each coefficient)
+    const meshPool = { a: [], b: [], c: [], d: [] };
+
+    const createGroup = (key, material, xOffset) => {
+        const group = new THREE.Group();
+        group.position.x = xOffset;
+        scene.add(group);
+        
+        for (let i = 0; i < 5; i++) {
+            const geo = new THREE.BoxGeometry(1, 1, 1);
+            const mesh = new THREE.Mesh(geo, material);
+            // Space items along Z axis within their category
+            mesh.position.z = i * 15 - 30; 
+            group.add(mesh);
+            meshPool[key].push(mesh);
+        }
+        return group;
+    };
+
+    // Positions categories side-by-side
+    createGroup('a', mat3, -35); // Cubes (x^3)
+    createGroup('b', mat2, -10); // Squares (x^2)
+    createGroup('c', mat1, 12);  // Lines (x^1)
+    createGroup('d', mat0, 30);  // Points (x^0)
+
+    // Render loop
+    return ({ dt, state }) => {
+        // Smoothly interpolate the visual scale of 'x'
+        currentX += (targetX - currentX) * 10 * dt;
+
+        // Update Cube Group (a) - x * x * x
+        meshPool.a.forEach((m, i) => {
+            m.visible = i < state.a;
+            if (m.visible) {
+                m.scale.set(currentX, currentX, currentX);
+                m.position.y = currentX / 2;
+            }
+        });
+
+        // Update Square Group (b) - x * x * 1
+        meshPool.b.forEach((m, i) => {
+            m.visible = i < state.b;
+            if (m.visible) {
+                m.scale.set(currentX, currentX, 0.5); // Thickness of 0.5 for visual clarity
+                m.position.y = currentX / 2;
+            }
+        });
+
+        // Update Line Group (c) - x * 1 * 1
+        meshPool.c.forEach((m, i) => {
+            m.visible = i < state.c;
+            if (m.visible) {
+                m.scale.set(currentX, 0.5, 0.5);
+                m.position.y = 0.25;
+            }
+        });
+
+        // Update Point Group (d) - 1 * 1 * 1
+        meshPool.d.forEach((m, i) => {
+            m.visible = i < state.d;
+            if (m.visible) {
+                m.scale.set(0.5, 0.5, 0.5);
+                m.position.y = 0.25;
+            }
+        });
+
+        controls.update();
+    };
+});
+</script><script type=x>
+/**
  * 万物皆数组：载荷与基底的投影
  * Payload & Basis Projection
  * 
@@ -2173,230 +3259,2073 @@ WH.initPlot('viz', ({ width, state }) => {
     return { marks: [] };
 });
 </script><script type=x>
-/**
- * 信息的真面目：二进制路由树
- * Logic: Binary as a routing path, not just a value.
- */
+const COMBS = [
+    [0, 0, 0], // x, x, x -> x^3
+    [1, 0, 0], [0, 1, 0], [0, 0, 1], // 1x^2
+    [1, 1, 0], [1, 0, 1], [0, 1, 1], // 1x
+    [1, 1, 1] // 1
+];
 
-// Define helper to regenerate the tree layout
-const buildTree = (depth, width, height) => {
-    const nodes = [];
-    const levelHeight = (height - 150) / depth;
-    const padding = 40;
+const resetSim = () => {
+    state.stepIndex = 0;
+    state.bins = [0, 0, 0, 0];
+    state.activeAnimation = null;
+    state.isShowingResult = false;
+    state.play = false;
+    updateEditorial();
+};
 
-    // Create Root
-    nodes.push({
-        id: 0,
-        x: width / 2,
-        y: 60,
-        level: 0,
-        bit: null,
-        parent: null,
-        path: []
+const updateEditorial = () => {
+    const progress = state.stepIndex;
+    let status = "等待开始";
+    if (state.isShowingResult) status = "演示完成";
+    else if (progress > 0) status = "组合生成中...";
+    
+    ui.setEditorial({
+        hud: [
+            { label: "当前组合", value: `${progress}/8` },
+            { label: "状态", value: status }
+        ]
     });
-
-    // Create children level by level
-    let prevLevelNodes = [nodes[0]];
-    for (let d = 1; d <= depth; d++) {
-        const currentLevelNodes = [];
-        const levelWidth = width - padding * 2;
-        const spacing = levelWidth / Math.pow(2, d);
-
-        prevLevelNodes.forEach((parent, i) => {
-            const startX = parent.x - (spacing / 2);
-            
-            // Left Child (0)
-            const left = {
-                id: nodes.length,
-                x: parent.x - spacing / 2,
-                y: 60 + d * levelHeight,
-                level: d,
-                bit: 0,
-                parent: parent.id,
-                path: [...parent.path, 0]
-            };
-            nodes.push(left);
-            currentLevelNodes.push(left);
-
-            // Right Child (1)
-            const right = {
-                id: nodes.length,
-                x: parent.x + spacing / 2,
-                y: 60 + d * levelHeight,
-                level: d,
-                bit: 1,
-                parent: parent.id,
-                path: [...parent.path, 1]
-            };
-            nodes.push(right);
-            currentLevelNodes.push(right);
-        });
-        prevLevelNodes = currentLevelNodes;
-    }
-    return nodes;
 };
 
-const handleReset = (s) => {
-    s.selectedNode = null;
-    s.pathBuffer = [];
-};
-
-const { state, ui } = WH.createApp({title:"二分查找",
+const { state, ui } = WH.createApp({
+    title: "代数展开模拟器 (x+1)³",
     params: {
-        depth: { value: 3, min: 1, max: 5, step: 1, label: "信息深度 (Bit Depth N)" },
-        reset: { type: 'button', label: '重置', onClick: handleReset }
+        play: { type: 'play', value: false, label: "自动穷举" },
+        reset: { type: 'button', label: "重置", onClick: resetSim }
     },
     editorial: {
         hud: [
-            { label: "寻址路径", value: "无" }
+            { label: "当前组合", value: "0/8" },
+            { label: "状态", value: "等待开始" }
         ]
     }
 });
 
-// Initialize Internal State
-state.selectedNode = null;
-state.pathBuffer = [];
-state.treeStructure = [];
+// Internal Non-Reactive State
+state.bins = [0, 0, 0, 0];
+state.stepIndex = 0;
+state.activeAnimation = null;
+state.isShowingResult = false;
 
-// Legend for clarity
-ui.setLegend([
-    { label: '逻辑链路', color: '--stroke-emphasis' },
-    { label: '激活路径', color: '--chart-1' }
-]);
+// Initialize subscribers
+state._subscribe('play', (v) => { if (v) updateEditorial(); });
 
-// Subscribe to logic changes
-state._subscribe('depth', () => {
-    state.selectedNode = null;
-    state.pathBuffer = [];
-});
+WH.initCanvas('viz', ({ ctx, width, height, cx, cy, minDim }) => {
 
-state._subscribe('pathBuffer', (val) => {
-    const pathStr = val.length > 0 ? val.join(' - ') : "无";
-    ui.setEditorial({ hud: [{ label: "寻址路径", value: pathStr }] });
-});
+    const getBinX = (idx) => (idx + 0.5) * (width / 4);
+    const getBracketX = (idx) => (idx + 1) * (width / 4);
+    const bracketY = height * 0.2;
+    const binY = height * 0.85;
 
-WH.initCanvas('viz', ({ ctx, width, height, cx, cy, minDim, pointer, state }) => {
-    
-    // Setup logic inside loop block for resizing safety
-    return ({ dt, time, frameCount, width, height }) => {
-        // Re-generate tree if dimensions or depth change
-        state.treeStructure = buildTree(state.depth, width, height);
+    const startNextCombination = () => {
+        if (state.stepIndex >= 8) {
+            state.play = false;
+            state.isShowingResult = true;
+            updateEditorial();
+            return;
+        }
+
+        const items = COMBS[state.stepIndex];
+        const numOnes = items.reduce((a, b) => a + b, 0);
         
-        const nodes = state.treeStructure;
-        const nodeRadius = Math.max(6, 15 - state.depth * 2);
-        const leafLevel = state.depth;
+        state.activeAnimation = {
+            items: items.map((val, i) => ({
+                val: val === 0 ? 'x' : '1',
+                startX: getBracketX(i) + (val === 0 ? -20 : 20),
+                startY: bracketY,
+                x: getBracketX(i) + (val === 0 ? -20 : 20),
+                y: bracketY,
+                color: val === 0 ? '--chart-1' : '--chart-2'
+            })),
+            targetBin: numOnes,
+            progress: 0, // 0 to 1
+            stage: 'drop' // drop -> merge -> fall
+        };
+    };
 
-        // 1. Interaction: Detect clicks on leaf nodes
-        if (pointer.justPressed) {
-            let found = null;
-            nodes.forEach(node => {
-                if (node.level === leafLevel) {
-                    const dist = Math.hypot(pointer.x - node.x, pointer.y - node.y);
-                    if (dist < nodeRadius * 2.5) found = node;
+    ui.setLegend([
+        { label: '变数 x', color: '--chart-1' },
+        { label: '常数 1', color: '--chart-2' }
+    ]);
+
+    return ({ dt, time, frameCount }) => {
+        // --- LOGIC ---
+        if (state.play && !state.activeAnimation && !state.isShowingResult) {
+            startNextCombination();
+        }
+
+        if (state.activeAnimation) {
+            const anim = state.activeAnimation;
+            anim.progress += dt * 1.5; // Speed
+
+            if (anim.stage === 'drop') {
+                const t = Math.min(anim.progress, 1);
+                const ease = t * t * (3 - 2 * t);
+                anim.items.forEach(item => {
+                    item.y = bracketY + (cy - bracketY - 40) * ease;
+                    item.x = item.startX + (cx - item.startX) * ease;
+                });
+                if (t >= 1) {
+                    anim.stage = 'merge';
+                    anim.progress = 0;
                 }
-            });
-            if (found) {
-                state.selectedNode = found.id;
-                state.pathBuffer = found.path;
+            } else if (anim.stage === 'merge') {
+                const t = Math.min(anim.progress * .5, 1);
+                if (t >= 1) {
+                    anim.stage = 'fall';
+                    anim.progress = 0;
+                }
+            } else if (anim.stage === 'fall') {
+                const t = Math.min(anim.progress, 1);
+                const ease = t * t; // Acceleration
+                const targetX = getBinX(anim.targetBin);
+                anim.items.forEach(item => {
+                    item.x = cx + (targetX - cx) * t;
+                    item.y = (cy - 40) + (binY - (cy - 40)) * ease;
+                });
+
+                if (t >= 1) {
+                    state.bins[anim.targetBin]++;
+                    state.stepIndex++;
+                    state.activeAnimation = null;
+                    updateEditorial();
+                }
             }
         }
 
-        // 2. Rendering Background Connections (Inactive)
-        ctx.strokeStyle = WH.getColor('--stroke-subtle');
-        ctx.lineWidth = 1.5;
-        nodes.forEach(node => {
-            if (node.parent !== null) {
-                const parent = nodes[node.parent];
-                ctx.beginPath();
-                ctx.moveTo(parent.x, parent.y);
-                ctx.lineTo(node.x, node.y);
-                ctx.stroke();
-
-                // Draw labels 0 and 1 on branches
-                if (state.depth <= 4) {
-                    ctx.save();
-                    ctx.fillStyle = WH.getColor('--on-surface-variant');
-                    ctx.font = '10px monospace';
-                    ctx.textAlign = 'center';
-                    const midX = (parent.x + node.x) / 2;
-                    const midY = (parent.y + node.y) / 2;
-                    ctx.fillText(node.bit, midX + (node.bit === 0 ? -8 : 8), midY);
-                    ctx.restore();
-                }
-            }
-        });
-
-        // 3. Rendering Active Highlight Path
-        if (state.selectedNode !== null) {
-            ctx.strokeStyle = WH.getColor('--chart-1');
-            ctx.lineWidth = 4;
-            ctx.lineCap = 'round';
+        // --- DRAWING ---
+        
+        // 1. Draw Brackets
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `bold ${Math.max(16, minDim * 0.05)}px sans-serif`;
+        
+        for (let i = 0; i < 3; i++) {
+            const bx = getBracketX(i);
+            const isHighlighted = state.activeAnimation && state.activeAnimation.stage === 'drop';
             
-            let curr = nodes[state.selectedNode];
-            while (curr.parent !== null) {
-                const parent = nodes[curr.parent];
+            ctx.fillStyle = WH.getColor('--on-surface-default');
+            ctx.fillText(`( x + 1 )`, bx, bracketY);
+            
+            // Sub-indicator for active selection
+            if (isHighlighted) {
+                const val = state.activeAnimation.items[i].val;
+                ctx.save();
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = WH.getColor(state.activeAnimation.items[i].color);
+                const offset = val === 'x' ? -20 : 20;
                 ctx.beginPath();
-                ctx.moveTo(parent.x, parent.y);
-                ctx.lineTo(curr.x, curr.y);
-                ctx.stroke();
-                curr = parent;
+                ctx.arc(bx + offset, bracketY, 20, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
             }
         }
 
-        // 4. Drawing Nodes
-        nodes.forEach(node => {
-            const isActive = state.pathBuffer.every((b, i) => node.path[i] === b) && node.level <= state.pathBuffer.length && state.selectedNode !== null;
-            
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
-            
-            if (node.level === leafLevel) {
-                // Leaf nodes are buttons
-                ctx.fillStyle = isActive ? WH.getColor('--chart-1') : WH.getColor('--surface-container-highest');
-                ctx.fill();
-                ctx.strokeStyle = WH.getColor('--stroke-emphasis');
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // Label numerical value below leaf if depth is low
-                if (state.depth <= 4) {
-                    ctx.fillStyle = WH.getColor('--on-surface-default');
-                    ctx.font = '11px sans-serif';
-                    ctx.textAlign = 'center';
-                    const decimalVal = parseInt(node.path.join(''), 2);
-                    ctx.fillText(decimalVal, node.x, node.y + nodeRadius + 14);
-                }
-            } else {
-                // Intermediate routing nodes
-                ctx.fillStyle = isActive ? WH.getColor('--chart-1') : WH.getColor('--surface');
-                ctx.fill();
-                ctx.strokeStyle = WH.getColor('--stroke-emphasis');
-                ctx.lineWidth = 1;
-                ctx.stroke();
-            }
-        });
+        // 2. Draw Bins
+        const binW = width / 4.5;
+        const binH = height * 0.12;
 
-        // 5. Contextual Information Tag
-        if (state.selectedNode !== null) {
-            const leaf = nodes[state.selectedNode];
-            const decimal = parseInt(state.pathBuffer.join(''), 2);
-            const desc = `目标 ${decimal} 的物理本质：一条经过 ${state.depth} 次分叉的寻址路径`;
-            ctx.drawTag(desc, leaf.x, leaf.y + 25);
-        } else {
+        for (let i = 0; i < 4; i++) {
+            const bx = getBinX(i);
+            const isHidden = state.isShowingResult && i === 0;
+            const isHighlighted = state.isShowingResult && i > 0;
+
             ctx.save();
-            ctx.fillStyle = WH.getColor('--on-surface-variant');
-            ctx.textAlign = 'center';
-            ctx.font = 'italic 14px sans-serif';
-            ctx.fillText('点击底部的叶子节点，观察寻址过程', width / 2, height - 30);
+            if (isHidden) ctx.globalAlpha = 0.1;
+            
+            // Bin box
+            ctx.strokeStyle = WH.getColor(isHighlighted ? '--primary' : '--stroke-emphasis');
+            ctx.lineWidth = isHighlighted ? 3 : 1;
+            ctx.strokeRect(bx - binW/2, binY - binH/2, binW, binH);
+            
+            // Label
+            ctx.fillStyle = WH.getColor('--on-surface-default');
+            ctx.font = `${Math.max(12, minDim * 0.03)}px sans-serif`;
+            const labels = ['0个1 (x³)', '1个1 (x²)', '2个1 (x¹)', '3个1 (1)'];
+            ctx.fillText(labels[i], bx, binY + binH/2 + 20);
+
+            // Count
+            ctx.font = `bold ${Math.max(20, minDim * 0.06)}px sans-serif`;
+            ctx.fillStyle = WH.getColor(state.bins[i] > 0 ? '--primary' : '--on-surface-variant');
+            ctx.fillText(state.bins[i], bx, binY);
+            
+            if (isHidden) {
+                ctx.strokeStyle = WH.getColor('--negative');
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(bx - binW/2, binY - binH/2);
+                ctx.lineTo(bx + binW/2, binY + binH/2);
+                ctx.moveTo(bx + binW/2, binY - binH/2);
+                ctx.lineTo(bx - binW/2, binY + binH/2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // 3. Draw Active Animation
+        if (state.activeAnimation) {
+            const anim = state.activeAnimation;
+            
+            if (anim.stage === 'merge') {
+                const str = anim.items.map(it => it.val).join('·');
+                ctx.fillStyle = WH.getColor('--on-surface-default');
+                ctx.font = `bold ${Math.max(24, minDim * 0.07)}px sans-serif`;
+                ctx.fillText(str, cx, cy - 40);
+            } else {
+                anim.items.forEach(item => {
+                    ctx.fillStyle = WH.getColor(item.color);
+                    ctx.beginPath();
+                    ctx.arc(item.x, item.y, 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.font = `bold 16px sans-serif`;
+                    ctx.fillText(item.val, item.x, item.y);
+                });
+            }
+        }
+
+        // 4. Result Title
+        if (state.isShowingResult) {
+            ctx.save();
+            ctx.fillStyle = WH.getColor('--primary');
+            ctx.font = `bold ${Math.max(24, minDim * 0.08)}px serif`;
+            ctx.fillText("3x² + 3x + 1", cx, cy + 20);
             ctx.restore();
         }
     };
 });
 </script>
 
+<script type="text/vnd.mermaid" title="Binomial Expansion Tree"></script><script type=x>
+/**
+ * COMBINATORIAL TREE GENERATOR
+ * Visualizes (x + dx)^n expansion as a binary choice tree.
+ */
+ 
 
+const getCombinations = (n, k) => {
+    if (k < 0 || k > n) return 0;
+    if (k === 0 || k === n) return 1;
+    if (k > n / 2) k = n - k;
+    let res = 1;
+    for (let i = 1; i <= k; i++) {
+        res = res * (n - i + 1) / i;
+    }
+    return Math.round(res);
+};
 
+const updateDiagram = (n) => {
+    let md = "graph TD\n";
+    
+    // Root Node
+    md += `ROOT["(x + dx)^${n}"]:::normal\n`;
 
+    // Internal Layers
+    let levels = [['ROOT']];
+    for (let i = 1; i <= n; i++) {
+        let currentLevel = [];
+        let prevLevel = levels[i - 1];
+        
+        prevLevel.forEach(parentId => {
+            const parentPath = parentId === 'ROOT' ? '' : parentId;
+            const id0 = parentPath + '0';
+            const id1 = parentPath + '1';
+            
+            // Labels get shorter as n increases to prevent overlap
+            const label0 = n > 3 ? "x" : "x";
+            const label1 = n > 3 ? "dx" : "dx";
+            
+            md += `${parentId} --> ${id0}["${label0}"]:::normal\n`;
+            md += `${parentId} --> ${id1}["${label1}"]:::active\n`;
+            
+            currentLevel.push(id0, id1);
+        });
+        levels.push(currentLevel);
+    }
+
+    // Terminal Buckets (Pascal's Triangle Rows)
+    const leafLevel = levels[n];
+    const buckets = {}; 
+    leafLevel.forEach(id => {
+        const numOnes = (id.match(/1/g) || []).length;
+        if (!buckets[numOnes]) buckets[numOnes] = [];
+        buckets[numOnes].push(id);
+    });
+
+    for (let k = 0; k <= n; k++) {
+        const count = getCombinations(n, k);
+        const xPow = n - k;
+        const dxPow = k;
+        
+        // Construct LaTeX-style label for the coefficient
+        let termLabel = "";
+        if (count > 1) termLabel += count;
+        if (xPow > 0) termLabel += "x" + (xPow > 1 ? "^" + xPow : "");
+        if (dxPow > 0) termLabel += " dx" + (dxPow > 1 ? "^" + dxPow : "");
+        
+        const bucketId = `B${k}`;
+        md += `${bucketId}["${termLabel}"]:::success\n`;
+        
+        // Link leaves to their aggregated coefficients
+        if (buckets[k]) {
+            buckets[k].forEach(leafId => {
+                md += `${leafId} --- ${bucketId}\n`;
+            });
+        }
+    }
+
+    // Update the DOM source
+    if (src) {
+        src.textContent = md;
+        mermaid.render('mermaid-svg', md).then(({ svg }) => {
+        viz.innerHTML = svg;
+    });
+    }
+};
+    const src = document.querySelector('[type="text/vnd.mermaid"]');
+        src.id="mermaid-src"
+
+const { state, ui } = WH.createApp({
+    title: "Binomial Expansion & Combinatorics",
+    params: {
+        n: { value: 2, min: 1, max: 5, step: 1, label: "Degree n" }
+    },
+    editorial: {
+        hud: [
+            { label: "Combinations", value: "8" },
+            { label: "Coefficient Sum", value: "8" }
+        ]
+    }
+});
+
+// HUD Synchronization
+const syncHUD = () => {
+    const total = Math.pow(2, state.n);
+    ui.setEditorial({
+        hud: [
+            { label: "Combinations", value: total.toString() },
+            { label: "Coefficient Sum", value: `2^${state.n} = ${total}` }
+        ]
+    });
+};
+
+// Initial Render and Subscriptions
+state._subscribe('n', (val) => {
+    updateDiagram(val);
+    syncHUD();
+});
+
+// Boot-up trigger
+updateDiagram(state.n);
+syncHUD();
+
+</script><script type=x>
+/**
+ * 指数导数矩阵演变 - 交互式可视化
+ * 演示 e^x 导数在矩阵视角下的“动量分解”与“重组”
+ */
+
+// 1. 初始化应用与状态
+const { state, ui } = WH.createApp({
+    title: "指数导数矩阵演变",
+    params: {
+        dimension: { value: 5, min: 3, max: 20, step: 1, label: "矩阵维度 N" },
+        play: { type: 'play', value: false, label: "执行求导扫描" },
+        reset: { 
+            type: 'button', 
+            label: "重置", 
+            onClick: (s) => {
+                s.scanRow = 0;
+                s.collectedCount = 0;
+                s.particles = [];
+                s.play = false;
+            }
+        }
+    },
+    editorial: {
+        hud: [
+            { label: "当前动量", value: "0" },
+            { label: "重组状态", value: "等待中" }
+        ]
+    }
+});
+
+// 2. 内部状态初始化
+state.scanRow = 0;
+state.collectedCount = 0;
+state.particles = []; // 粒子池: {x, y, vx, vy, targetY, size, alpha, type}
+
+// 订阅状态更新 HUD
+state._subscribe('collectedCount', (val) => {
+    const total = state.dimension;
+    const progress = (val / total * 100).toFixed(0);
+    ui.setEditorial({
+        hud: [
+            { label: "累计动量", value: `${val}/${total}` },
+            { label: "重组方法", value: `D(1+x/N)=(1/N), 常数1消除，(1/N)x 外提` },
+            { label: "重组进度", value: val === total ? "完成 (1.0)" : `${progress}%` }
+        ]
+    });
+});
+
+// 3. 布局拆分
+const { vizTop, vizBottom } = ui.splitViz('60%');
+
+// 4. 顶部画布：矩阵与扫描逻辑
+WH.initCanvas(vizTop, ({ ctx, width, height, state }) => {
+    
+    return ({ dt, frameCount }) => {
+        const N = state.dimension;
+        const padding = 40;
+        const gridSize = Math.min(width - padding * 2, height - padding * 2);
+        const cellSize = gridSize / N;
+        const offsetX = (width - gridSize) / 2;
+        const offsetY = (height - gridSize) / 2;
+
+        // 逻辑：更新扫描线
+        if (state.play && state.scanRow < N) {
+            const oldRow = Math.floor(state.scanRow);
+            state.scanRow += dt * 1.5; // 扫描速度
+            const newRow = Math.floor(state.scanRow);
+
+            // 当跨越新行时，触发碎裂并产生动量粒子
+            if (newRow > oldRow && newRow <= N) {
+                state.collectedCount = newRow;
+                // 在对角线位置产生粒子
+                const px = offsetX + (newRow - 0.5) * cellSize;
+                const py = offsetY + (newRow - 0.5) * cellSize;
+                for (let i = 0; i < 8; i++) {
+                    state.particles.push({
+                        x: px,
+                        y: py,
+                        vx: (Math.random() - 0.5) * 100,
+                        vy: 200 + Math.random() * 200,
+                        size: 4 + Math.random() * 6,
+                        alpha: 1,
+                        active: true
+                    });
+                }
+            }
+        }
+
+        // 绘制背景网格
+        ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        for (let i = 0; i <= N; i++) {
+            const pos = i * cellSize;
+            // 横线
+            ctx.beginPath();
+            ctx.moveTo(offsetX, offsetY + pos);
+            ctx.lineTo(offsetX + gridSize, offsetY + pos);
+            ctx.stroke();
+            // 纵线
+            ctx.beginPath();
+            ctx.moveTo(offsetX + pos, offsetY);
+            ctx.lineTo(offsetX + pos, offsetY + gridSize);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // 绘制对角线单元格
+        for (let i = 0; i < N; i++) {
+            const x = offsetX + i * cellSize;
+            const y = offsetY + i * cellSize;
+            const isScanned = i < Math.floor(state.scanRow);
+            const isScanning = i === Math.floor(state.scanRow);
+
+            ctx.save();
+            if (isScanned) {
+                // 已处理：变淡，显示 1/N
+                ctx.fillStyle = WH.transparent(WH.getColor('--on-surface-default'), 0.1);
+                ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+                ctx.fillStyle = WH.getColor('--on-surface-default');
+                ctx.font = `${Math.max(10, cellSize * 0.3)}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('1/N', x + cellSize / 2, y + cellSize / 2);
+            } else {
+                // 未处理：高亮
+                ctx.fillStyle = isScanning ? WH.getColor('--primary-container') : WH.getColor('--surface-container-high');
+                ctx.shadowBlur = isScanning ? 15 : 0;
+                ctx.shadowColor = WH.getColor('--primary');
+                ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
+                
+                ctx.fillStyle = WH.getColor('--on-surface-default');
+                ctx.font = `${Math.max(8, cellSize * 0.2)}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('(1+t/N)', x + cellSize / 2, y + cellSize / 2);
+            }
+            ctx.restore();
+        }
+
+        // 绘制扫描线
+        if (state.play && state.scanRow < N) {
+            const scanY = offsetY + state.scanRow * cellSize;
+            ctx.strokeStyle = WH.getColor('--negative');
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(offsetX - 10, scanY);
+            ctx.lineTo(offsetX + gridSize + 10, scanY);
+            ctx.stroke();
+            
+            ctx.drawTag('求导扫描器', offsetX + gridSize, scanY);
+        }
+
+        // 更新并绘制掉落粒子
+        state.particles.forEach(p => {
+            if (!p.active) return;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.alpha -= 0.5 * dt;
+            if (p.y > height) p.active = false;
+
+            ctx.fillStyle = WH.transparent(WH.getColor('--chart-2'), p.alpha);
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        // 清理非活动粒子
+        if (frameCount % 60 === 0) {
+            state.particles = state.particles.filter(p => p.active && p.alpha > 0);
+        }
+    };
+});
+
+// 5. 底部画布：公式累加与能量收集
+WH.initCanvas(vizBottom, ({ ctx, width, height, state }) => {
+    
+    return ({ dt }) => {
+        const N = state.dimension;
+        const collected = state.collectedCount;
+        const cx = width / 2;
+        const cy = height / 2;
+
+        // 绘制背景装饰
+        ctx.strokeStyle = WH.transparent(WH.getColor('--stroke-emphasis'), 0.2);
+        ctx.strokeRect(20, 20, width - 40, height - 40);
+
+        // 核心公式展示
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // 渲染累加公式
+        let formula = "";
+        if (collected === 0) {
+            formula = "等待动量输入...";
+            ctx.fillStyle = WH.getColor('--on-surface-variant');
+        } else if (collected < N) {
+            formula = Array(collected).fill('1/N').join(' + ') + ' + ...';
+            ctx.fillStyle = WH.getColor('--primary');
+        } else {
+            formula = `N × (1/N) = 1`;
+            ctx.fillStyle = WH.getColor('--positive');
+        }
+
+        ctx.font = `bold ${Math.min(24, width / 20)}px monospace`;
+        ctx.fillText(formula, cx, cy - 20);
+
+        // 能量槽进度条
+        const barW = width * 0.6;
+        const barH = 20;
+        const barX = (width - barW) / 2;
+        const barY = cy + 40;
+
+        // 槽背景
+        ctx.fillStyle = WH.getColor('--surface-container-highest');
+        ctx.roundRect(barX, barY, barW, barH, 10);
+        ctx.fill();
+
+        // 槽填充
+        const progress = collected / N;
+        ctx.fillStyle = progress >= 1 ? WH.getColor('--positive') : WH.getColor('--chart-2');
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barW * progress, barH, 10);
+        ctx.fill();
+
+        // 结论文本
+        if (collected === N) {
+            ctx.globalAlpha = (Math.sin(Date.now() * 0.005) * 0.2) + 0.8;
+            ctx.fillStyle = WH.getColor('--on-surface-default');
+            ctx.font = "italic 16px sans-serif";
+            ctx.fillText("1 × (剩余 N-1 阶梯) = 导数原矩阵", cx, cy + 80);
+            ctx.globalAlpha = 1.0;
+        }
+
+        // 辅助说明标签
+        ctx.drawTag('动量收集区', barX, barY);
+    };
+});
+
+// 初始化图例
+ui.setLegend([
+    { label: '单元格 (1+x/N)', color: '--surface-container-high' },
+    { label: '求导动量 1/N', color: '--chart-2' },
+    { label: '扫描界限', color: '--negative' }
+]);
+
+</script><script type=x>
+/**
+ * Square Root Iteration Geometry
+ * Visualizing Heron's Method: N_next = 0.5 * (N + Area/N)
+ */
+
+const TARGET_AREA = 100;
+const ANIM_DURATION = 0.6; // seconds
+
+// Logic for updating the iteration
+const runStep = () => {
+    state.lastN = state.targetN;
+    state.targetN = 0.5 * (state.lastN + TARGET_AREA / state.lastN);
+    state.animProgress = 0;
+};
+
+const resetSim = () => {
+    state.targetN = state.n_guess;
+    state.lastN = state.n_guess;
+    state.animProgress = 1;
+};
+
+const { state, ui } = WH.createApp({
+    title: "Square Root Iteration Geometry",
+    params: {
+        n_guess: { value: 2, min: 1, max: 50, step: 1, label: "初始记忆 N (Initial Guess)" },
+        step: { type: 'button', label: "执行折半迭代", onClick: runStep },
+        reset: { type: 'button', label: "重置", onClick: resetSim }
+    },
+    editorial: {
+        hud: [
+            { label: "当前 N", value: "2.00" },
+            { label: "物理约束 (t/N)", value: "50.00" }
+        ]
+    }
+});
+
+// Internal animation state
+state.targetN = state.n_guess;
+state.lastN = state.n_guess;
+state.animProgress = 1;
+
+// Watch the slider for manual changes
+state._subscribe('n_guess', (val) => {
+    state.targetN = val;
+    state.lastN = val;
+    state.animProgress = 1;
+});
+
+// Sync HUD with current dimensions
+const syncHUD = () => {
+    const currentDisplayN = state.lastN + (state.targetN - state.lastN) * d3.easeCubicOut(state.animProgress);
+    const h = TARGET_AREA / currentDisplayN;
+    ui.setEditorial({
+        hud: [
+            { label: "当前 N (Width)", value: currentDisplayN.toFixed(3) },
+            { label: "物理约束 (Height)", value: h.toFixed(3) }
+        ]
+    });
+};
+
+WH.initCartesianCanvas('viz', ({ ctx, width, height, minDim }) => {
+    
+    // Legend for the geometry
+    ui.setLegend([
+        { label: '当前状态 (Current)', color: '--primary' },
+        { label: '上次状态 (Previous)', color: '--outline' }
+    ]);
+
+    return ({ dt, frameCount }) => {
+        // Animation update
+        if (state.animProgress < 1) {
+            state.animProgress = Math.min(1, state.animProgress + dt / ANIM_DURATION);
+        }
+
+        // Sampling HUD updates
+        if (frameCount % 5 === 0) {
+            syncHUD();
+        }
+
+        // 1. Calculations
+        const t = d3.easeCubicOut(state.animProgress);
+        const currentN = state.lastN + (state.targetN - state.lastN) * t;
+        const currentH = TARGET_AREA / currentN;
+        
+        const prevN = state.lastN;
+        const prevH = TARGET_AREA / prevN;
+
+        // Scaling factor: ensure N=50 fits nicely
+        // Let 50 units = 0.8 * half-width
+        const scale = (width * 0.4) / 50;
+
+        // 2. Background Grid
+        ctx.strokeStyle = WH.getColor('--outline-variant');
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = -50; i <= 50; i += 10) {
+            ctx.moveTo(i * scale, -height/2);
+            ctx.lineTo(i * scale, height/2);
+            ctx.moveTo(-width/2, i * scale);
+            ctx.lineTo(width/2, i * scale);
+        }
+        ctx.stroke();
+
+        // 3. Draw Previous Rectangle (Ghost Outline)
+        if (state.animProgress < 1) {
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = WH.getColor('--outline');
+            ctx.lineWidth = 2;
+            ctx.strokeRect(- (prevN * scale) / 2, - (prevH * scale) / 2, prevN * scale, prevH * scale);
+            ctx.setLineDash([]);
+        }
+
+        // 4. Draw Current Rectangle (Active Shape)
+        const rectW = currentN * scale;
+        const rectH = currentH * scale;
+        const x = -rectW / 2;
+        const y = -rectH / 2;
+
+        ctx.fillStyle = WH.transparent(WH.getColor('--primary'), 0.15);
+        ctx.fillRect(x, y, rectW, rectH);
+        
+        ctx.strokeStyle = WH.getColor('--primary');
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x, y, rectW, rectH);
+
+        // 5. Annotations
+        // Dimension Tags
+        ctx.drawTag(`w = ${currentN.toFixed(2)}`, 0, y + rectH);
+        ctx.drawTag(`h = ${currentH.toFixed(2)}`, x + rectW, 0);
+
+        // Squareness Marker (Ideal Target)
+        const idealSize = Math.sqrt(TARGET_AREA) * scale;
+        ctx.strokeStyle = WH.getColor('--chart-3');
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 4]);
+        ctx.strokeRect(-idealSize/2, -idealSize/2, idealSize, idealSize);
+        ctx.setLineDash([]);
+        
+        if (Math.abs(currentN - currentH) < 0.1) {
+            ctx.fillStyle = WH.getColor('--positive');
+            ctx.fillText("收敛至正方形 (Converged to Square)", 0, -rectH/2 - 20);
+        } else {
+            ctx.fillStyle = WH.getColor('--on-surface-variant');
+            ctx.fillText("正在进行折半求根...", 0, -rectH/2 - 20);
+        }
+    };
+});
+</script>
+<script type=x>
+/**
+ * CONTINUOUS VS. DISCRETE DYNAMICS
+ * Comparing algorithmic physics (discrete) with analytical calculus (continuous).
+ */
+
+const SNAPSHOT_POINTS = 100;
+let objX = 0;
+let objY = 0;
+let velY = 0;
+let horizVel = 0;
+let lastJumpX = 0;
+let lastJumpY = 0;
+let lastJumpVY = 0;
+let history = [];
+let predictionPath = [];
+
+// 1. TOP-LEVEL ACTION HANDLERS
+const updatePrediction = (state, width) => {
+    predictionPath = [];
+    const g = state.gravity * 200; // Scaled gravity for pixels
+    const vx = horizVel;
+    const vy0 = lastJumpVY;
+    const x0 = lastJumpX;
+    const y0 = lastJumpY;
+    
+    // Calculate 2 seconds into the future
+    const duration = 2.0; 
+    for (let i = 0; i <= SNAPSHOT_POINTS; i++) {
+        const t = (i / SNAPSHOT_POINTS) * duration;
+        const px = x0 + vx * t;
+        const py = y0 + vy0 * t + 0.5 * g * t * t;
+        predictionPath.push({ x: px, y: py });
+    }
+};
+
+const runJump = (state, width) => {
+    // Apply upward impulse
+    velY = -Math.sqrt(state.gravity * 15000); // Dynamic impulse based on gravity
+    lastJumpX = objX;
+    lastJumpY = objY;
+    lastJumpVY = velY;
+    updatePrediction(state, width);
+};
+
+const runReset = (state, width, height) => {
+    objX = width * 0.1;
+    objY = height * 0.5;
+    velY = 0;
+    horizVel = width * 0.2; // Move across screen in 5 seconds
+    lastJumpX = objX;
+    lastJumpY = objY;
+    lastJumpVY = velY;
+    history = [];
+    updatePrediction(state, width);
+};
+
+// 2. CREATE APP
+const { state, ui } = WH.createApp({
+    title: "Continuous vs. FlappyBird Dynamics",
+    params: {
+        play: { type: 'play', value: true, label: 'Animation' },
+        jump: { type: 'button', label: 'Jump (Spacebar Flap！)', onClick: (s) => runJump(s, state._width) },
+        dt: { value: 0.01, min: 0.001, max: 0.1, step: 0.01, label: 'Time Step (dt)' },
+        gravity: { value: 9.8, min: 0, max: 20, step: 0.1, label: 'Gravity (g)' },
+        showPrediction: { value: true, label: 'Show Calculus Prediction' },
+        reset: { type: 'button', label: 'Reset', onClick: (s) => runReset(s, state._width, state._height) }
+    },
+    editorial: {
+        hud: [
+            { label: "Velocity Y", value: "0.0 m/s" },
+            { label: "State", value: "Freefall" }
+        ]
+    }
+});
+
+// 3. INTERNAL STATE & SUBSCRIPTIONS
+state._width = 800; // Default
+state._height = 500;
+
+state._subscribe('gravity', () => updatePrediction(state, state._width));
+
+state._subscribe('hud_data', (val) => {
+    ui.setEditorial({
+        hud: [
+            { label: "Velocity Y", value: val.vy.toFixed(1) + " m/s" },
+            { label: "State", value: val.isGrounded ? "Grounded" : "Freefall" }
+        ]
+    });
+});
+
+// 4. INITIALIZE ENGINE
+WH.initCanvas('viz', ({ ctx, width, height }) => {
+    state._width = width;
+    state._height = height;
+    runReset(state, width, height);
+
+    ui.setLegend([
+        { label: 'Discrete (Actual)', color: '--on-surface-default' },
+        { label: 'Calculus (Prediction)', color: '--chart-2' }
+    ]);
+
+    return ({ dt, frameCount, width, height }) => {
+        const groundY = height - 60;
+        const g = state.gravity * 200; // Pixels per second squared
+        const simDt = state.dt; // Use the slider dt for the simulation step size
+
+        if (state.play) {
+            // DISCRETE PHYSICS ENGINE (Euler)
+            velY += g * simDt;
+            objY += velY * simDt;
+            objX += horizVel * simDt;
+
+            // CONSTRAINTS (Discrete engine logic)
+            let isGrounded = false;
+            if (objY >= groundY) {
+                objY = groundY;
+                velY = 0;
+                isGrounded = true;
+            }
+
+            // Wrapping
+            if (objX > width + 50) {
+                const shift = width + 100;
+                objX -= shift;
+                lastJumpX -= shift;
+                history.forEach(p => p.x -= shift);
+                predictionPath.forEach(p => p.x -= shift);
+            }
+
+            // Record History
+            if (frameCount % 2 === 0) {
+                history.push({ x: objX, y: objY });
+                if (history.length > 200) history.shift();
+            }
+
+            // Sample HUD
+            if (frameCount % 10 === 0) {
+                state.hud_data = { vy: velY / 10, isGrounded };
+            }
+        }
+
+        // --- DRAWING ---
+        
+        // 1. Ground
+        ctx.fillStyle = WH.getColor('--surface-container-highest');
+        ctx.fillRect(0, groundY, width, height - groundY);
+        ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, groundY);
+        ctx.lineTo(width, groundY);
+        ctx.stroke();
+        ctx.fillText('Rigid Ground Constraint (y = 0)', 10, groundY + 20);
+
+        // 2. Analytical Prediction (Continuous)
+        if (state.showPrediction && predictionPath.length > 1) {
+            ctx.save();
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = WH.getColor('--chart-2');
+            ctx.beginPath();
+            ctx.moveTo(predictionPath[0].x, predictionPath[0].y);
+            for (let i = 1; i < predictionPath.length; i++) {
+                ctx.lineTo(predictionPath[i].x, predictionPath[i].y);
+            }
+            ctx.stroke();
+            
+            // Label the divergence
+            const lastP = predictionPath[predictionPath.length - 1];
+            if (lastP.y > groundY + 20) {
+                ctx.globalAlpha = 0.6;
+                ctx.fillText('Calculus ignores floor', lastP.x, groundY + 40);
+            }
+            ctx.restore();
+        }
+
+        // 3. Discrete Trajectory
+        if (history.length > 1) {
+            ctx.strokeStyle = WH.getColor('--on-surface-default');
+            ctx.setLineDash([]);
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(history[0].x, history[0].y);
+            for (let i = 1; i < history.length; i++) {
+                ctx.lineTo(history[i].x, history[i].y);
+            }
+            ctx.stroke();
+        }
+
+        // 4. The Object
+        const radius = Math.max(10, width * 0.02);
+        ctx.fillStyle = '#ee000090';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.arc(objX, objY - radius, radius, Math.PI * (.6+velY*.002),0);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Label velocity vector
+        if (Math.abs(velY) > 5) {
+            const arrowScale = 0.2;
+            ctx.drawArrow(objX, objY - radius, 0, velY * arrowScale, '--primary');
+        }
+
+        ctx.drawTag('Discrete Agent', objX, objY - radius * 2.5);
+    };
+});
+
+</script><script type=x>
+/**
+ * Orbital Integration Stability
+ * Compares Explicit Euler vs. Symplectic (Verlet) integration in a central force field.
+ */
+
+const GM = 50000; // Gravitational parameter (Scaled for visualization)
+const MAX_PATH = 200;
+
+// Setup initial simulation variables
+let px = 0, py = 0; // Local coordinates relative to Sun
+let vx = 0, vy = 0; 
+let prevPx = 0, prevPy = 0;
+let initialEnergy = null;
+let currentSimTime = 0;
+
+const runReset = () => {
+    // We need width/height but this runs outside the loop.
+    // We'll initialize variables with placeholders and finalize in the first loop run or resize.
+    px = -1; // Flag for initialization
+    state.pathHistory = [];
+    state.energyHistory = [];
+    currentSimTime = 0;
+    initialEnergy = null;
+};
+
+const { state, ui } = WH.createApp({
+    title: "Orbital Integration Stability",
+    params: {
+        integrator: {
+            value: "Symplectic (Verlet)",
+            options: ["Explicit Euler", "Symplectic (Verlet)"],
+            label: "Integrator"
+        },
+        dt: {
+            value: 0.05,
+            min: 0.01,
+            max: 0.15,
+            step: 0.01,
+            label: "Time Step (dt)"
+        },
+        play: {
+            type: 'play',
+            value: true,
+            label: "Animation"
+        },
+        reset: {
+            type: 'button',
+            label: "Reset",
+            onClick: runReset
+        }
+    },
+    editorial: {
+        hud: [
+            { label: "Energy Ratio (K/P)", value: "0.00" },
+            { label: "Integration Error", value: "0.00%" }
+        ]
+    }
+});
+
+// Initialize internal state
+state.pathHistory = [];
+state.energyHistory = [];
+state.frameCount = 0;
+
+// Handle layout
+const { vizTop, vizBottom } = ui.splitViz('60%');
+
+// Register subscribers for parameter changes that should trigger a reset
+state._subscribe('integrator', runReset);
+
+// --- HUD UPDATE HANDLER ---
+state._subscribe('hudUpdate', (data) => {
+    ui.setEditorial({
+        hud: [
+            { label: "Energy Ratio (K/P)", value: data.ratio.toFixed(2) },
+            { label: "Integration Error", value: (data.error * 100).toFixed(2) + "%" }
+        ]
+    });
+});
+
+// --- TOP VIZ: PHYSICS ENGINE ---
+WH.initCanvas(vizTop, ({ ctx, cx, cy, minDim }) => {
+    
+    ui.setLegend([
+        { label: 'Sun', color: '--chart-2' },
+        { label: 'Planet', color: '--primary' },
+        { label: 'Orbit Trace', color: '--stroke-emphasis' }
+    ]);
+
+    return ({ dt, width, height, frameCount }) => {
+        const simDt = state.dt;
+        
+        // 1. Initialization / Reset Check
+        if (px === -1 || initialEnergy === null) {
+            const r = minDim * 0.3;
+            px = r;
+            py = 0;
+            const v = Math.sqrt(GM / r);
+            vx = 0;
+            vy = v;
+            
+            // For Verlet p_prev = p - v*dt + 0.5*a*dt^2
+            const dist = r;
+            const ax = -GM * px / (dist * dist * dist);
+            const ay = -GM * py / (dist * dist * dist);
+            prevPx = px - vx * simDt + 0.5 * ax * simDt * simDt;
+            prevPy = py - vy * simDt + 0.5 * ay * simDt * simDt;
+            
+            const ke = 0.5 * (vx * vx + vy * vy);
+            const pe = -GM / dist;
+            initialEnergy = ke + pe;
+            px = r; // reset flag
+        }
+
+        // 2. Physics Update
+        if (state.play) {
+            const dist = Math.hypot(px, py);
+            const ax = -GM * px / (dist * dist * dist);
+            const ay = -GM * py / (dist * dist * dist);
+
+            if (state.integrator === "Explicit Euler") {
+                // v = v + a*dt
+                // p = p + v*dt
+                vx += ax * simDt;
+                vy += ay * simDt;
+                px += vx * simDt;
+                py += vy * simDt;
+            } else {
+                // Verlet: p_new = 2p - p_prev + a*dt^2
+                const nextPx = 2 * px - prevPx + ax * simDt * simDt;
+                const nextPy = 2 * py - prevPy + ay * simDt * simDt;
+                
+                // Velocity estimate for energy calculations: v = (p_next - p_prev) / 2dt
+                vx = (nextPx - prevPx) / (2 * simDt);
+                vy = (nextPy - prevPy) / (2 * simDt);
+                
+                prevPx = px;
+                prevPy = py;
+                px = nextPx;
+                py = nextPy;
+            }
+
+            currentSimTime += simDt;
+
+            // Update Histories
+            if (frameCount % 2 === 0) {
+                state.pathHistory.push({ x: px + cx, y: py + cy });
+                if (state.pathHistory.length > MAX_PATH) state.pathHistory.shift();
+            }
+
+            // Sampling Energy & HUD
+            if (frameCount % 5 === 0) {
+                const currentDist = Math.hypot(px, py);
+                const ke = 0.5 * (vx * vx + vy * vy);
+                const pe = -GM / currentDist;
+                const totalEnergy = ke + pe;
+                
+                state.energyHistory.push({ t: currentSimTime, e: totalEnergy });
+                if (state.energyHistory.length > 100) state.energyHistory.shift();
+
+                // Trigger HUD update via flat state property
+                state.hudUpdate = {
+                    ratio: Math.abs(ke / pe),
+                    error: Math.abs((totalEnergy - initialEnergy) / initialEnergy)
+                };
+            }
+        }
+
+        // 3. Drawing
+        // Trace Path
+        if (state.pathHistory.length > 1) {
+            ctx.beginPath();
+            ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+            ctx.setLineDash([4, 4]);
+            ctx.moveTo(state.pathHistory[0].x, state.pathHistory[0].y);
+            for (let i = 1; i < state.pathHistory.length; i++) {
+                ctx.lineTo(state.pathHistory[i].x, state.pathHistory[i].y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        // Sun
+        ctx.fillStyle = WH.getColor('--chart-2');
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = WH.getColor('--chart-2');
+        ctx.beginPath();
+        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillText("Sun", cx, cy + 35);
+
+        // Planet
+        const screenX = px + cx;
+        const screenY = py + cy;
+        ctx.fillStyle = WH.getColor('--primary');
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.drawTag(state.integrator, screenX, screenY);
+    };
+});
+
+// --- BOTTOM VIZ: STABILITY PLOT ---
+WH.initPlot(vizBottom, ({ width, state }) => {
+    const data = [...state.energyHistory];
+    
+    // Determine Y axis scale to show stability or explosion
+    // If Euler explodes, energy increases rapidly.
+    return {
+        width,
+        title: "Total Mechanical Energy (Stability Trace)",
+        x: { label: "Sim Time", grid: true },
+        y: { label: "Energy (J)", grid: true, nice: true },
+        color: {
+            domain: ["Total Energy"],
+            range: [WH.getColor('--primary')]
+        },
+        marks: [
+            Plot.ruleY([initialEnergy], { stroke: WH.getColor('--stroke-default'), strokeDasharray: "4,2" }),
+            Plot.lineY(data, { 
+                x: "t", 
+                y: "e", 
+                stroke: WH.getColor('--primary'),
+                strokeWidth: 2
+            }),
+            Plot.text([`Initial: ${initialEnergy ? initialEnergy.toFixed(0) : 0}`], {
+                x: data.length > 0 ? data[0].t : 0,
+                y: initialEnergy,
+                textAnchor: "start",
+                dy: -10,
+                fill: WH.getColor('--on-surface-muted')
+            }),
+            Plot.dot(data, Plot.selectLast({
+                x: "t",
+                y: "e",
+                fill: WH.getColor('--primary'),
+                tip: true
+            }))
+        ]
+    };
+});
+
+// Initial trigger
+runReset();
+
+</script><script type=x>
+const STAGES = {
+  FLAT: '直线',
+  CURVED: '测地线弯曲'
+};
+
+// 1. Initial State & Logic Helpers
+let particleProgress = 0;
+const GRID_SIZE = 100;
+const GRID_DIVS = 64;
+const SIGMA_SQ = 400; // Gravity well width squared
+
+const resetSimulation = () => {
+  particleProgress = 0;
+};
+
+// 2. Create the App
+const { state, ui } = WH.createApp({
+  title: "时空弯曲与测地线可视化",
+  params: {
+    mass: { value: 0, min: 0, max: 10, step: 0.1, label: "中心星体质量" },
+    showEuclidean: { type: 'toggle', value: false, label: "显示欧几里得直线" },
+    play: { type: 'play', value: true, label: "动画" },
+    reset: { type: 'button', label: "重置", onClick: resetSimulation }
+  },
+  editorial: {
+    hud: [
+      { label: "当前质量", value: "0.0" },
+      { label: "路径状态", value: STAGES.FLAT }
+    ]
+  }
+});
+
+// 3. Subscriptions for HUD
+state._subscribe('mass', (val) => {
+  ui.setEditorial({
+    hud: [
+      { label: "当前质量", value: val.toFixed(1) },
+      { label: "路径状态", value: val > 0 ? STAGES.CURVED : STAGES.FLAT }
+    ]
+  });
+});
+
+// 4. Initialize Three.js Engine
+WH.initThree('viz', ({ scene, camera, renderer, controls }) => {
+  // Setup Environment
+  camera.position.set(0, 60, 80);
+  camera.lookAt(0, 0, 0);
+  
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+  scene.add(ambientLight);
+  
+  const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  sunLight.position.set(10, 50, 10);
+  scene.add(sunLight);
+
+  // Spacetime Grid
+  const gridGeom = new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE, GRID_DIVS, GRID_DIVS);
+  gridGeom.rotateX(-Math.PI / 2);
+  const gridMat = new THREE.MeshStandardMaterial({
+    color: WH.getColor('--chart-1'),
+    wireframe: true,
+    transparent: true,
+    opacity: 0.4
+  });
+  const spacetime = new THREE.Mesh(gridGeom, gridMat);
+  scene.add(spacetime);
+
+  // Central Mass (Star)
+  const starGeom = new THREE.SphereGeometry(1, 32, 32);
+  const starMat = new THREE.MeshStandardMaterial({
+    color: 0xffcc00,
+    emissive: 0xffaa00,
+    emissiveIntensity: 0.5
+  });
+  const star = new THREE.Mesh(starGeom, starMat);
+  scene.add(star);
+
+  // Photon Particle
+  const photonGeom = new THREE.SphereGeometry(0.8, 16, 16);
+  const photonMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const photon = new THREE.Mesh(photonGeom, photonMat);
+  scene.add(photon);
+
+  // Photon Trail (for visual persistence)
+  const trailPoints = [];
+  for(let i=0; i<50; i++) trailPoints.push(new THREE.Vector3(0,0,0));
+  const trailGeom = new THREE.BufferGeometry().setFromPoints(trailPoints);
+  const trailMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+  const trail = new THREE.Line(trailGeom, trailMat);
+  scene.add(trail);
+
+  // Euclidean Reference Line (Red Dashed)
+  const eucPoints = [new THREE.Vector3(-50, 15, 0), new THREE.Vector3(50, 15, 0)];
+  const eucGeom = new THREE.BufferGeometry().setFromPoints(eucPoints);
+  const eucMat = new THREE.LineDashedMaterial({
+    color: 0xff4444,
+    dashSize: 2,
+    gapSize: 2,
+  });
+  const eucLine = new THREE.Line(eucGeom, eucMat);
+  eucLine.computeLineDistances();
+  scene.add(eucLine);
+
+  // Animation Loop
+  return ({ dt, state }) => {
+    // 1. Update Spacetime Curvature
+    const posAttr = gridGeom.attributes.position;
+    for (let i = 0; i < posAttr.count; i++) {
+      let x = posAttr.getX(i);
+      let z = posAttr.getZ(i);
+      let rSq = x * x + z * z;
+      // Gaussian dip for the gravity well
+      let y = -state.mass * 3.5 * Math.exp(-rSq / SIGMA_SQ);
+      posAttr.setY(i, y);
+    }
+    posAttr.needsUpdate = true;
+
+    // 2. Update Star Size
+    const starScale = 0.5 + state.mass * 0.5;
+    star.scale.set(starScale, starScale, starScale);
+    star.position.y = -state.mass * 3.5;
+    star.visible = state.mass > 0.1;
+
+    // 3. Photon Motion (Geodesic Approximation)
+    if (state.play) {
+      particleProgress += dt * 0.3;
+      if (particleProgress > 1) {
+        particleProgress = 0;
+      }
+    }
+
+    const startX = -50;
+    const endX = 50;
+    const startZ = 15; // Offset path from center to show bending
+    
+    let curX = startX + (endX - startX) * particleProgress;
+    
+    // Calculate gravitational "pull" (lensing) towards Z=0
+    // Simplified model: Z shifts towards 0 proportional to mass and well proximity
+    let distToCenterSq = curX * curX + startZ * startZ;
+    let pull = state.mass * 1.2 * Math.exp(-distToCenterSq / SIGMA_SQ);
+    let curZ = startZ - pull;
+    
+    // Vertical position follows the curved grid surface
+    let curY = -state.mass * 3.5 * Math.exp(-(curX * curX + curZ * curZ) / SIGMA_SQ);
+
+    photon.position.set(curX, curY + 0.5, curZ);
+
+    // Update Trail
+    const trailPositions = trail.geometry.attributes.position;
+    for (let i = trailPositions.count - 1; i > 0; i--) {
+      trailPositions.setXYZ(i, trailPositions.getX(i - 1), trailPositions.getY(i - 1), trailPositions.getZ(i - 1));
+    }
+    trailPositions.setXYZ(0, photon.position.x, photon.position.y, photon.position.z);
+    trailPositions.needsUpdate = true;
+
+    // 4. Euclidean Line Toggle
+    eucLine.visible = state.showEuclidean;
+
+    // 5. OrbitControls
+    controls.update();
+  };
+});
+</script><script type=x>
+/**
+ * 复数向量场变换器
+ * 目标：展示复数乘法作为线性变换的空间算子效应。
+ */
+
+const handleReset = (s) => {
+    s.realPart = 1;
+    s.imagPart = 0;
+};
+
+const { state, ui } = WH.createApp({
+    title: "复数向量场变换器",
+    params: {
+        realPart: { value: 1, min: -2, max: 2, step: 0.1, label: "实部 (a)" },
+        imagPart: { value: 0, min: -2, max: 2, step: 0.1, label: "虚部 (b)" },
+        reset: { type: 'button', label: '重置控制', onClick: handleReset }
+    },
+    editorial: {
+        hud: [
+            { label: "当前复数 Z", value: "1.0 + 0.0i" }
+        ]
+    }
+});
+
+// 初始化内部点阵 (极坐标分布)
+const points = [];
+const RINGS = 4;
+const PER_RING = 12;
+for (let r = 1; r <= RINGS; r++) {
+    const radius = r * 1.8; // 空间分布半径
+    for (let i = 0; i < PER_RING; i++) {
+        const theta = (i / PER_RING) * Math.PI * 2;
+        points.push({
+            x: Math.cos(theta) * radius,
+            y: Math.sin(theta) * radius
+        });
+    }
+}
+
+// 订阅状态以更新 HUD
+const syncEditorial = () => {
+    const a = state.realPart.toFixed(2);
+    const b = Math.abs(state.imagPart).toFixed(2);
+    const sign = state.imagPart >= 0 ? '+' : '-';
+    ui.setEditorial({
+        hud: [{ label: "当前复数 Z", value: `${a} ${sign} ${b}i` }]
+    });
+};
+
+state._subscribe('realPart', syncEditorial);
+state._subscribe('imagPart', syncEditorial);
+syncEditorial(); // 初始同步
+
+// 初始化图例
+ui.setLegend([
+    { label: '原始点 $z$', color: '--chart-1' },
+    { label: '变换向量 $Z \cdot z$', color: '--chart-2' }
+]);
+
+WH.initCartesianCanvas('viz', ({ ctx }) => {
+    
+    // 设置坐标系样式
+    const axisColor = WH.getColor('--on-surface-default');
+    const gridColor = WH.getColor('--stroke-default');
+    
+    return ({ width, height, minDim, state }) => {
+        const unit = minDim / 12; // 坐标缩放：每单位约占总尺寸的 1/12
+        
+        // 1. 绘制辅助网格 (笛卡尔空间)
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = -10; i <= 10; i++) {
+            // 垂直线
+            ctx.moveTo(i * unit, -height / 2);
+            ctx.lineTo(i * unit, height / 2);
+            // 水平线
+            ctx.moveTo(-width / 2, i * unit);
+            ctx.lineTo(width / 2, i * unit);
+        }
+        ctx.stroke();
+
+        // 2. 绘制主轴
+        ctx.strokeStyle = axisColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-width / 2, 0); ctx.lineTo(width / 2, 0);
+        ctx.moveTo(0, -height / 2); ctx.lineTo(0, height / 2);
+        ctx.stroke();
+
+        // 坐标轴标签
+        ctx.fillStyle = axisColor;
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('Re(z)', width / 2 - 10, -10);
+        ctx.textAlign = 'left';
+        ctx.fillText('Im(z)', 10, height / 2 - 15);
+
+        // 3. 计算并绘制点阵变换
+        const a = state.realPart;
+        const b = state.imagPart;
+
+        points.forEach(p => {
+            const zx = p.x;
+            const zy = p.y;
+
+            // 复数乘法公式: (a+bi)(x+yi) = (ax-by) + (ay+bx)i
+            const tx = a * zx - b * zy;
+            const ty = a * zy + b * zx;
+
+            // 绘制原始点 z
+            ctx.fillStyle = WH.getColor('--chart-1');
+            ctx.beginPath();
+            ctx.arc(zx * unit, zy * unit, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 计算向量偏移
+            const dx = (tx - zx) * unit;
+            const dy = (ty - zy) * unit;
+            
+            // 绘制变换向量箭头 (z -> z')
+            // 如果位移过小则不绘制箭头，避免视觉重叠
+            const distSq = dx * dx + dy * dy;
+            if (distSq > 4) {
+                ctx.drawArrow(zx * unit, zy * unit, dx, dy, '--chart-2');
+            }
+        });
+
+        // 4. 在原点附近显示算子 Z 的实时标签
+        ctx.drawTag(`$Z = ${a.toFixed(1)}${state.imagPart >=0 ? '+' : '-'}${Math.abs(b).toFixed(1)}i$`, 20, 20);
+    };
+});
+</script><script type=x>
+/**
+ * 二维几何代数可视化 (Geometric Algebra 2D Visualizer)
+ * 目标：展示标量、矢量、双矢量在几何代数中的物理意义及对矢量的操作
+ */
+
+const { state, ui } = WH.createApp({
+    title: "二维几何代数可视化",
+    params: {
+        operator: { 
+            type: 'select', 
+            value: 'Scalar', 
+            options: ['Scalar', 'Vector', 'Bivector'], 
+            label: '运算类型 (Operator Type)' 
+        },
+        magnitude: { 
+            value: 1, 
+            min: -2, 
+            max: 2, 
+            step: 0.1, 
+            label: '量级 (Magnitude)' 
+        }
+    },
+    editorial: {
+        hud: [
+            { label: "当前类型", value: "标量" },
+            { label: "操作效果", value: "缩放" }
+        ]
+    }
+});
+
+// --- 内部状态初始化 ---
+// 目标矢量固定为基础 e1 [1, 0]
+const TARGET_V = { x: 1, y: 0 };
+
+// 更新 HUD 信息
+const updateHUD = () => {
+    let typeStr = "";
+    let effectStr = "";
+    const m = state.magnitude;
+
+    if (state.operator === 'Scalar') {
+        typeStr = "标量 (Grade 0)";
+        effectStr = `等比缩放: ${m.toFixed(1)}x`;
+    } else if (state.operator === 'Vector') {
+        typeStr = "矢量 (Grade 1)";
+        effectStr = `投影: 1.0 | 面积: ${Math.abs(m).toFixed(1)}`;
+    } else {
+        typeStr = "双矢量 (Grade 2 / 'i')";
+        effectStr = `旋转: ${(m * 90).toFixed(0)}° (面积扫掠)`;
+    }
+
+    ui.setEditorial({
+        hud: [
+            { label: "当前类型", value: typeStr },
+            { label: "操作效果", value: effectStr }
+        ]
+    });
+};
+
+// 订阅参数变化
+state._subscribe('operator', updateHUD);
+state._subscribe('magnitude', updateHUD);
+
+// 初始化调用一次
+updateHUD();
+
+// --- 渲染逻辑 ---
+WH.initCartesianCanvas('viz', ({ ctx, width, height, minDim }) => {
+    
+    // 绘图常量
+    const UNIT = minDim * 0.22; // 逻辑单位对应的像素值
+    const GRID_STEP = 1;
+
+    // 设置图例
+    ui.setLegend([
+        { label: '目标/结果矢量 (v)', color: '--primary' },
+        { label: '算子 (Operator)', color: '--chart-1' },
+        { label: '几何意义 (投影/面积)', color: '--chart-2' }
+    ]);
+
+    return ({ time }) => {
+        const mag = state.magnitude;
+        const opType = state.operator;
+
+        // 1. 绘制网格
+        ctx.strokeStyle = WH.getColor('--stroke-default');
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = -4; i <= 4; i++) {
+            const p = i * UNIT;
+            // 纵线
+            ctx.moveTo(p, -height/2); ctx.lineTo(p, height/2);
+            // 横线
+            ctx.moveTo(-width/2, p); ctx.lineTo(width/2, p);
+        }
+        ctx.stroke();
+
+        // 2. 绘制轴线
+        ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-width/2, 0); ctx.lineTo(width/2, 0);
+        ctx.moveTo(0, -height/2); ctx.lineTo(0, height/2);
+        ctx.stroke();
+
+        // 轴标签
+        ctx.fillStyle = WH.getColor('--on-surface-default');
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('e₁', UNIT * 3.2, 20);
+        ctx.fillText('e₂', 15, UNIT * 3.2);
+
+        // 3. 根据类型执行几何运算并绘图
+        if (opType === 'Scalar') {
+            // 标量：缩放
+            // 绘制原始矢量 (虚线)
+            ctx.setLineDash([5, 5]);
+            ctx.drawArrow(0, 0, TARGET_V.x * UNIT, TARGET_V.y * UNIT, '--stroke-emphasis');
+            ctx.setLineDash([]);
+
+            // 绘制结果矢量
+            const rx = TARGET_V.x * mag * UNIT;
+            const ry = TARGET_V.y * mag * UNIT;
+            ctx.drawArrow(0, 0, rx, ry, '--primary');
+            ctx.drawTag(`v' = ${mag.toFixed(1)}v`, rx, ry + 10);
+
+        } else if (opType === 'Vector') {
+            // 矢量算子 u = [1, mag]
+            // 几何积 uv = u·v + u∧v
+            const ux = 1 * UNIT;
+            const uy = mag * UNIT;
+            const vx = TARGET_V.x * UNIT;
+            const vy = TARGET_V.y * UNIT;
+
+            // 绘制面积 (u ∧ v) - 这是一个平行四边形（此处为矩形）
+            ctx.fillStyle = WH.transparent(WH.getColor('--chart-2'), 0.2);
+            ctx.fillRect(0, 0, vx, uy);
+            
+            // 绘制投影 (u · v) - 在 e1 轴上的投影
+            ctx.strokeStyle = WH.getColor('--chart-2');
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(0, -2); ctx.lineTo(ux, -2);
+            ctx.stroke();
+
+            // 绘制矢量
+            ctx.drawArrow(0, 0, vx, vy, '--primary'); // Target v
+            ctx.drawArrow(0, 0, ux, uy, '--chart-1'); // Operator u
+            
+            ctx.drawTag('u (算子)', ux, uy);
+            ctx.drawTag('u·v (内积/标量)', ux/2, -20);
+            ctx.drawTag('u∧v (外积/面积)', vx, uy);
+
+        } else if (opType === 'Bivector') {
+            // 双矢量算子：作为旋转子 exp(θI)
+            const angle = mag * Math.PI / 2;
+            const vx = Math.cos(angle) * UNIT;
+            const vy = Math.sin(angle) * UNIT;
+
+            // 绘制扫掠面积 (Bivector 的物理实质)
+            ctx.fillStyle = WH.transparent(WH.getColor('--chart-2'), 0.2);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            // arc(x, y, radius, startAngle, endAngle, anticlockwise)
+            // 在 Cartesian 坐标系下，顺时针参数设为角度的正负判断
+            ctx.arc(0, 0, UNIT, 0, angle, angle < 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // 绘制原始位置参考
+            ctx.setLineDash([5, 5]);
+            ctx.drawArrow(0, 0, UNIT, 0, '--stroke-emphasis');
+            ctx.setLineDash([]);
+
+            // 绘制旋转后的矢量
+            ctx.drawArrow(0, 0, vx, vy, '--primary');
+            
+            const deg = (mag * 90).toFixed(0);
+            ctx.drawTag(`旋转 ${deg}°`, vx, vy);
+            ctx.drawTag('扫掠面积 ∝ Bivector', Math.cos(angle/2)*UNIT*0.7, Math.sin(angle/2)*UNIT*0.7);
+        }
+    };
+});
+</script><script type=x>
+/**
+ * Damver Version Simulator
+ * 模拟 Damver 版本号生成逻辑（AST 变更驱动）
+ */
+
+// 1. 定义顶层更新逻辑以避免按钮绑定问题
+const updateVersion = () => {
+    const major = 1 + (state.breaks || 0);
+    if(major==8)return
+    const minor = state.additions || 0;
+    const prefix = Math.min(12, major + 2)%10;
+    state.gitHash=(Math.random()*0xfffffff|0).toString(16)
+    let verStr = '';
+    let verInt = '';
+
+    if (state.libType === '联网库') {
+        // 格式：v[Major]_[Year][Month].[Minor]p[Hash]
+        verStr = `v${major}_202609.${minor}P${state.gitHash}`;
+        // 逻辑：Prefix * 10000 + YYMM (30000 + 2609 = 32609)
+        const baseInt = prefix * 100000 + 2609;
+        verInt = `${baseInt}.${minor}`;
+        if(major>10) verInt = verInt.replace('2609', '26'+(20+ major-11))
+    } else {
+        // 格式：v[Major].[Minor]p[Hash]
+        verStr = `v${major}.${minor}P${state.gitHash}`;
+        // 逻辑：Prefix * 100 + Minor
+        verInt = ((300+prefix) * 100 + minor).toString();
+    }
+
+    // 更新 UI Panel
+    ui.setEditorial({
+        hud: [
+            { label: "Breaks", value: (major>7? major-1 : major).toString() },
+            { label: "Major", value: minor.toString() },
+            { label: "版本字符串", value: verStr },
+            { label: "底层整数编码", value: verInt }
+        ]
+    });
+
+    // 更新表格数据源
+    state.currentData = [
+        { key: 'Breaks 版本 (平台版本)', val: major, desc: '由破坏性变更(删除操作)触发' },
+        { key: '版本号 (大版本)', val: minor, desc: '由非破坏性新增操作触发' },
+        { key: 'Prefix 编码前缀', val: prefix, desc: 'Major + 2 的固定映射' },
+        { key: '版本标识符 (String)', val: verStr, desc: '用户可见的 SemVer 字符串' },
+        { key: '引擎内部标识 (Int)', val: verInt, desc: '底层存储与比对使用的数值' },
+        { key: '提交哈希 (Git)', val: state.gitHash, desc: '源码唯一识别符' }
+    ];
+};
+
+// 2. 初始化应用与参数
+const { state, ui } = WH.createApp({
+    title: "Damver Version Simulator",
+    params: {
+        libType: { 
+            type: "select", 
+            value: "联网库", 
+            options: ["联网库", "本地库"], 
+            label: "库类型",
+            desc: "切换联网库(含有时间戳编码)与本地库模式"
+        },
+        deleteOp: { 
+            type: "button", 
+            label: "AST: 删除类/函数", 
+            onClick: () => { 
+                state.breaks++; 
+                updateVersion(); 
+            } 
+        },
+        addOp: { 
+            type: "button", 
+            label: "AST: 新增类型", 
+            onClick: () => { 
+                state.additions++; 
+                updateVersion(); 
+            } 
+        },
+        reset: { 
+            type: "button", 
+            label: "Reset", 
+            onClick: () => { 
+                state.breaks = 0; 
+                state.additions = 0; 
+                updateVersion(); 
+            } 
+        }
+    },
+    editorial: {
+        hud: [
+            { label: "Major", value: "1" },
+            { label: "Minor", value: "0" },
+            { label: "版本字符串", value: "v1_202609.0pa1b2c3d" },
+            { label: "底层整数编码", value: "32609.0" }
+        ]
+    }
+});
+
+// 3. 初始化内部状态
+state.breaks = 0;
+state.additions = 0;
+state.initialYear = 2026;
+state.initialMonth = 9;
+state.gitHash = 'a1b2c3d';
+state.currentData = [];
+
+// 4. 监听类型切换
+state._subscribe('libType', updateVersion);
+
+// 5. 初始化表格引擎渲染
+WH.initTable('viz', ({ state }) => ({
+    data: state.currentData,
+    columns: [
+        { 
+            key: 'key', 
+            label: '版本元数据', 
+            format: (v) => `<span style="color:var(--primary); font-family: monospace; font-weight: 600;">${v}</span>` 
+        },
+        { 
+            key: 'val', 
+            label: '计算结果', 
+            format: (v) => `<span style="background:var(--surface-container-high); padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace;">${v}</span>` 
+        },
+        { 
+            key: 'desc', 
+            label: '逻辑说明', 
+            format: (v) => `<small style="color:var(--on-surface-variant)">${v}</small>` 
+        }
+    ]
+}));
+
+// 6. 首次运行同步
+updateVersion();
+
+</script><script type=x>
+const STAGES = {
+  "2D墨卡托": { morph: 0, desc: "墨卡托投影：等角投影。方向保持，但高纬度面积放大显著。", feature: "等角/平面" },
+  "3D球体": { morph: 1, desc: "球体模式：保持真实几何比例。球面三角形剖分确保曲面平滑。", feature: "真实比例/球体" }
+};
+
+const CITY_DATA = [
+  { name: '北京', lon: 116.4, lat: 39.9, color: '--chart-1' },
+  { name: '上海', lon: 121.5, lat: 31.2, color: '--chart-2' },
+  { name: '广州', lon: 113.2, lat: 23.1, color: '--chart-3' },
+  { name: '成都', lon: 104.0, lat: 30.6, color: '--chart-4' }
+];
+
+// Mock region data (boxes representing major geographic blocks)
+const REGION_DATA = [
+  { name: '华北', lon: 115, lat: 38, w: 10, h: 8 },
+  { name: '华东', lon: 120, lat: 30, w: 8, h: 10 },
+  { name: '华南', lon: 113, lat: 23, w: 12, h: 6 },
+  { name: '西南', lon: 102, lat: 28, w: 10, h: 10 },
+  { name: '西北', lon: 95, lat: 40, w: 15, h: 10 }
+];
+
+const { state, ui } = WH.createApp({
+  title: "地理投影交互模拟器",
+  params: {
+    projection: { type: 'stepper', value: '3D球体', options: ["2D墨卡托", "3D球体"], label: "投影模式" },
+    showGrid: { type: 'toggle', value: true, label: "经纬网格" },
+    showRegions: { type: 'toggle', value: true, label: "区域多边形" },
+    showCities: { type: 'toggle', value: true, label: "城市点位" },
+    zoom: { value: 60, min: 20, max: 120, step: 1, label: "视角缩放" }
+  },
+  editorial: {
+    hud: [
+      { label: "当前模式", value: "3D球体" },
+      { label: "几何特征", value: "真实比例/球体" }
+    ]
+  }
+});
+
+// Internal animation state
+let currentMorph = 1.0; 
+let targetMorph = 1.0;
+const RADIUS = 20;
+
+const updateEditorial = () => {
+  const stage = STAGES[state.projection];
+  ui.setEditorial({
+    hud: [
+      { label: "当前模式", value: state.projection },
+      { label: "几何特征", value: stage.feature }
+    ],
+    details: `<div>${stage.desc}</div>`
+  });
+};
+
+state._subscribe('projection', (val) => {
+  targetMorph = STAGES[val].morph;
+  updateEditorial();
+});
+
+// Initial trigger
+updateEditorial();
+
+WH.initThree('viz', ({ scene, camera, renderer, controls }) => {
+  scene.background = new THREE.Color(WH.getColor('--surface'));
+  
+  // Lighting
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+  const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+  sun.position.set(50, 50, 50);
+  scene.add(sun);
+
+  // Grouping
+  const globeGroup = new THREE.Group();
+  scene.add(globeGroup);
+
+  // 1. Grid Geometry (Lat/Lon Mesh)
+  const segments = 64;
+  const gridGeom = new THREE.PlaneGeometry(1, 1, segments, segments);
+  const gridMat = new THREE.LineBasicMaterial({ 
+    color: WH.getColor('--on-surface-default'), 
+    transparent: true, 
+    opacity: 0.2,
+    depthWrite: false 
+  });
+  
+  const gridLines = new THREE.Group();
+  // We'll update the positions manually in the loop
+  const gridMesh = new THREE.Mesh(gridGeom, new THREE.MeshBasicMaterial({ visible: false }));
+  globeGroup.add(gridLines);
+
+  // 2. Mock Regions (Simplified representation)
+  const regionsGroup = new THREE.Group();
+  globeGroup.add(regionsGroup);
+  
+  const regionMeshes = REGION_DATA.map(r => {
+    const geo = new THREE.PlaneGeometry(1, 1, 10, 10);
+    const mat = new THREE.MeshStandardMaterial({ 
+      color: WH.getColor('--chart-2'), 
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.4
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    regionsGroup.add(mesh);
+    return { mesh, data: r };
+  });
+
+  // 3. Cities
+  const citiesGroup = new THREE.Group();
+  globeGroup.add(citiesGroup);
+  const cityMeshes = CITY_DATA.map(c => {
+    const geo = new THREE.SphereGeometry(0.6, 16, 16);
+    const mat = new THREE.MeshStandardMaterial({ color: WH.getColor(c.color) });
+    const mesh = new THREE.Mesh(geo, mat);
+    citiesGroup.add(mesh);
+    return { mesh, data: c };
+  });
+
+  // Helper: Mapping function
+  const getPos = (lon, lat, morph) => {
+    const lambda = (lon * Math.PI) / 180;
+    const phi = (lat * Math.PI) / 180;
+
+    // 3D Sphere
+    const x3 = RADIUS * Math.cos(phi) * Math.sin(lambda);
+    const y3 = RADIUS * Math.sin(phi);
+    const z3 = RADIUS * Math.cos(phi) * Math.cos(lambda);
+
+    // 2D Mercator
+    // Mercator Y scaling factor: ln(tan(pi/4 + phi/2))
+    const mercY = Math.log(Math.tan(Math.PI / 4 + phi / 2));
+    const x2 = (lon / 180) * RADIUS * Math.PI;
+    const y2 = mercY * RADIUS;
+    const z2 = 0;
+
+    return new THREE.Vector3(
+      THREE.MathUtils.lerp(x2, x3, morph),
+      THREE.MathUtils.lerp(y2, y3, morph),
+      THREE.MathUtils.lerp(z2, z3, morph)
+    );
+  };
+
+  // Build high-res wireframe for the grid
+  const wireLines = [];
+  const createWireframe = () => {
+    // Latitudes
+    for (let lat = -80; lat <= 80; lat += 10) {
+      const pts = [];
+      for (let lon = -180; lon <= 180; lon += 5) pts.push(new THREE.Vector3());
+      const geom = new THREE.BufferGeometry().setFromPoints(pts);
+      const line = new THREE.Line(geom, gridMat);
+      gridLines.add(line);
+      wireLines.push({ line, type: 'lat', val: lat });
+    }
+    // Longitudes
+    for (let lon = -180; lon <= 180; lon += 20) {
+      const pts = [];
+      for (let lat = -80; lat <= 80; lat += 5) pts.push(new THREE.Vector3());
+      const geom = new THREE.BufferGeometry().setFromPoints(pts);
+      const line = new THREE.Line(geom, gridMat);
+      gridLines.add(line);
+      wireLines.push({ line, type: 'lon', val: lon });
+    }
+  };
+  createWireframe();
+
+  camera.position.set(0, 0, 60);
+
+  return ({ dt, state }) => {
+    // 1. Smooth Morphing
+    currentMorph += (targetMorph - currentMorph) * 0.05;
+
+    // 2. Visibility Toggles
+    gridLines.visible = state.showGrid;
+    regionsGroup.visible = state.showRegions;
+    citiesGroup.visible = state.showCities;
+
+    // 3. Update Grid
+    wireLines.forEach(w => {
+      const posAttr = w.line.geometry.attributes.position;
+      if (w.type === 'lat') {
+        for (let i = 0; i <= 72; i++) {
+          const lon = -180 + i * 5;
+          const p = getPos(lon, w.val, currentMorph);
+          posAttr.setXYZ(i, p.x, p.y, p.z);
+        }
+      } else {
+        for (let i = 0; i <= 32; i++) {
+          const lat = -80 + i * 5;
+          const p = getPos(w.val, lat, currentMorph);
+          posAttr.setXYZ(i, p.x, p.y, p.z);
+        }
+      }
+      posAttr.needsUpdate = true;
+    });
+
+    // 4. Update Regions
+    regionMeshes.forEach(rm => {
+      const posAttr = rm.mesh.geometry.attributes.position;
+      const count = posAttr.count;
+      const { lon, lat, w, h } = rm.data;
+      for (let i = 0; i < count; i++) {
+        // Map local plane UVs to lat/lon
+        const uvX = rm.mesh.geometry.attributes.uv.getX(i); // 0 to 1
+        const uvY = rm.mesh.geometry.attributes.uv.getY(i);
+        const l = lon - w/2 + uvX * w;
+        const b = lat - h/2 + uvY * h;
+        const p = getPos(l, b, currentMorph);
+        posAttr.setXYZ(i, p.x, p.y, p.z);
+      }
+      posAttr.needsUpdate = true;
+    });
+
+    // 5. Update Cities
+    cityMeshes.forEach(cm => {
+      const p = getPos(cm.data.lon, cm.data.lat, currentMorph);
+      cm.mesh.position.copy(p);
+      // Billboard-ish effect: stay same size regardless of zoom
+      const s = state.zoom / 60;
+      cm.mesh.scale.set(s, s, s);
+    });
+
+    // 6. Camera & Controls
+    //camera.position.z += (state.zoom - camera.position.z) * 0.01;
+    
+    // Slow auto-rotation in 3D
+    if (currentMorph > 0.5) {
+      globeGroup.rotation.y += 0.2 * dt;
+    } else {
+      globeGroup.rotation.y += (0 - globeGroup.rotation.y) * 0.1;
+    }
+
+    controls.update();
+  };
+});
+</script>
 
 
 
