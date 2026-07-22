@@ -1,0 +1,519 @@
+# 编程的定律📚
+
+- 美而不丑、明而不暗、短而不凡、长而不乱。扁平略宽，读而后码，行之天下，勿托地上天国。 
+- 异常勿吞，难过勿过，叹服真理：效率最重要，盲目最低效。
+- 简明是可靠性的先验，不是可靠性的祭品。
+- 所以，我们从4条定律：构思、表达、限制、能效，去理解70年以来【可编程性】的本质：
+
+> `TL;DR` 变决定恒、值皆代码、数据流决定职能、可达路径相等即等同
+
+1. 数据的构造和消耗将决定数据结构。是“变”决定“恒”：不从出现和调用的【概率】入手，读死书的人无法【创造】出它众所周知的结构。
+
+任何软件都请考虑round-trip，最好连屏幕外也猜的到。内容大于形式、组合优于继承、结构先于计算。
+
+2. 程序结构语法上对称于它流进流出的数据类型：同像性。“值的forif就是代码”，代码是字面量，而字面的值依然是结构，运行的结果也可以粘贴到源码中！
+
+这是H5和js接口成功的主要原因，甚至，也是N卡“独霸”AI算力、Apple用“一指禅”干掉诺基亚的技巧。
+
+行表格有结构，序列一字字的有结构，块一段段的有结构，`'(树状(组))` 的结构高于肉眼扫过的两个词，没有什么结构更缺乏生产力。开发时要依靠新信息才有技术力、执行力。
+
+[1 2 3] 就是结构，序列化中另有元数据和小结构。序列外的“工人”被命名为【代码】，但它只是【解释器】所需的，另一类生命周期的【元数据】。
+
+3. 解释器实现权限，【数据流】决定软件的类型。123在键鼠触屏上是数，是坐标，或是 `(con-cat "n=" "123)` 如何能够预判？
+
+4. 123是它自身的字面，但123的【取值】是从哪来？往那去？编程所呼吸的空气是函数和【多点候数】，是实参，更是形参，就像超链接间网状的【路径】。
+
+源码从不在“地址栏”或滚动的鼠标上，而在于按Tab补齐的【位置】。学代码的精髓是做进出(IO/APIs/for.if)，不是做字面(A=B, Math)。
+
+问问用户：`echo "helloworld"`; 和打开单行txt的区别在哪？“标记语言”的界限又在哪？
+
+> 用数据流、事件入口(ifs)和【模块重复】来理解前后端的一切。
+
+虽然用键盘写的代码，但你的思维总在你眼前：光标左侧和滑条（Tab列举+git diff）确实替你思考。你不在脑子里思考，更不在C++/Java里思考。它，不像文字。
+
+“魔法墨水”和“教科书”像法师或技工，从不在一个世界观内。【才能】不可被统计跳过，这就像硬件“不跟手”，罗马数字不好算，不能怪游戏玩家上限低。“它们错了！”，这才是诚实。
+
+代码行数、效用，不是 A=B 的严格相等。把【1条路径】if进某个命名，产生自乘式的易用性和通用性，这才是自然。写错一处 i+1 软件完全报错或部分正常，但心智模型的路径和可用性，突破【满分】的边界是应然。
+
+所以，当我们聊编程史时，我们在聊什么？我想，未来的【思想和路径】，必将突破既存，从而顺其自然。
+
+## 若编程是个函数-它返回什么
+
+一个成品软件，本质上就是装了许多录屏的文件夹，里边的计算热点或polyfill，被写成if或def，而其它的就只是脚本，无论【形式上】是文本、二进制或Scratch，语法和语意就是canvas与SVG的关系。
+
+class有七成是def里重复的参数，三成是 `*{onadd: x=>x+1 or x=>x+2}` 这样的kwargs覆盖，他们称为@Override，但本质上只是给链式文件处理一个“参数面板”
+
+许多人误以为存在着一种“软件架构”或是“代码保护”，忽视了API与数据流【范围】的决定性，更不懂得开源算法为什么开源。如果你用VMWare容器的快照、按键精灵式的UI自动测试、云桌面，就会稍微理解软件的“代码语意”有多灵活。
+
+> 用户动动手刷起来都不卡，让CPU来刷的框架套路、文件划分、编译依赖的各种繁琐边界，它显然是技术债务。
+
+JS Workers + Neon/Atlas 或 Vercel/Netlify 是免费云计算的两大流派，补齐了静态Pages的缺口。它们并不需要Java经验，因为面向请求/推送事件，操作SQL消耗CU，比“启动服务端”更为严谨。.war和JSP/JDBC是模块化，但缺乏隔离度。
+
+就像对全网C/S架构的误解（“客户端只能请求不是双通”，把“可寻址”误解为“单向流动”），技术圈，也存在着根本性的认知偏差。
+
+这种偏差直观来说，非常像USB曾经不受质疑的AB大小口——B口甚至“不对称”那样，属于【设计失败】。毫不夸张。
+
+更耳熟能详的例子是把【后退手势】固化在竖屏屏底，每次左滑只拉开导航栏的MD1。数据的构造和消耗将决定数据结构，用户【浏览频率和跳转关系】将决定UI布局结构，写的漂亮的算法或框架是肉眼可见的美，不用逻辑推理就明白。许多人用21世纪的“罗马数字框架”来写应用，却不知道它不自然。
+
+最首先的革命：async/yield 本来都属于【多点候数】【栈堆环联动模型】而非函数-返回模型。`while({cond}, {blk})` 这个函数只能在无返回值的函数上调用，它的递推结果只能写到 `rwAcc(i=>{rdTxt("now:"+i); i+i})` 的侯数集上
+
+- `chkstk=(n, r=0)=>{Loop(n-1, r+1, {if: n>0, or:OK(r)})}` 是可用于区间iter/二分查找的伪递归形式，它不应写作 `chkstk=n=>(n==0)? r : chkstk(n-1)+1`。
+- `CPU.hang(u=> u(chkstk(50)))` 用于强行允许不因栈深度报错的伪递归，但这样写会保留“程序无响应”的弹框，因为这世界不止会看“返回值”。
+- `Loop(n, i=>{})` 用于区间iter等步数已知的循环，和栈深度同理。
+- `vars.noMemo(c, {num: u=>0})` 用于在关闭重开时改变单例模块中 c={num} 的状态，其他组件状态随 `main=(u, [{ c={num=0} }])=>div..` 保存。c={}即组件默认值，c=NO表示动态类型，参见FnXIAA的kw0
+
+声明式是HOLP和一般纯函数的最大不同。多点候数使用 `(_1moreArg, [{ x }])=>noretTo(x, "new Signal"), (lambda a, /,x Δx: opTo(x))` 进行时序无关的数据流链接。
+
+下面这篇文章，包含许多【编译原理和系统编程】的通俗理解，值得反复读，作为背景知识帮助大家代入playground。像辩论赛，也算是“不打不相识”了。
+
+## 现代数码对编程语言栈的误解🌻
+
+Web技术之于现代设备，已经像JVM之于 Linux vm/sched，实际控制权是前端决定后端了——不分零售/专业级/大厂。
+
+而性能上，numpy SIMD-GPU/线程池/SQLite 就够了，技术栈上不需要操作系统。
+
+那种让vm.c负责运行时检查【双指针有效性】( array [len]T; union{tag} )，然后让 sched.c 给一堆无效化的 while(true) 打上nice做时间切片的真是逊爆了，既不支持裸机，也不像高级语言会做的约定。
+
+如果说vm.c想要实现微内核的鱼和熊掌（必须在 syscall vs `len()` every acces 或Rust类型税里选一个），那 sched.c 的线程模型就是纯粹的蠢。有人见过 “每个人分0.01秒来轮流if检查，成功再多syscall一次:copied!” 的公司吗？
+
+> 是没用过鼠标触屏吗？键鼠屏幕都没动，CPU也会不断耗电吗？
+
+我们学编译原理写 JSON parser，一般的人让字符流动（RD+TDOP parserc），效仿代码解释器“两指一拃向右量”，食指探拇指吃，是谓变“量”。而多数人，选择让“虚拟机壳”流动（LL/GLR），真是连错误都不原创。
+
+使用了WebAPIs，你才知道native（安卓、WPF、Qt）的心智模型本该多落后：epoll天然带有惊群效应，IRQ和DMA把“函数名”优化成了芯片乱码，
+
+而这一切，仅仅是C没有函数值（“回调地狱”都不行）带来的设计缺陷： C天然只能用于文件和脚本（黑框框Excel）而不能理解hov/foc这样灵动的“焦点区分”界面，哪怕是一行REPL。
+
+JS可不是只能在【一行内】响应人体的调用——哪怕是其他GC语言(Py,Java,Pwsh)也没她这样强劲的引擎。短而不凡、长而不乱，不过如此。IDEA也不能瞬间响应你的新代码，踩在断点上按需编程。
+
+没体验过——大部分人不知道coding本该像CSS和UserScript那样在任何代码基上瞬间生效、指哪打哪。再没有Fortran和Lisp那样优雅的科学发现：
+
+所有编程者都在为小学生玩手机时，都用得上的【栈/堆/环计算模型】杜撰各种稀奇古怪的框架术语：只知道C之上，不认识C以外的世界。
+
+> 用户不点、代码不动（stack:noop, heap:wait），这只是一种非常日用化的认知罢了，但每一层import都在加私货。
+
+我写过一个30行的canvas调试器，hook了各种写操作 before&after，如果它涂掉了鼠标所指的“1px噪点”就唤起F12的REPL，hover时则能显示 drawTrex() 这样的函数名，并用filter点亮其贴图。
+
+很难想象，至今对 File URL 都没有打断点能力的，还要依赖WireShark【旁听】的 "native" 是怎么做开发的——旁听和推敲属于自己的源码？Pretty alien to me. Bret Victor's "deadfish".
+
+DOM被一个只会链式($0)省字数的JQ，和以为C++层学不会diff的React打败：真有人以为JS-DOM和syscall一样慢，还需要“虚拟树”缓冲写操作？节点池复用做过吗？
+
+“永生函数” vs C-like，通俗的说，就像动物植物那样差异巨大，她【不在】函数们的世界，仅仅共享了“信息类型-可计算”的基因。
+
+callee，不是只在value被观察时有【使用价值】，它在栈上占线时：
+
+零拷贝的情况drawRect读写帧数组的共享内存(mmap)，它就可以既单线跑满却又“有响应”，必须受调(evpoll/uring)才能有用的情况，一个stack就绝不能等待第二个while(true)，
+
+但“封装f()结果值”的需求从未消失，这就是回调地狱也叫回调链表(async/evpush)的诞生。
+
+所以，stack本质上是种【有步数上限】的函数调用，耗尽自动throw（或溢出事件）。你不创造，你不真懂。
+
+不限步数的调用只能set到heap上变成【once监听】：它受“多点侯数”的驱动，且非单次的返回，方便授权键鼠触屏去【动态地拖拽参数】。否则1帧要无限秒，0fps。
+
+> 但返回不可能“多次”！消除悖论（语意化）之后是【分段运行、返回进多个点】：不再做“记忆化GOTO”，顺序执行、广播执行（栈和环）都要“堆”好！
+
+DOM让人机两个闭环的交互只用学 onclick、innerHTML、setInterval(loop)，是 one-stack。而stack即是timer，“多线程”只是对【落后的poll】的混淆。
+
+栈本就是堆，多一个id的那种。就像函数本该是对象，多一个data指针（而非vtable “kwarg”）的内存地址。
+
+本无“阻塞”。`while(很大-->0){}` 就像尾递归栈深度超了，该弹框提示“不响应”让用户决定，是否继续算。`while(true){}` 是无穷，不是“有很大”，它们不能只这样写出来并且compile通过，太生硬了。
+
+## 误解和理论界的教训
+
+请别把timers（侯数图）和call（函数树）混为一谈：没有【同一条线】，从不存在 callback; yield; 和“异步”这样的技术。只有【堆、栈、环】的三位一体。
+
+一个noreturn的函数，不能牵强附会说它是 `(): Unit` 或（不做语意化理解的）void —— 这就像把 `str|None` 统称为 String 一样，对技术栈的认知是纸上谈兵。
+
+`({async Sam() { while(true) switch((u=await click()).type) { case '#apple': balance-=u.price } }, async Tom, Jack...}).Sam().then(Tom)`
+
+then是由用户点开的。参数不齐，所以“图片”没有冻结，你移一下它then一下。参数凑齐了就没意思了。
+
+网络要把 `f=(A,B)=>{}` 装箱成 `(f,A,B) | (f0,ret)`，tcp再为它包一层 `(id,f0,ret)`，栈转堆-转栈，是这【通信方式】，让两个死循环中的数码设备互操作。
+
+RPC,IPC,FFI,async.. 这些东西的本质正好是【栈转堆+bytes片定位处理+堆转栈】，从A语言参数粘贴进B语言参数，或从昨天粘贴进今天(presets)。我说的简单，可没一个框架有完美的、点名即用的跨栈工具。毕竟那种工具为需求服务，要懂需求场景。代码只是刀和食谱，不是菜和锅！
+
+一个视角就值80点IQ：Kay的OOP“细胞计算机”可不是Rx.Observer或C++，她是一种【和纯函数式、关系式同层次的】、全新而且受误解的，重要如三大系统内核的模型。而且，C++和Lean都不懂她，以非常讽刺的方式。
+
+Scratch2的前身可不是【一个KV加几个this≠null函数】，它是真正“独立且高性能”的消息-类型-响应模型。曾经的C和Java也把地址引用，搜索替换为“值类型”，就产生各种混淆与“薛定谔的装拆箱/常量是否equals/reified泛型..”，直到支持了JSON才明白，原来【地址】只是最低档的一种hashCode而已！data class绝不是class。
+
+Java同样可以把单变量 final class 的 `T(x).A().B()` 简化为 B(A(x))，可惜这般OOP缺乏扩展性，甚至连postMessage的【跨栈能力】都丢了。Scratch也不需要序列化，“细胞”本就是被swap到内存里的，不存在loadump(拷贝)。
+
+这种事情Kay在启发 2007 iPhone 杀死比赛之前就知道：代码和图片、示例数据，是打包在一起的，所谓运行和关闭，甚至是【发送一个进程】，就像游戏机存读档那样自然，免安装。
+
+真不明白为什么要先写一堆拷贝和rc文件，再重新发明【零拷贝】【前端编译器】。Scratch 的 rc (/etc) 文件有“注册表”可以改，也能直接在AppUI调，rc的Reader就是Writer，IO没有第二份代码。
+
+> 回头再看看，loop{} 根本不属于返回Never类型的函数。不然【函数染色】是哪来的？
+
+UI和onfetch仅仅是【单线程模型】吗？它并非线程！函数值就是对象(refcount≠1)，它们在运行前有属性值。这点上，Svelte和numpy的理解比LLVM或Linux还正确！
+
+线程只是一颗求值树（让单个 CPU.loop{} 做遍历排序），软件却是数据流的树状图。停机问题的不可判，让人混淆【定时器vs纯流控】，但流控仅能包含流控，可以从各个时期看出：
+
+- 【动态语言】的本质是将 def/class 作为语句，可以写在forif里，导致函数【可以不存在】而较难静态检查（不能“编译期”，可写编译器）
+- 【宏】将可以有forif的函数体强行一步替换(inline)，或依据const（如 GOOS=ios/js）展开，它无法用变量消除重复的表达式（那属于栈分配）
+- 【动态规划】可以被 `@lru_cache def DFS(p0): DFS(p0+[↑↓←→]) if..or print(p0)` 部分替换，但有两个参数的DP理解难度已经和 for y, x: 没差别了。
+
+【事件循环】不是一个“比较难false”的while(true)，它取决于芯片内有没有timer，而不是主频有多少个Hz，这是完全不同的物理量。
+
+- `while() {read(); sleep()}` 把一个特例（once事件）当成了常态，就像await把另一个特例（单路监听）视作唯一。可共享一个i=0并用 i++==0, i++==N 实现 all,race 不代表它不是原语
+- `while(很大-->0){}` 和轮询并不是一码事，轮询是有【采样率】的，while就算作为丑化版的filterMap或findNext，类型上也是“瞬间得出”，既不是会“得出多次”的write-read管道对，也不是Excel/CSS式的自由变量。
+
+while是一个自旋，它和【事件队列】没太大关系。事件本质上是一个 type `enum EvLoop {CallA(int), CallB(str)}`+链表，这和 loop{} 的打转是两回事！
+
+libuv 的轮询依赖于 Linux vDSO `gettimeofday` 和 `epoll_wait(..., 50ms)`，是一个【保存/恢复现场】的内存镜像，从来就不是while在数步数！
+
+## 系统内核和编译器的尾声
+
+> 结果是结果，过程是过程。“有码就能跑，能响就是歌？”
+
+既然事件不是个“循环”，反言之“死循环”就是SyntaxError，【阻塞和异步】这两个概念，也就无从谈起。我们不理解的arguements对象，请不要用那些“可执行的语法”来简化语意。
+
+没while，靠tailrec伪递归就不能实现evloop了？有while，内核就会乖乖放死循环永远继续吗？ML99可以完全靠 #define 重新定义C的形式语法，Quine-relay 单文件100+语言做同一件事，【边界】并不明确。
+
+死递归是栈深度限制，而非本质上不行。Haskell的 IO Monad 就是回调和伪递归的结合。
+
+死循环会产生【另一种栈溢出】：它可被恢复，而这是设计错误。从一开始，【栈】就只包含带深度限制的伪递归，每次超时可选择等待或KeyboardInterrupt，总之没有死循环。死不是编程者该思考的内容，活动的对象才是。
+
+写出 `for(i=1; i<0; i++) {anyhow;}` 这只是条问题代码，它不负责分派什么“事件”，而 (1..0) 从构造时，自然会杜绝这一类思维方式。活对象≠死循环，她只是走走停停——而while不包含“停”，“走”又如何体现？
+
+GOTO considered harmful, for today, `while(true)` should be SyntaxError.
+
+编程是在连接树状图，它总有原点和模块但无【绝对执行序】，main函数之中的不是一颗 `E=(A [*/+-] B); A=E|[0-9]+` 的代码树，编程语言，是一种支持import的人机界面。
+
+> 编译原理的要点是import和on事件的数据流“管线固定”，不是实现eval、GC或“在哪都能运行”。点开、Enter后能跑通就糟糕了！
+
+因为运行时“水流”是断开的、漏液的，加俩新功能整个代码基僵掉、没有竞争力，反而让人养成了次抛的坏习惯，但【人机界面】二字人才是本质，机器码是债务！
+
+相关并非因果：“函数”是错的。 Can Programming Be Liberated from Abstracted Functions? Yup.
+
+"Native" 缺少一个像Tailwind.css和React.js那样的 Game Changer，这可不是“前端技术”而已。不然，onfetch为何在并发上从起步就超越了PHP/JSP，哪怕不引入“新技术”呢？
+
+如果有一种“Observer设计模式”在几乎所有软件、服务器和框架里被import，甚至成为 io_uring，它就不再是设计模式，而是编程语言缺乏的特性。
+
+很遗憾编程界走向了await和AsyncIterator这种扯淡的共识，就像GOTO那次一样。
+
+
+
+
+5内涵5外接
+ROFI逻扉多态
+
+鸭猴鹰-组入转拆范式
+
+- 易分辨Rpc子类型、错误边界、表格主键压缩（DeSer和DMM工具集）
+- 可爬性预知
+- 盘旋参数
+
+
+
+
+add[-2] A+B # 表格列参数
+
+add[-A]:
+  OK([-B] { 1A+1B } Or ([-B] [A B] @[1 1]) ) # 单位化算术
+
+adder[-A] As: # As(走) 块内可含可变量，不可使用 [-A]:
+  new {-acc A -step 1}
+  # -x -y inc(0)  # new的平替inc，一般对数值和下标用。x=y=新表达式。
+  -op  [:]
+    new acc([-i] i + 1step), step(step+1)
+
+  OK(op) # 可变捕获了 {nonlocal acc}，也不需要随处大小 let
+
+test [:] #< 仅有的两语法，加可变接口不用As块
+  -k  am("n" 0)
+  -a  are([1 2 3]) # arr.map(it=>操作);
+  inc(1 3): [->i]
+    k "n" (k "n" + 1) # 单位化读写，下标不搞特殊
+    a#(0, i-1) == i # 数组，可广播
+  a #1lit #== a#(0) lit # 交互式下标
+  a #(0, 0:3:+1) # a -As inc(0 2 1)
+
+变量名LEGB查找顺序，E包含this(u.varfun, F.useOld)参数，G为模块(imp.x)且高于this.x。
+
+imp包含所有全局键（对象和函数、py式模块），但类型一般要用iTdotLit元类格式： `imp.Array(_new=10), imp.Node.DOT.TEXT_NODE, imp.UIEvent.T==imp.Event`。
+
+元类体系(learn to "Argify") 主打SaveAsJson另存链和IEatDeeper标签长度深拷贝(col,cond, c_zeros,c_hasV)、FnXIAA馈硬反射。
+
+Fn/Fu/FnHo, Row/Ro/RoLit+Arg 两端可编程
+
+siLINQ__?.tri/inc/setterJQ_FRA/3m3var/htmb.u
+
+str,int各包含2个区间构造器，UNIX模型引入了 Uh/Um/fstr/dtStr/ahex。Um实现了dirGlob和index打开，D2点框速度(mat)都算区间
+
+mind,make,mutate; var.spy/noMemo/meetEq
+
+OK
+NO.Or(cue)
+has.XX,ON,pass
+
+it.As(op) 可写作 `js?.(u=>(n=u+1, n*2)); py@{n:=u+1, n*2}`
+
+Quac==cccl夸克公理
+
+.:彼此::上下?? (uOOI?? you our OK impl) 是仅有的6个硬关键词，如 protected(our??) open(impl?)，另有 I[msft]_ifcuup$T 类型前缀/键名后缀。
+
+If编码作 `u.if_animal={Duck:{name:"Donald"}} or {Cat:{iam:"Tom"}} or {"":"Cat",iam:"Tom"}`，将type和其他键名混在一起是个常见的设计错误，插件下拉不能选“预设过”的某插件，而要选插件+选预设，这是同一类型的误解。
+
+URow、Col、rdRw、Arg(F.n/FnHo)，行按可变性下降：Row、Ro、RoLit，应await或可空的后缀是_，v_（渲染为 v?），也可 v?.(u=>u+1) 访问。除了.Or("\u500e") 和404e其他异常要求函数名后缀如 fetchOK_()。见 [0xnBCD_8edf]
+
+典型除错的方法：400 重填 401 登录 402 付费或提升硬限 403 提权 404 重搜 405 重装或清数据 500 必须改代码 502 安装依赖或联网
+
+
+UFCS.01n 是hito的函数范式：文本和区间数据流、声明式流控、扁平化类类型。 incAB,#i, -XX复选框
+
+1. Are/AM/IsSome密封类
+1. Rd一元组和文件 Rw信号(Tk.Var, onvar/vi/isa/yield)
+1. F.n0, F.u1 等强转，Arg.paste 过程宏
+
+
+数据类的革新更大
+
+.: Val-Addr-Come # class 三种可变性模式 {...}
+  add[-2] As:
+    new {n: A, "c": B} # 所有JSON字面支持！
+    CPU hang -while {n>0}:
+      new ([-c] c+1) # js 同理，倾向于 new(c=>c+1)
+      new n([-i] i-1) # py new(n={(i), i-1} or {u-1})
+    OK(c)
+    # py多行块，替代 @lambda f:on("wtf",f) def ret(ev: T):
+    # for ev[:T] in on("wtf"), ret: OK()
+
+  add-tailrec[-i-c_ 0 0 ~> 0]:
+    newArgs(i-1)(c+1) Or {c}: i==0 # js(.. {Or: c, if: i==0})  py (..) or c if i==0 else OK
+
+    # 平替(if门)
+    (i \= 0) (1==1): newArgs(i-1)(c+1)
+    OK(c)
+    ("war" \= "peace") Or: KO ""
+    # 平替(when展开式)：
+    i :.
+      0: OK(c)
+      [->(n+1)]: newArgs(n)(c+1)
+
+  set-evFun[:]
+    -hi[:] alert(prompt "Hi?")
+    new nav({-btn {-onclick hi}}) # 太冗长
+    nav btn -new {onclick: hi, if: ON} # 太重复
+    # new(vars).onclick({ inp(ev){...} })，inp可以是键、函数或.setInp
+    nav As:
+      new(vars) -onclick {
+        -btn hi
+        -inp [-ev] alert(inp value)
+      }
+
+对JSON式字面没有":,;"的特殊要求，但不能与箭头函数 [-1]和fn{u}{u} 或访问链 (a b attr) 混淆，不可空位。[*a], {*kw}, {[kst]:v, varAsKV} 需要完全分隔符。
+
+调用链(BS-Vocx)同理，a b "kst"/() 后方可跟随参数名，直到(子命令)或 : 块。a -b()() 可追加多子命令，-V链完整后 ('\或|' BS) 可换行继续访问
+
+  set-auth[-h] As:
+    k "n" (Math -random) # GET请求丢弃变更，即便容器(val a: [Int Come_]) 可变。HEAD(搜索/H5卡片)见URow
+    new [-noauth] inc(a)(a (-1))
+    # Hito 对可变性的标记相对注重 ^
+    #new(noauth => { a.push(a.at(-1)) })
+
+    h -ok new([-nobody] {
+      KO "\u403E 用户未登录"
+    }) Or "Token: {k "n"}"
+    
+    # 索引处insert和多维赋值 inc(a,"", u=>u[0])
+    inc(a)("first"): u #1
+    test: n(inc(NO)(a)) == inc(a)(NO)+2 # =5, a.pop(), a.shift().length
+    [[1 2] [*"AB"]] Tr #= 1A 2B, zip
+    [*(inc 1 4)] sep 2 +1 #= 12 23 34
+    
+    new {-b [["nest"]]}
+    inc(b)("深"): #(0,0)
+    test: b#(0,0) #1 == '深'
+
+.: Ro
+  Val-Addr-Come[-defl_-s_ 42 "hi"\ -inc 2]: #< class{} 内嵌了2个变量，必须在此处赋值或拟态类型(Litype)
+    new {
+      -k  am("n" 0)
+      -a  are(1 2 3)
+    }
+  App
+
+Litype 详见 [sikxfaneCuRLDoom]拟态王国。有基本类型，也已经有 [CtrlSNOWLY] 6个Dunder非常有用了。
+
+Come(来/collections.abc) 只包含 in,iter,len 三接口写作： kv(K)(pass), kv()(rw_inHole)==ON有剩余, inc(a)("auto_id")
+
+FnHo 包含 .var[GITES] 数据流，rdNum/rdRows/rw/rws 区分用户是否写入变量，rws允许多监听/环形广播/队列Worker，`{"":type}值或空键_` 为 .varT
+
+除了.varE 变量都不支持.v=NO，但E也只能空初始化，用于解构遍历。.varS 被用于模块化，不同模块访问DOT.常量有不同值，这方便了 `import math: m; m.prec=0.01` 依赖注入零拷贝。
+
+HOLP 倾向于单例UIUX，即使用URL栈（分时复用）和同页面多窗口/内嵌（分参数集复用）实现多文档界面而拒绝new对象-元素配对（本质上基于显/隐）。在跨页playlist里单例的自然性尤为明显，与纯函数相悖。var.Swapfile/lit模板被作为helloworld
+
+集合三接口最好写作表格推导式 (foods "🍎") As{"?."} Or{"🍎=null"}: saying(u) 和 foods [-k-v]{v <3 USD: "💸{k}" - v}  (包含 RowD2, T? 链)。
+
+推导式支持序号 -a ["123".*]; a [-i-x]{}，支持按次查找 -i inHole(0); a(i): [->iptr x] 。(a -step -1) 迭代器不反转i本身。
+
+数组项不可None，认假为空，认空为错，null被视为一种KO(\u500E)。详见 [0xnBCD_8edf] 公牛标签
+
+有 &has[**nth] 的位判断(sock.XX &acting)。"-XX" 键的8位最多含5个复选框，Str间等号为(id "Jack")。
+
+[FnXIAA] js 调用方 imp.AS.treasure(pass, [arg1,], {kw0})，定义方 (ALL,As="~> Litype")=>({name: ALL[0], age: ALL.kw0})
+
+解构遍历、免嵌套连线、粘贴加括式重构、F12热编辑赋值（划分被赋值的边界）、F12补齐试错保留(d=9, 9())
+
+-_ [1 2 3]()
+-rd Out: [->(A @a)->B] # 打两个洞
+  _(A); _(inHole(2)); _(B) # 全真。可嵌套 or, and 门实现 if match
+  B v == 3
+  a v == 1
+  OK("rd出洞")
+
+cnt[-a] :.
+  [[]]: 0
+  [[x, *xs]]: cnt(xs)+1
+
+greet[-me-age] "{haha(age)} {me}" clean
+
+Out(^v 2) # 不落LEGB的俗套
+
+haha[-n] :.
+  n>18: "Howdy,"
+  n>7: "Yoo {me #(inc 1 3)}!"
+  Or: "Hi,"
+
+clean[-u ""] sed (re:'fuck'): "" join(u#1)("*" -repeat (n(u) -2))(u#-1)
+
+^v2 可以配合剪贴板悬挂式重构：前置1行 [-] {} 括住重复代码，按^C，watch命令将隐水印化该[-]块，随后选中各参数按^C
+
+在[-]行按^C，即可随处粘贴代码段，修改空括号或(old|new)任意参数，可增加条件语句并重^C。最终在[-]行按^X，模块内放置函数，再参数命名。
+
+#@1 code.. @# prompt.. 可用于AI重录。纯文本的列表按钮、富类型stdio详见[BeSQRUT]。TDDgcc和双向编辑可用于UIUX
+
+(.:) 的第3/3个意义是DSL和管道链(kwargs)
+
+.: App
+  Out(-3 vars) # Builder类型推理、隐式operator()函数
+  id2 on "change":
+    id1 -new {innerText (u value)}
+    alert(wtf)
+  OK
+
+  init[-u XmlExt]:
+    nav .:
+      div .:
+        a(-id1) {-href "#"}
+        ": "
+        input(-id2)
+    -x (-wtf)
+    wtf "Inline set"
+    new {[re:'wtf']: [-k-v] "type() set"}
+
+一般用 new {[bind]: fns, *glue} 来编译期AOP和注入stub函数，三项均为 Arg paste 函数。
+
+("Rose") .:
+  globalThis treasure .: -kw0 19 A
+  grep .: (A) ./hack.txt -C 1 -XX oP
+  #^ 复选框写作 -XX(o P :ON) ，单独的 copy-kwarg -name -age 要与ES6 {var1, v2:v2} 对仗
+  dd(A)
+
+提问、查找、调试打印3句，拒绝随处大小let
+
+
+
+与URow、URL、UMat应用轻松交互
+
+Row读写器
+
+无GC时的 [T rw] 如 (int argc,char** v={{"./wtf"}}){} 默认全*const，CPU.trust_me{} 可算指针
+
+
+## Basic CLI
+
+w@ f"{1=}"
+wrtHoles(boy=>{wrt`Hi, ${boy}`; boy.v})
+n=>mutate(rw=>{while(n-->0) rw?.(n)})
+
+for u in w@":IXE": w@"no trail \n"
+rdList=(a)=>`render() a on update`
+rwFile=U.txt.a，需要cue (defer绑定)
+
+## Console Fmt
+
+stdiox (F12-groups, files-pipe ::)
+
+1. vars.spy.dd_dt `dd="out", d[DTFM]=dbg_print,F12_jq,help()`
+1. wrt.BeSQRUT，类似 BS-VOCX
+1. wrt.BYGRP
+
+- 5Ufs: 4$5U, $ys,$h,$tate,$end 协议, $ys/p = /p; $h/p = ~/p
+- 三种新文件类型 .dmm; dir.fn/; index.* ，dmm配置决定文件夹下（链接是否带过滤器、文件显示名），dir.fn/** 打开或cd前都要touch(a/ 显示为 a::)；index可cd和执行文件夹
+- 5U: dev{3h3m}  sys{Boot, A:C:, T/背光等类, ip.fn/, ip.dmm蓝牙WIFI等, mnt/U盘等}  lib{.py,.java, .c/{lib和bil.so反射@PATH.so}, @PATH二进制}
+    - ussr{icons,menu,font, 各种App资源..}  v{tmp,log,db,run, 动态记录..}
+    - m0空读写(zero,full同类) m1内存 m2p1,sd2p1(sda), hid/{mouse,key}, hdi{a0,a1,v0@RGBA,v0.dmm}, hci{WebUSB}
+
+## 系统和图形
+
+UV-UW-PV  iTime(media元素时轴/rate,Lim/ease语法) iChannel(canvas像素/shaderToy.com) 支持CSS-js互事件和SVG互变量，自带擦拭去色等滤镜
+
+OS {json,urlCard,cpio,fastF5, chroot"USER", chcpu}, chop mint补丁-模块级cue-F.useOld(), imp.LEGB查变量  自动选线路import class-def的静态无序性
+CPU {foreign{Tx候选,Rx表,nextID0}, atom1,jobN, UX.add1 UI UGC  Unix跨页/VFX/DSP} 支持transfer:[FnHo]
+
+## Console Table
+
+1. 按钮组和图片嵌入、进度条状态词#.:
+1. 列表组、链接（精确到行列,秒）、AI重录
+1. 两行两栏两层[{}] 简单CRUD界面，FLST+FLIP(first, last, [subst, topup]+[inverse, play]) 列表和动画
+
+Um,Uh,Ureq(./, globDir/, dir/index.XX, //链接?/参数:值)
+
+tap:OP {menu📌,nav,leftTab深2}   ptr:Pxyz_WH {drop,dropSort🧲,dragXYWH,CtrlB变量}   kbd{vkbdApp含时延小猫,lilGUI,i3wm}   L_D2{inScr,inCSS,全屏转屏焦点}
+
+## 新的前后端范式
+
+Hito对象模型还有一个类似CRUD的概念：CUIFS(create update(is_deleted) ID  filter sort)
+
+ID应该包含路径访问、卡片速览、用户ID鉴权。使用 p,per_page 关于屏幕大小分页。分页应用点顶栏应滚到最顶，有可选实现的 `/prev_page:id` 参数，滑动到历史访问的id为第0项。
+
+过滤排序可使用 `?/q:@tag+@归类+@@uname+kws, /sort:1A+1B-2C, /dt_page:20080101-20261230, /dt_page:起始时间戳/p:1` 方式动态完成，但需要传入可用的相关列。
+
+1. 应使用路由别名显示分类，如 `a.com/@id => a.com/?/q:@@id`，表单ID使用 @+123 形式传输。
+1. 批量操作可 `POST /pet/new [{"id":A, "-XX": "remove"}]`，修改内容、重设旗标数组。注意，根对象是[]而非{}
+1. 可使用类似 cpio(newc) 的格式传输每项：`dt dt1? uid? "(@uname)? tags \n{json元数据?}\n desc \n\0{blob}"`
+    1. dt用3bit标注是否含uid、dt1(mtime)是否不等于dt而不省略、dt1是否保存点击量数字(dt1 & 2**32-1)。典型是"11,01"表本地和远程。块有4字节长度前缀。
+    1. 如果是 `"desc\xBB\0{BlobBulk}"`，其中就有许多块 `路径/文件名.typ\n{blob}` 且以 "\x00\x01!\n" 结束，一般会在第一项出现 ".png\n\x89PNG" 预览图
+    1. 所示元数据在 `let [dt_dur, owner_tags_str, desc]=blob.ID2, blob.DOT.json` 可访问
+    1. CUIFS 使用 /\.u[vageztmup]/ 缩写视频、音频、图片、文档树、任意下载，剩下4项意味：模板和歌词字幕、3D、桌面、项目
+
+其实，真正的HTTP动词只有 OG(HEAD,OPT) 鉴权SEO和 CDN(GET,SET) 可重放性，没有代码=没有区别。至于 `curl -X POST` 一词用 `-d "body"` 是否为空替换就行。总是要造出无效术语呢？
+
+鉴权登录伪代码： `if tok:=chkpass(email, "az09rep8"): res.addCookie("HOME", tok) .. if not (u:=chkpass(req)) or u.balance<=0: error("More Money! #403E")`
+
+写过文件上传都明白。是不是POST该区分 body==null，它是标准输入流。
+
+基于响应式的动词是 GET SET(PATCH) PUB(POST) OPT HEAD，因为UI变量的pub-sub本来就有可能触发跨端操作，完整后调用/new设定ID，或调用 /new&force={UUID}，可用于兼容reset默认值的PUT。
+
+CUIFS在数据流（调用栈范围）上区分读写方向。SET 方向的 `chkpass(u,p)` 创建或忽略凭据键值表，而PUB方向尝试登录（`.jwt=true` 冻结后续键值修改）。
+
+服务端计算，如 `"邮箱激活码是："+chkpass({As: u=>u.freeze=NO})` 可生成用户操作函数（另见 nextID0,ret2json），`chkpass("//b.com/")` 将向SNS服务端发送“注册按钮”并请求重定向到UI
+
+如 `PUB //b.com/chkpass -d "a.com/chkpass?hole={}&id="`，只追加参数编码的 "id:otp:nextOTP"，将GET到的链接下发给js端，form submit 即可注册或登录。
+
+绑定同理。此流程会依据既有HOME注册类似 site:uid:otp 的状态，只要site调用并提供当前的 id:otp 就能插入绑定或登录，site请求己方验证时同理。
+
+扫码登录同样要用 hole={状态机} 变量，所以也支持 hole=.`uuid:site:{sha256("uuid:site"+salt+unixTime)}` 格式，有 .tag 非空和 .v（比如旧设备扫码上传文本，必须长轮询）
+
+## 防冲突的semver
+
+Damver是静态检查的版本号规范，兼容 x.y.z 和 js的16位十进制、git的7位短提交号（9位十进制）三种形式
+
+对于需要联网的库，必须使用 `v1_202609.2P{git}` 的日期格式，其他库可用 `v1.2P{git}`。只要有类、函数或全局变量删除，v1 → v2，只要有新类型，.2 → .3，v1或v2的一栏不可以手动编辑。`import pkg` 严格导入 pkg@1
+
+工程师应当明白：任意发布大版本不会使软件更成熟，却会对下游造成困扰。
+
+命令行工具一般传入 -v 参数来显示p{git}校验和。v1_2026 或即 v2026 存储为 int("302609")，注意v1编码为 "3"，无年份时为 301, 302.. ❤ <3
+
+如果API破坏的次数>9，会溢出并破坏两位月份（比如2620=不兼容更新第10次，此时 v10_2026.2="202620.2.{git}"），版本号最多发99次，就要随月份或破坏性重构归零
+
+> 从两个端解决importmap太长，以及新版向下兼容的问题。禁止用“主版本号”虚荣、假谦虚，因为主版本就是小版本。禁止直接导入【最新版】，除非它的兼容性仍是v1。
+
+## PahQL解析控半同
+
+BYGRP代码高亮
+
+['-', 缩进语法/JSON.org所示的简单嵌套] 和'\xBB'标注的点号补齐
+
+PQL支持BLIP(Braces & Literals Incremental Parsing)

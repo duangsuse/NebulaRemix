@@ -5326,7 +5326,335 @@ WH.initThree('viz', ({ scene, camera, renderer, controls }) => {
   };
 });
 </script>
+<script type=x>
+const { state } = WH.createApp({
+    title: "N-Sided Zhao Shuang Chord Diagram",
+    params: {
+        n: { value: 5, min: 3, max: 12, step: 1, label: "Number of Sides (N)" },
+        alpha: { value: 0.35, min: 0.15, max: 0.85, step: 0.01, label: "Alpha Ratio" }
+    },
+    internal_state: {
+        gamma: 0,
+        side_a: 0,
+        side_b: 0,
+        side_c: 0,
+        totalArea: 0,
+        triangleArea: 0,
+        innerArea: 0
+    },
+    sizing: { viz: { height: 420 } },
+    editorial: {
+        hud: [
+            { label: "Alpha/Beta", value: "" },
+            { label: "Area (Sum)", value: "" }
+        ]
+    }
+});
 
+// Update HUD and calculated math properties
+const updateCalculations = () => {
+    const N = state.n;
+    const alphaRatio = state.alpha;
+    
+    // Total interior angle at a vertex of a regular N-gon is (N-2)*PI / N
+    // We split this angle into alpha and beta for the triangles
+    const vertexAngle = ((N - 2) * Math.PI) / N;
+    const alpha = vertexAngle * alphaRatio;
+    const beta = vertexAngle * (1 - alphaRatio);
+    const gamma = Math.PI - alpha - beta; // Interior angle of the triangle at the inner vertex
+
+    // HUD Formatting
+    const alphaDeg = (alpha * 180 / Math.PI).toFixed(1);
+    const betaDeg = (beta * 180 / Math.PI).toFixed(1);
+    
+    state._gamma = gamma; 
+
+    ui.setEditorial({
+        hud: [
+            { label: "Angles α/β", value: `${alphaDeg}° / ${betaDeg}°` },
+            { label: "Vertices", value: `${N}-gon` }
+        ],
+        details: `This diagram generalizes Zhao Shuang's classic proof of the Pythagorean theorem to N-sided polygons. For any regular N-gon, we construct N congruent triangles with interior angles $\\alpha$ and $\\beta$. \n\nThe side lengths $a$, $b$, and $c$ satisfy the Law of Cosines relative to the central vertex angle: $c^2 = a^2 + b^2 - 2ab \\cos(2\\pi/N)$. \n\nTotal Area = $N \\times$ Triangle Area + Inner $N$-gon Area.`
+    });
+};
+
+state._subscribe('n', updateCalculations);
+state._subscribe('alpha', updateCalculations);
+updateCalculations();
+
+WH.initCanvas('viz', ({ ctx, cx, cy, width, height, minDim, state }) => {
+    
+    return ({ ctx, width, height, cx, cy, minDim, state }) => {
+        // Force proxy clear
+        ctx.fillRect(0, 0, 0, 0);
+
+        const N = state.n;
+        const alphaRatio = state.alpha;
+        const R = minDim * 0.35; // Outer radius
+
+        // 1. Calculate Outer Vertices (Regular N-gon)
+        const outerPoints = [];
+        for (let i = 0; i < N; i++) {
+            const angle = (i * 2 * Math.PI / N) - (Math.PI / 2);
+            outerPoints.push({
+                x: cx + R * Math.cos(angle),
+                y: cy + R * Math.sin(angle)
+            });
+        }
+
+        // 2. Derive Triangle Geometry
+        // Each triangle base is a side of the N-gon: c = 2 * R * sin(PI / N)
+        const side_c = 2 * R * Math.sin(Math.PI / N);
+        const vertexAngle = ((N - 2) * Math.PI) / N;
+        const alpha = vertexAngle * alphaRatio;
+        const beta = vertexAngle * (1 - alphaRatio);
+        const gamma = Math.PI - alpha - beta;
+
+        // Using Sine Rule: a / sin(alpha) = b / sin(beta) = c / sin(gamma)
+        const side_a = (side_c * Math.sin(alpha)) / Math.sin(gamma);
+        const side_b = (side_c * Math.sin(beta)) / Math.sin(gamma);
+
+        // 3. Draw Triangles and Extensions
+        ctx.lineWidth = 2;
+
+        const innerPoints = [];
+        for (let i = 0; i < N; i++) {
+            const P1 = outerPoints[i];
+            const P2 = outerPoints[(i + 1) % N];
+
+            // Vector from P1 to P2
+            const dx = P2.x - P1.x;
+            const dy = P2.y - P1.y;
+            const angleBase = Math.atan2(dy, dx);
+
+            // Calculate inner vertex Q
+            // Q is at angle (angleBase - beta) from P2 at distance side_a
+            // OR at angle (angleBase + alpha) from P1 at distance side_b
+            const Q = {
+                x: P2.x + side_a * Math.cos(angleBase + Math.PI - beta),
+                y: P2.y + side_a * Math.sin(angleBase + Math.PI - beta)
+            };
+            innerPoints.push(Q);
+
+            // Draw Triangle i
+            const hue = (i * 360 / N);
+            ctx.fillStyle = `hsla(${hue}, 70%, 60%, 0.4)`;
+            ctx.strokeStyle = `hsla(${hue}, 80%, 40%, 0.8)`;
+            
+            ctx.beginPath();
+            ctx.moveTo(P1.x, P1.y);
+            ctx.lineTo(P2.x, P2.y);
+            ctx.lineTo(Q.x, Q.y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Draw "Chord" Extensions
+            // Extend the line from P2 through Q
+            const extLen = side_a * 0.4;
+            const edx = Q.x - P2.x;
+            const edy = Q.y - P2.y;
+            const eMag = Math.sqrt(edx*edx + edy*edy);
+            
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(Q.x, Q.y);
+            ctx.lineTo(Q.x + (edx/eMag) * extLen, Q.y + (edy/eMag) * extLen);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Label sides for the first triangle only to keep it clean
+            if (i === 0) {
+                ctx.save();
+                ctx.fillStyle = WH.getColor('--on-surface-default');
+                ctx.font = '12px monospace';
+                
+                // Label 'a'
+                ctx.fillText('a', (P2.x + Q.x)/2 + 10, (P2.y + Q.y)/2);
+                // Label 'b'
+                ctx.fillText('b', (P1.x + Q.x)/2 - 15, (P1.y + Q.y)/2);
+                // Label 'c'
+                ctx.fillText('c', (P1.x + P2.x)/2, (P1.y + P2.y)/2 + 15);
+                ctx.restore();
+            }
+        }
+
+        // 4. Draw Inner Hole (Empty N-gon)
+        ctx.strokeStyle = WH.getColor('--stroke-emphasis');
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath();
+        ctx.moveTo(innerPoints[0].x, innerPoints[0].y);
+        for(let j = 1; j < N; j++) ctx.lineTo(innerPoints[j].x, innerPoints[j].y);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 5. Draw Outer Perimeter
+        ctx.strokeStyle = WH.getColor('--outline');
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(outerPoints[0].x, outerPoints[0].y);
+        for(let j = 1; j < N; j++) ctx.lineTo(outerPoints[j].x, outerPoints[j].y);
+        ctx.closePath();
+        ctx.stroke();
+
+        // 6. Draw central labels/info
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = WH.getColor('--on-surface-de-emphasis');
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(`N=${N}`, cx, cy);
+    };
+}, { height: 420 });
+
+</script><script type=x>
+const { state } = WH.createApp({
+    title: "Recursive Zhao Shuang Chord Diagram",
+    params: {
+        sides: { value: 4, min: 3, max: 10, step: 1, label: "Number of Sides (N)" },
+        ratio: { value: 0.35, min: 0.15, max: 0.85, step: 0.01, label: "Shape Split Ratio" },
+        depth: { value: 4, min: 1, max: 7, step: 1, label: "Recursion Depth" },
+        reset: { type: 'button', label: 'Reset', onClick: (s) => { s.sides = 4; s.ratio = 0.35; s.depth = 4; } }
+    },
+    internal_state: {
+        geometryData: [],
+        renderTrigger: 0
+    },
+    sizing: { viz: { height: 420 } },
+    editorial: {
+        hud: [
+            { label: "Scaling Factor", value: "0.00" }
+        ]
+    }
+});
+
+WH.initCanvas('viz', ({ ctx, width, height, state }) => {
+    
+    // Geometry calculation helper
+    const getInitialVertices = (n, r) => {
+        const verts = [];
+        const angleStep = (Math.PI * 2) / n;
+        const startAngle = -Math.PI / 2; // Point up
+        for (let i = 0; i < n; i++) {
+            const angle = startAngle + i * angleStep;
+            verts.push({
+                x: Math.cos(angle) * r,
+                y: Math.sin(angle) * r
+            });
+        }
+        return verts;
+    };
+
+    const updateCalculations = () => {
+        const n = state.sides;
+        const r = state.ratio;
+        
+        // The side length of the inner polygon vs outer polygon
+        // Based on Law of Cosines or similar geometric interpolation
+        // In a Zhao Shuang construction, the inner square/polygon is formed by 
+        // the intersection of lines or interpolation.
+        // Side ratio S' / S = sqrt(r^2 + (1-r)^2 - 2r(1-r)cos(2pi/n))
+        // However, for the specific chord diagram construction where vertices 
+        // are on the edge:
+        const theta = (2 * Math.PI) / n;
+        const scalingFactor = Math.sqrt(Math.pow(r, 2) + Math.pow(1 - r, 2) + 2 * r * (1 - r) * Math.cos(theta));
+        
+        ui.setEditorial({
+            hud: [{ label: "Scaling Factor", value: scalingFactor.toFixed(3) }]
+        });
+    };
+
+    state._subscribe('sides', updateCalculations);
+    state._subscribe('ratio', updateCalculations);
+    updateCalculations();
+
+    return ({ ctx, width, height, time }) => {
+        // Force clear/init
+        ctx.fillStyle = WH.getColor('--surface');
+        ctx.fillRect(0, 0, width, height);
+
+        const cx = width / 2;
+        const cy = height / 2;
+        const radius = Math.min(width, height) * 0.42;
+        
+        const n = state.sides;
+        const splitRatio = state.ratio;
+        const maxDepth = state.depth;
+
+        const drawLayer = (vertices, currentDepth) => {
+            if (currentDepth <= 0) return;
+
+            const nextVertices = [];
+            const hue = 200 + ((maxDepth - currentDepth) * 20);
+            const lightness = 40 + (currentDepth * 5);
+            const color = `hsl(${hue}, 70%, ${lightness}%)`;
+            const strokeColor = `hsl(${hue}, 80%, ${lightness - 20}%)`;
+
+            // Draw triangles for this layer
+            // For each side of the current polygon, we find the "split point"
+            // And form a triangle (or quadrilateral in Zhao Shuang's case, 
+            // but the recursion here uses the inner hole as the next poly)
+            for (let i = 0; i < n; i++) {
+                const v1 = vertices[i];
+                const v2 = vertices[(i + 1) % n];
+
+                // Interpolate to find vertex of the NEXT inner polygon
+                const nextV = {
+                    x: v1.x + (v2.x - v1.x) * splitRatio,
+                    y: v1.y + (v2.y - v1.y) * splitRatio
+                };
+                nextVertices.push(nextV);
+            }
+
+            // Draw the geometry for this level
+            // We draw the segments connecting outer vertices to inner vertices
+            ctx.beginPath();
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = strokeColor;
+            ctx.fillStyle = WH.transparent(color, 0.4);
+
+            for (let i = 0; i < n; i++) {
+                const v_outer_start = vertices[i];
+                const v_outer_end = vertices[(i + 1) % n];
+                const v_inner_start = nextVertices[i];
+                const v_inner_end = nextVertices[(i + 1) % n];
+
+                // Zhao Shuang triangle: Outer vertex -> Inner vertex -> Inner vertex
+                ctx.beginPath();
+                ctx.moveTo(v_outer_start.x, v_outer_start.y);
+                ctx.lineTo(v_inner_start.x, v_inner_start.y);
+                ctx.lineTo(v_inner_end.x, v_inner_end.y);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            // Recursive call with the inner vertices
+            drawLayer(nextVertices, currentDepth - 1);
+        };
+
+        const initialVerts = getInitialVertices(n, radius);
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        // Add a very subtle rotation over time for visual flair
+        ctx.rotate(time * 0.05); 
+        
+        drawLayer(initialVerts, maxDepth);
+        
+        // Draw the outermost container border
+        ctx.beginPath();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = WH.getColor('--outline');
+        ctx.moveTo(initialVerts[0].x, initialVerts[0].y);
+        for(let i = 1; i < n; i++) ctx.lineTo(initialVerts[i].x, initialVerts[i].y);
+        ctx.closePath();
+        ctx.stroke();
+        
+        ctx.restore();
+    };
+}, { height: 420 });
+</script>
 
 
 
