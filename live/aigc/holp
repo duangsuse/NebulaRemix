@@ -1,3 +1,5 @@
+
+
 # HOLP草案
 
 HOLP, 面向人类逻辑编程 or hito[河,一水可][图,形真似]=wOJs[握,手至尸][迹,促文办]+LOSN[诺,谚右生][榫,木十难]+PahQL[爬,(一爪八][抠,手取㐅)*] 烙书四件套是也。LOSN和爬扣是OS43系统平台的「JSON可执行」RPC和文本二进制结构高亮区语言。
@@ -49,6 +51,10 @@ hosh解释器/hito编译打包/woj框架，提供被称为[OS43,Universe+ONE]和
 > | c    | BYTE | WORD | DWORD   | QWORD  | utf32        | wchar         | size_t    | u128 //zhihu:utf16解码10行 |
 > | d    | FP8  | bf16 | float   | double | D2j8_complex | DotDigitsE854 | deform(void) | f128                       |
 
+CYY PJPJLCCSS
+Py JS PHP Java Lua C C# Solidity/eBPF Scratch
+
+
 
 
 
@@ -77,6 +83,111 @@ hosh解释器/hito编译打包/woj框架，提供被称为[OS43,Universe+ONE]和
 YY NN NO XXis oo NOpass,ALL.arg inc&RE&Fn.T/广义假空&条件   Robo=pass检查~NOp
 
 Dincoo选区 imp/ALL.kwd
+
+
+
+
+HOLP创编四宝 [河图 一水可 形真固] [洛榫 汌牛口 集十木] [燍叩 火其斤 一口令] [爬抠 一爪八 指取X] 真善美行🦜🦙🐑⛩
+
+HOLP范式也称 Human&Hole Oriented Lists Postprocessor，一种 FP+响应关系式+OOP+元编程 的多范式软件开发。 
+
+这些范式由三部分组成：
+
+ID|vartree变量树|callgraph参数管线|API.SDK框架生态
+:-|-|-|-
+Any|组合与解构(✍️积攒章节,两两链接)|复用或代换(✍️术语表,好懂比喻)|自顶向下,选型
+Clike|byte struct{偏移量}, 无类型难GC|“硬”模块化 `T前缀_op(Tdata,*argv)`|高吞吐低延迟,系统编程等
+OOP|集中为T{constructor}, 访问链|继承, 方法表覆盖|和REST一样广,全栈
+FP|(a:b:[])lists, json, 解构匹配。区分可空，不分值/引用|接口, [泛型函数SAM闭包](https://zh.javascript.info/closure#tasks)|偏理论,正被前端界炒作
+HOLP|🦆鸭子类型Excel+🙉猴子补丁|🐦鸽群赋值+五合一调| --“海陆空[侃半同 组合子]”
+
+范式、语法糖、常量糖的区别： 如对 `Col2(A,B) {swap=(B,A)}` ，Clang 也有可能链式调用 `swap(Col2*,)` 如x.swap.swap，而「无需运行时支持」，这时称为语法糖。 将 `else if u == elif u` 而没有简化出 `match u:` 的叫做常量糖。 语法糖若能对应到运行时数据的结构(如 `def Col2|Col3.Str()`)，即便如同“泛型擦除”，也算范式特性
+
+科学的基石是复现+质疑，经济的基本是复用+质押(信用IP)，代码质量也一样始于复用，忠于普适。 好框架问"What"而不必说How， **这可以叫做 declarative, Pythonic, HOLPful**
+
+五合一调： sh/fs sql http proto反射 rpa.rpiMenu自动化 ，LOSN第一梯队： `py js ps1.cs jsh.java lib.c/cdn.js; RRLG四语`
+
+## 5大M
+
+mint 铸造跨端验证的表单、(AB)表格、单行，支持元函数 .CtrlSNOWLY、算函数 十一XノLEt口/[RowID].DOT_静态.bla
+meet 导入和重铸跨语跨端API，如行/列构造器、强/弱接造器、结参器、三段构造、表格器，可调用 passNl,ASum4HTs☯️, AUv命名检查(I[msft],ifuup_Attr_,双IIAA)
+mind
+  - ☯️认识 {upKrv,onvar} {upRVk,onvar(aNew_ie)} 候选，使用.As{} 和 inc;As{} 浅先重赋值
+  - 组装h2js hh.Mod=XMLfn，F.on{}多监听REST, 列表处理(关系式)，理解这一切
+  - 判定OS.type重赋值(`.Or`), 表格器的其他优化, 解鸡兔
+mount TxRxNO特殊候选, lityped.sixfane 拟态匹等类型, HTML如何被“燍叩”并解构-以Col2例
+memo 三大根类型(Row/Col/Rw)、memo({}, PUT/URL/cache/VTT/lruCG)，URow::_SAVE=设定读档, __UidBLOG/Env/ENV/rw:{sepNO}等位置约定
+
+### 术语表
+
+sixfane ⑥类型, 全称 sikxfanedCuRLDoom，CR是单参泛型($Ref_T1)，L/D物理单位请戳 [D3]
+
+sikxfaned: str idX kv any(泛型T) fn ary nItem eTree decimal
+
+ASum4 是四种HOLP表单数据的操作， Assign/Broadcast/Create, SameOrCopy, updateFn, mkNO 。右左赋值或解构匹配取决于 OS.IS.mut 表格器
+
+Tx 绑定到 OS.foreign.Tx[k]，Rx 用await模拟yield，其缓冲区为 n(g.slideWin)，NO 替代dat={}以允许子组件稍后初始赋值
+
+### 基本运算和数据
+
+十一XノLEt口: 所有运算，按深先浅后排名， `lit常量|var指向变量树, $访问 As() Sa.[游标]^, Neg'\', Xノ(kana no) RemLt%, 十一, Lt< Gt> XLt>= XGt<= , Eq== XEq~=, Comma&, (Slash||print)总是执行` 。访问=`A.var A[var]==ITypeDict(A,'const|kv').As('var',set?), -1x负变量, A.fn(x):块(建议支持)`
+
+a[Sa(1)] 即头部， a.As(pos_R, 42) 即 a[len]=42 同理于 az ("42")。 a.As(...pass, 42,)=a.Sa(pos_R).As(42)=a.insert(-1,42) 。`memo(are(0))` 将项0首键pop为类型/pass模板
+
+为方便处理表格，KV结构也有升级。 `addr(v,[k], ...pass, *RowID1s)` 如 `uid=memo(addr("Jay", 0)); uid.As(0, "Jay Chou")` 和Hole()与are(Col2)结构相反，但解构时统一为 `u.As((ki?,v)=>passOrCopyForif)`
+
+`XLt XGt` 运算一般用 pos_[LUnR]: `inc(0..pos_R, 100..pos_L), inc(2026,+oo)` 区间替代
+
+## 5大S
+
+`saybug./d[DTFM]=/` F12
+`lityped.Quine_[]` TDDgc
+堆叠反射(OS.async, 单步流控)
+堆叠装箱/双指针-引用内嵌(BlahSeer和ImplFor[T]浅先重赋值, 单步树洞化)
+Web3Hook/D3, SBRivBDFL字串化/BSVOCX
+
+### Quine_馈硬codegen
+
+Quine是基于「首次运行即编译」的码可揉/constexpr!技术，也可支持lityped类型推理、TDDgc抖树 (测试驱动的 Defs GC)
+
+fn=Quine_($=>) 容易实现循环展开、值首次引用添加let； forif{}、'this.'键 的生成，并善用 JIT eval('$0+1')技术和k=>eval(k)闭包，将过程宏视为刻板的"eval缓存"内嵌，而得名「馈硬」。
+
+$ 用于： $(反引号 添加JSON/`${ {容器类var} }`)  $.code 编译期参数;  `${{arg:1}}` 参数0， `$.arrow($=>如$'for()')` 自顶向下拼凑。 非POJO使用OS.async的 '{...type形式}'
+
+比如零开销DSL: `a=[]; for(i in 0..9) if(i>5) {$i=$'${i}'; $'${{a}}.push(${{i}})' }` 。 馈硬已经对标 "".trimIndent, lazyGet, DeepCopy, div(p()) 等语法糖需求。
+
+多段求值fn/class名必须为 Name_ / "As" 形式，以 `Fn_["1str"/cfg.bla](...)` 或 `class T1` (`: T({kt})`? / `static assert(Q_s)`)调用
+
+
+## OS43
+
+0xbcd1248_bCDEF字节数 \u406E.cue跨语报错返回码 URow{UhUm,正反链IO,Syd__SYN.OPTIONS双管道}  LOSN/DMM/MDD/VTT跨端数据 SQRUT.{式参数,sh,sh_io,BYGRP} PahQL爬抠解析补齐 Web3:pOTP/payPTTP/SMSbio URowFS根容器/包资源
+
+## PahQL-以下为模块
+
+Str {AZ:PQRE,AHex,ItemU(+nth)}, AZ={eat,tabsToRPN,pahQL({rgb,ws,wspan,wsPrior,repl}) }
+
+爬抠的增量解析不嵌套，单位是 `fn{}` + `100 "等literal//docs"` 内。更新时调用父级.repl(rv或eFn)
+
+s(+1)
+s(-1)
+s(0, 'Bb'或{repl,pad:[.."{}"]}, s=>) 创建BYGRP高亮区间或块缓存(从'{'之右)，区间内的游标增删只重赋AST和其右的wspan高亮。删除首尾pad将删除整块，删空同理
+s(/[\d+]/ 或取前缀Loadump)
+
+“吃不干净”则去尾，“吃不到”则加红，默认只从 `{;新加行}` 开解析，光标换行后才读整体。这样可使 .Tab[0].首个词= 'obj.»\xBB'处补齐
+
+PQRE['»']("") 是压缩Trie树，可把 prj."src/main".app 合二为一，并以1字区分 a{pp,ssert} 方便补齐
+
+AHex 同理基于 `eat(Blob[])(+-0xbcd).rv` 地址，其 s(0) 为可变长度如 [Col2,str,..]，设置.onTail 链表和 .onTrunc ，以此序列化。 若push项，游标右侧的rv在访问时才右移
+
+bcd,n=|1|2|4|8
+-|-|-|-|-
+Byte|`0xb1`|short|✓int|long|✓ssize_t
+Char|✓uint8|u16|u32|u64|uintptr|u128|'\U.{8}'
+Decs|||d4|✓double
+
+BYGRP: 解析器高亮，蓝黄绿红粉💙🦐💚💓🟪 = 名 动 接(to,by等) 单项 形/刑(报错点)
+
 
  hosh-i hito.LSPcmt.apkPyi 0xcc,xBB,.:::. deFdestruct kw闪存 os43.3 big%d authNeed i0,n00
 OOP值 unix值 IpPySqlSh Menu:aw'nav'
