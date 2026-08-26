@@ -68,7 +68,9 @@ Decs|quint8|d2|d4|✓double|bfloat16|f128|d2j4|✓d2j8|`np.angle(1j+0)/6.28 #com
 CJEnc词根 sndo mdd dm vtt ac与行缓存
 XML()Http:/./ sudo toml,md //woj stylus pug Vue-RP JDK-OO SQL-LP arg.env cborStr优化
 
-mdd(Mark2D) 是在粗斜体和缩进换行上违背了 CommonMarks.org 的子集和替代品。作为HTML在UGC世界的代言，mdd支持#tag、table list 尾注、LaTeX和告示框
+mdd(Mark2D) 是在粗斜体和缩进换行上不遵循 CommonMarks.org 的子集和替代品。作为HTML在UGC世界的代言，mdd支持#tag、table list 尾注、LaTeX和告示框
+
+对标 gfm, Telegraph, Telegram 富文本和AI对话。
 
 mdd还能预览颜色/勾选/进度条/大纲，有更自然的HTML内嵌、(圆(括号)脑图)和flowchart.js、文学编程(预处理器 #line".py")
 
@@ -84,12 +86,12 @@ _Mark2D_ the MD syntax for <_Web_ devs>>  _Web <Apps>>_
 ## 这是标题2
 <h1~6>内嵌</>
 
-#tag @提及 和裸链接也可触发回调 ##请求AI-注释
+#tag @提及 和裸链接也可触发回调 #@请求AI-注释
 
 以下按富文本、链接和格式、小结构的顺序介绍。 还请重视 [中文排版](https://github.com/sparanoid/chinese-copywriting-guidelines) 如 hanzi.pro/Heti 。[可转换自剪贴板](https://euangoddard.github.io/clipboard2markdown/)，也有[Regex式高亮](https://regex101.com/r/AljM9u/1)
 
 ```py
-源码<code.language-py>
+源码 <code.language-py>
 不支持1Tab或4Space的语法，建议1Tab渲染2空格
 ```
 
@@ -99,9 +101,9 @@ _粗体_ <Book书名 斜体> _粗<斜>体_ <斜 _粗_ 体 > <_唯一粗斜_>
 
 [链接](方+圆括号) [!img](方括号+叹) [^悬停注解; Abbr;title] [^1自动尾注](引用) <footer/> <h1></>
 
-~~划去s~~ ~~高亮~~mark  [^^上标sup] ~~下标sub~~sub ~~注意力u~~u
+~~黑幕s~~ ~~高亮~~mark ~~真删了~~del  [^^上标sup] ~~下标sub~~sub ~~注意力u~~u
 
-URL前缀缩写统一放在文章末尾 `[!goog]: https://www.google.com/favicon.ico` ，支持相对链接和 `# 标题` 锚点
+URL前缀可缩写，统一放在文章末尾 `[!](goog/favicon.ico)  [goog]: https://www.google.com/` ，支持相对链接和 `# 标题` 锚点
 
 支持 f"---\n{yaml元数据}\n---", slug,type,date,tags
 
@@ -111,28 +113,40 @@ URL前缀缩写统一放在文章末尾 `[!goog]: https://www.google.com/favicon
 
 ---
 
-- [ ] TODO list [80%] 百分progress
+- [ ] TODO list [80%] 可包含百分progress
 
 - ul
-  - 无序列
-
-- 1. ol
-- 有序列自动编号
-  - 1. 嵌套2-1
+  - 无序列表
 
 - 这是dl
   - 没错
 - dt
   - dd
 
+- 1. ol
+- 无序转有序列表
+  - 1. 嵌套2-1
+
+- 1. 第一步
+
+打鸡蛋
+
+- 2. 第二步
+
+加油炒鸡蛋
+
 >
-连续行引用块
+连续多行引用块
+
+-- 1.
+多行的ol
+-
+内部是li
 
 --
-连续行ol
-内部是ul
+多行的ul
 -
-内部是ul
+内部是li
 
 Pair|A|B
 -:|-|-
@@ -146,11 +160,11 @@ f|x|y
 > [!CAUTION]
 > 请注意 `[+-*.]` 里只有-被用于创建列表，但可以转化自/至既有 `.md` 项目
 
-> <details summary>
-> 第一行是summary
-> 这是children的内容
-
-
+-- details
+内部
+多行
+^为折叠
+-^
 
 
 HOLP.semvar: rel sixfaneCuRLptok Phyx MIME CMem Uroot

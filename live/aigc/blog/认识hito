@@ -1,0 +1,283 @@
+## 认识hito风格的数据
+
+hito的字面和JSON[串读串写器: Loadumper]有四种大限制：
+
+- {..} 内不能只含0或1项，且要求 `!["\n", "", "-XX"].includes(键名)`。
+- 除非 /^if_/ 前缀的键名，对象包含的键数、键类型深度不可变。不含if_前缀的 `[0, "", true]` 式数组同样受其限制。因此首项为对象的数组，总不可含字面或null项！
+    - Imp Im It 前缀类型名和数组，同样必须使用 /^im_/。需指定 `{allowlist: [Types]}` 才能导出接口对象。有 .ID1 的对象KV同样会按json表格封送。
+- 除非 /^up_?/ 前缀的键名，绝不可循环引用，up的值不可为Str。你可以理解为Weak、Arena.ID或#html对象池。类没有能独占外键引用时，必须使用 /^m_/ 。这对模块化与Builder内存优化是好习惯。
+- 类似 /^_/ 的键名需要指定 `{hideVars:/[]/}` 才能传输，否则需在 T.CtrlN 里重算。可.cue 的值双向绑定 /^cu_/ 键名，文件路径一般是 .kp_键名，它们会自动绝对化、transfer()和清理(`OS.unload?.`)。
+
+/Ctrl[SNOWLY]|[十一Xノ]/ 是hito里主要的dunder动作的写法。代表 Save New Open(isMoutingAB) Word免引号 LitStr安全模板。而 CtrlY 并不存在，但它提醒你 IEatDeeper/IEatBoth (Visitor) 和动态查找的 `IWtf: ImplFor; IWtf[T](..)` 才是hito的串读串写接口。
+
+类似 isMoutingAB(u,jso) 的双向合并赋值，isLitype(jso,u) 常用于类型T和上述四种限制的判断，再如enum、常量Regex验证都支持。{}被视为一种联立条件而 []类似union条件、[OK,{}，{}] 类似接口extends。
+
+/I[msft][^a-z]/ 里If类名和上述if_键名职责相同，`Im=abstract It=interface Is=enum`，命名以 /_$/ 结尾的才可空/表示await(`u.f_()`)，这些都属于[sikfane前缀类型]。
+
+没错：`变量_` 可空，`函数_` 可等待，`类型_` 可赋值。再搭配上 `f=(x, [{v=响应式}])=>bind(el, <{v}>)` 和 `def f(x, /, v): "字体渲染为 x, Δ v"` 就有意义了。
+
+技术细节：
+
+- {..} 内..
+    - Map和Blob将使用 `{"": [[k,"\b{MIME},{Base64|UUID}"], "\t1Map"]}`，解码为 `Map([k, new Blob(..)])`，Error传递为 `{k: "\f\u404e Not Found"}`
+    - {} 被读取为NO，它响应As和Or并模拟JS可选链的null。`{if_k:{}}` 实现多态，`{"-XX": "bm", child:{"-XX": "bad admin"}}` 实现bash旗标。
+    - '\[' 开头的文件视为TOML读取，且支持 `[..it] [it.a b c]` 标头，`{it:{"":"[a b c]", "\n":[Row1Each3]}` 这样的深度和表格拓展
+- 除非 /^up_?/..
+    - 推荐使用 `inc({obj: {y: never(wtf.x)}})` 来“移动”独占对象。如果数组或对象的inc赋值中alias了 .x，在 vars.DBG 模式下会报错。使用 `never(never.target=[0])?.(u=>u+1)` 可原地映射过滤。可移动的键不可空。
+    - 【定义上】值类型就是不拷贝的冻结引用类型。hito默认下层语言支持【结构化克隆】，实现 `INeverDup` 的寄存器宽度的值无需标注 `.m_xx, xx.dup, never()` 即允许在赋值右侧（被别名）
+    - 并不是只有{}[]对象需要new。0, "1" 也使用 `new {i:0,s:"1"}` 局部赋值语法，C-like 语言中会区分“堆/栈/值类型”，却连深拷贝（即移动内存地址）的树反射都做不到，才是很奇怪的！
+
+因为有 `认假为空、认空为错` 所以总输出 `{}` 而不是 `{is_hasK:false}`。更离谱的是，在值上面也有ctypes的字面约定[0x1248CDEF]，与最上面的 "\f\u404e (U8ErrDeF)" 并称奇葩。
+
+作者显然认为错误和SIGINT一样，不可能有太多种子类情况吧？对了，/[十一Xノ]/ 四则如 1.十(2)，又缺了 n.RemLesser(10), Lt,Gt,Eq, NoLt 等7项
+
+缺了 at_()=len 以及相关索引， `n.一() == -n, NO.一() = ON, Bits.十(Bits.pos(-8,b),it)==(b<<8)|it, .Xfer=&, .Xor(n)=~n, .uint(8)=2**8-1` 这些逻辑计算
+
+`u?.(f)` 支持四个操作：map或each并返回自身+filterMap+firstIndex, f.AS(kwarg={ALL:vararg}, ..) 参见 FnXNAA
+
+调试的DTFM四操作 vars.spy.dd_dt `dd="out", d[DTFM]=dbg_print,F12_jq,help()` ，`vars.noMemo(c, {num: u=>0})` 重置模块内状态
+
+除 `imp.包名.树` 全局默认为模块变量（支持dm=id=>调试），全局变量只可小写
+
+## 根因与类型
+
+字面有四种限制，hito的数据类型，有六种根基：
+
+`RoLit|Ro|Row|F.n|F.u|FnHo`
+
+当你打开一层 `.: T0` (make=class T0{}) 的缩进，相当于，是把 `f[-x][0~>]` 动作f自动追加为 `f[-u-x][T0 0~>]` 并检查后续接口，我们默认用RoLit。Row是它的子类型，因为行可 set() add() 而字面不可以？
+
+NO NO NO ——组合优于继承，RoLi实现了默认 ID1(hash) 和 CtrlO(equals+Str) 而Row没有。像#[derive]接口，它们有互斥的关系。
+
+这和值类型无关，但确保了整个树的json化不含可变量。Ro确保这一层冻结，Row允许 `NEW_2=OK` 声明所指前两参数可重新赋值。另外，`fn() .: -kw As:多行expr` 的Builder写法接受传入NO=使用默认值，在语法上避免了泛滥的设计模式。
+
+即便Pair可以含变量，也只有 `Pair_` 类型上可赋值。在传参或返回时，am和are也会自动退化为不可变的，比如 `new {a: are(1,2,3)}; OK(a._) //aΔ` ，aΔ 在a创建后只可获取一次（针对 if-inc 和Builder）
+
+建议用 `aΔ?.(u=>{多次修改})` 。别怕“mut恐惧症”，不用到处Boxing和RefCell。Ro子树被允许包含 Pair_ 可变性或 FnHo 响应式，只是在封送时深拷贝（可填写转移 aΔ 子树的绑定Worker，FnHo自动共享）
+
+除了六种根基，`FnHop|$1|[A B T$2]|Args` 这四种特殊类型用于还原泛型、DSL和CRDT(git log)
+
+我们曾认为(FnHo "abc123")是唯一的“引用类型”，即有类似 `u.* = v1` 的deref赋值（虽然和监听队列混在一起），而 FnHop(v0默认值) 使用 `-arena1 FnHo { inc {u: V} }; main[-argv] Or"": cue(arena1); u==V` 制造和临时打开一组侯数，很像[hito模块变量: static var]的独立不共享。可持久化。
+
+综合六种根基：Rust使用非常保守的 `&mut 变量树` 限制，而hito默认冻结，也接受超出了（纯参数/可inline）Builder模式的，堆可变状态，但和响应式、Arena融合的更自然。
+
+你的 `class(var wtf)` 是真的var，还是只有读conf启动时被两到三个fun一次性的完成？请认真理解。
+
+类型=白盒测试。一个def或class最精确的类型，就是body本身。你直接hook掉验证过的API，用重载，来完成检查和codegen。
+
+hito没有“静态编译期”，编译期就是hook掉了argv/fs/sock的自顶向下解释器，for跑一次if跑两边，调用时报错自动catch到错误面板。类型，就是不依赖于argv等平台基本值的“测试函数”字面值。
+
+因为hito的类型推理是基于占位值的（`assert are(0) is [i32 List],  f=(x, AS=[""])=>x.split..` )，这种用块参数换掉forif{}{}花括号的实现非常直观。与C的不带长度数组、不带ABI函数相比，hito连空数组、空struct都有运行时类型。
+
+这有具体的表现：
+
+/.varGITES/ 里的S是单例+查表，.var 类似 useState，.varG 像生成器和缓冲区，I 用于列表id缓存编辑，T 响应类型和空，E 响应可空初始值（因为侯数也强类型不可变）。`varI(ix,a0,del)` 允许引用a0里的旧项或插入新项，节点缓存，是不是很愉快？
+
+.ID1 在大部分对象上有效。Row包含 ID0（绝对路径/[CPU.foreign]/而非指针）  ID1（文件名/.key.id/xmlID/hash）  ID2（.desc.title 等全文搜索名），以及 T（原型表） DOT（弱类型键值/xmlAttr/imp.类的static） lit（json=OS.repr/outerHTML）。这三种ID的意义请读[CUIFS协议]
+
+## hito风格的操作
+
+Join21(fAB, fx, ()=>0) 另存为
+FSAA/OPFS的WASM支持
+
+ FLIP/HiBLIP 支持 (Hilight-included BiBrace & Literals Incremental Parsing)
+
+htmb(u=>), hiccup/VanJS的思想
+
+UX UI UGC离线缓存 GFX/DSP Unix跨页工作
+
+atom1(arr) waitN add1 chan race mayStop trust_me
+
+CAS支持 `rw.waitAsync?.(idx, 1); rw.compareAndSet(0, 1); rw?.((v,to)=>v+1)()新值, rw?.(+1)旧值`
+
+
+Um菜单/Uh.index打开、GSetJQ文件另存为
+
+tap:OP {menu📌,nav,leftTab深2}   ptr:Pxyz_WH {drop,dropSort🧲,dragXYWH,CtrlB变量}   kbd{vkbdApp测试时延小猫,lilGUI,i3wm}   L_D2{inScr,inCSS,全屏转屏焦点}
+
+UV-UW-PV  iTime(media元素时轴/rate,Lim/ease语法) iChannel(canvas像素/shaderToy.com) 支持CSS-js互事件和SVG互变量，自带擦拭换色等滤镜
+
+
+OK/Loop
+NO.Or(cue)
+has.XX,ON,dd
+
+m_oo0nBits/inc两点为点动框
+
+am().inc('ord'|NO) 可实现有序Map与Set接口
+
+
+Quine:用窥硬实现sexpXML。调用窥硬的lib函数不得无测试覆盖。
+
+- 换首律：追溯调用 QuineOp_() 的函数名，替换栈帧为 src/ 下的首个"()"的区间为 `"&&"+首次输出`。
+    - 强制 comptime 常量可 `全局=isLityped.run((x,y,)=>Q_(xyTreeDSL..))`，.Ret_("a z") 用于az分词等简单常量折叠。被替换行不得含运算符。
+- 内插律：`.Quine_($=>{})` 内 `Args.lit($=>[()=>op, ()=>nxt]) [i]` 首次引用，插入其变量名，而魔法在于op块中 `(值的JSON或cell名)` 内联。由此得名LetsBlock/lb
+    - lb[i]可用于 `forif,$.T.callFuns, $[1]=For语句的var, $[0](If句的OK)`，c=Args.lit({op(){}}) 将内联箭头等(cell=c.op)
+- css实用律：窥硬即展开/折叠/内嵌，如 constifyAdd, sexpXML, swapAB 有惯用法：
+    - `OK(Args.lit([_=>A.v+B.v,_=>B.v==0?A:pass, _=>A.十(B)]))` 常量折叠优化，sexpXML在多个lb里将attr上树并append所有节点，swapAB将A,B=FnHo引用内联为var
+
+灵感来源为 https://pypi.org/project/tkgui
+
+## os43
+
+hito的发行风格又称为MMP纲领，强调软件的维修权(Mod-ready)、离线分享权与改版权(Mirrors&Album)。对许可证传递性的重视程度则相较次于软件的质量、软件初次启动和 pull-patch cycle (P2C) “解压即改”的难度，也可以叫【三大自由】。
+
+在聊设计问题时，我总是以实例和比喻起手：awrit，某一个Kitty的ANSI协议扩展之上，被移植到tty图形的Chrome浏览器，但它叫什么不太重要。
+
+- 它出现不是因为它有代码、它Rust，而是找到了一个【框】来安放自己，又展示某种内容或工作流。 这个思路，是无代码的。
+- 它涉及的无缝scroll和resize，这个vec2的模型，是无代码的。本来可以无代码的。
+
+代码往往是这样：有一个API，就会被多一种“私货”束缚。而发现代码甚至【软件行为】的重复，却不过度设计的能力，非常稀奇。真正【面向REPL/AOP】写代码的开发者——极为罕见。你要先运行，再保存，而不是反过来。
+
+- 要么，你在使用之中改变节点之间跳动的“功能函数”，补齐完整的值、在完整的事件上暂停，保存和载入某种 `(body.innerHTML, localStorage)`
+- 要么，你看不清一个普通def的参数有几个可能值，炫耀数不尽的术语和类型体操（`sed '' -i code.js` 般的简单功能），却又对运行时的特性和上限一无所知，甚至不知道数MB的编译输出里，哪些函数最长（它们可能不是“你的”）
+
+运行是因，可执行是果。而不是“类型和二进制是因，可执行是果”。这之中有极大的区别，就像CSS和Java世界各种XML的使用体验那样巨大。
+
+无论我们是用innerHTML还是 `e0.append(e)`，eval或是 `fns.forEach(f=>f())` 实现了这种组件的活力，它们都是“即时连接”的典范。 /usr/lib 不是“你的”，但优秀的框架自带电池和漂亮的截图。
+
+F12的本地/远程内容替换、窗口油猴AHK、内核油猴BPF、普通的LD_PRELOAD和RTLD_NEXT，它们不仅仅是 "Observable" 的PGO部署和热更新工具，更是一种【免费项目模板】。
+
+—— 很难想象，在可remix的宝库里装乞丐从0开始rework会是什么样子——这不会让功能的设计更健全，因为【程序设计】在敲第一行代码以先，早就被实现了。
+
+这就是MMP纲领具体要针对的那一类问题：并不是单纯的SDK/客户端开源，或“完整自由”，就能实现软件世界的自由。
+
+Pythonic的接口是个好点子，我们可以从那里开始学习。
+
+
+总的来说，OS上共有三类任务串：事件、帧率、主频。基于用户事件的，和基于晶振的，不可以互相模拟。
+
+事件的，比如Wayland的 wev 和 notify-send，帧率的，比如rAF带时间戳的帧回调，主频的，往往是SIMD计算，卡太久会ANR弹框（是否停止应用）。不应用固定帧率轮询事件，更不能用while来做应用编程。
+
+事件系统可以休眠，帧率渲染可以随便跳帧，主频可以显示ANR（甚至像断点续传那样暂停重启），它们和while(1)没有关系，这就是CPS（免费回调化）的意义。Linux 对这些情况完全不了解。
+
+## 实现笔记
+
+
+
+hito的四库全书：  组合eDSL/FnHo 拆解Proxy/chop 转换EatDeep 联合LOSN/TDDgc
+
+bash/http/py其实都使用kwarg和标准单文件、管道，只是语法的长短和适配差异巨大。各种语言都有【ECCD四个实例】带人入门： EchoOddArgs, CounterDown, Checklist_LiveGrep, du_-h_ForkJoin
+
+State是“F5刷新不掉的报错”，Effects是“函数卡死也阻挡不了的输出”，它单次调用【生成】多项，而这自然无法通过API单次return来观测。良好的效应产生的多项比yield更快，就像SHM往往比pipe高效。
+
+C++, C# 的泛型实现为单态化(unbox Int/Long ptrs)。Rust在此之上使用双指针替代vtable (custom impl{} 友好)
+
+> Brainfxxk和一个json库也不一定是初等实现呢！
+
+关于变量树（多态和自动剪枝）：其实通用Rc非常容易实现和优化，而且实战上对于Gtk和苹果都是够用的。缓存污染和批量释放可以用简单的bitmap和queue解决
+
+小计数、SMI、<16b的字符串 可以不占GC压力，多核ARc在前端上基本上不需要（可transfer独占）。反正字符串不可变，这比“值类型”的机械区分高效多了。AoS/SoA的列存储优化也是 Jon Blow/TaiChi 的特性呢。
+
+关于指令集的执行：Tailcall (computed goto, `(pc+1)->run(vm)`)、Tagstrip (codegen op+opLen@jmp)、Tagless (DSL only, `(lits)=>(env)=>VM`)、Tagstr (naive if-match) 都值得一看。Cosmolibc是一种无需HLVM的程序壳。
+
+> 表面上看，有些引擎的实现是【抽象泄露】，但从重构和测试的容易度，你会发现，在【语境正确】的意图导向之下，Lua解决的更干净，不留死角，与它出自 game-dev 的身世相符。下文的关键词：if impl/LEGB vars/TDOP expr
+
+实际上，如果手写forif的平铺Visitor，比如javabc生成，Lua的实现可以说是 de Facto。因为你不会做IR优化的。应用层框架自带各种优化了。
+
+背景知识：C 的 `if{} else{}` 的闭括号有不同的跳转目标。if()到else{ 有一个， if } 到 else } 有个无条件goto。return不属于goto跳转，它是ABI 局部变量+函续续体保护的范围。
+
+而Lua的 t/f list dispatch 确实奇葩，但它一步把短路和if-else做到位了。
+
+要像Dijkstra对待“嵌套调用”那样，变量替换和if选择是“思想钢印”：你确实应该像支持了 Dynamic Scoping（局部KV+protoype链 or bash式"$1"）那样，意识到eval必然有【两个后继分支】 ——它们不是普通的文档树。
+
+通俗的说，.t .f 的if-or链表直接把bool的计算结果绑定到{}的执行，只有在传参取值时再生成 ld.true。碰上了 if？直接把俩洞“咔”一下拖拽到AB两个{}块，像金丝飞线那样，if a and b 求值完直接顺路滑进{}，而 if a or b 遇到真直接跳进{}。
+
+这混淆了表达式和if块的边界，但却更加接近本质。我这么一说，就知道它其实比到处BB和br干净。lparser.c 的逆波兰TDOP，更是经典的正解。
+
+TDOP会把 1+2×3 的1略过，比较 (+2) (×3) 哪个深，深的比加号先算，即 [1 2 3 × +]。
+
+TDOP比Dijkstra的调度场算法还简洁，用到了他贡献的栈和深度优先排序(DFS)思想，但更加容易与RD的 a[i], f(x), -a 这些标准链组合，而不是像LeetCode那样，以为遇到'('存盘，见 ')' 整个数组吐出来就解决了！
+
+如果谈到括号对（比如IDE中点尾跳头）的解析，”refcount“的一次一字n==0和位运算优化思维很像做题。然而，simdjson却在分词器的模型上去批量识别 `",:,{}` 这些边界bitmap做零拷贝slice，综上所述，事在人为呢。
+
+
+## shref协议
+
+因为stdioe之中err流太多余，就以此设计了类似 F12 console 的协议。支持颜色、进度、小文件管道写入和zenity式选择等等。如果用惯了Gtk或TTK，woutk 五个字可作为它的昵称？
+
+以下可嵌入在源码和网页code： `#> 命令/./文件路径  #>[按钮]命令 #>多行按钮换行 #> 命令 $_ =多行列表单选,首词,不含空格  #<=>折叠批注  #</>已关闭 #<|>已拉开 #>[append此折叠区到路径] # 模块名可供u命令开关`，双斜杠同理，匹配 /^\s*#>/
+
+`    #>大写提示或章节  #< 配置:flags\n ((lit)) #@1 AI重录 @#` 这些需要框架和编辑器支持，不支持写入stderr。配置库(TOML)可在关于菜单或u命令查看。
+
+输出 /^:[IWEX\.]:\d+=\n/，如 `:I:4=exit` 为粗体信息，可含 "🟦🟨🟩🟥🟪🏙⬛⬜" BYGRP等八种颜色，如 `$(🏙_)$(⬛)$(🟪)bold pink on cyan$(⬜)`。
+
+就像BYGRP那样易用：pacman/pacaptr 式的BeSQRUT包和服务管理用法。又如， pm -Sw = winget/scoop; -Sm brew; -Sj pnpm; -Sp uv/venv
+
+你可能想用 $(⬜_) 标注链接或 `\x1B[{y};{x}H` 控制print(if isatty)，除了 `"\r无符号状态词 $(⬜% 90) flip"`，通过 `\r line[##--] flip` 手动渲染进度也好办。终端游戏想直接获取按键？ lihaoyi.com 完整描述了bash/py自己在用的ANSI事件流。
+
+`cmd 2&>|o 1` 即点击第1按钮。`$(o .png magick a.bmp)` 或 `o -png magick|yazi $(o)` 可实现非文本管道， `o port:8080 http-server` 为端口选择，port=localhost=默认, prot=0.0.0.0, ipa=本机ip, ipr=USB上网时手机名 ipr1=本用户本局域网第1次出现的MAC，开服会显示本机地址列表。
+
+`o ctrlc {image,watch}|o ctrlv` 是基于 OSC52/klipper，`:-1=a.date_log\n` 日志tee到当前日期。类型化嵌入（如图片）用 `:6=.txt\n?` 即可，用 `o a.` 将最后一张存入 a.txt。
+
+更类似Juypter组件库的图片显示？只需前置 :=.url 的嵌入，内容比如 `?id=1&xywh=0,0,80,1,z999&file=(SHM,empty2clear)&fps=60&set_fail=load%20fail`
+
+如果程序冷启动较快的话，`if argv[i]=="\xBB"` 时查找此位置的补齐，再 `echo "-W a b c";exit 1` 就会好用不少。大致仿照了 `#> help compgen`，-Ad接受目录 -Ac接受子命令 -Wd 为编译时缓存的-W，`-Af image/* -Af *.png` 是处理图片的两种写法，用file和glob命令过滤。
+
+当然，`argv[1]=="-h": echo "#> {$0}..."` 才能启用此功能，-opt 补齐同样来源于-h，格式上可以确保 `eval ''{ruby,lua,sed,curl,pacman,docker}' -h|head -n10;'` 正确补齐和高亮。ssh;find;grep 那种命令建议换tldr。
+
+`#> dust -r /usr/share/bash-completion/completions` 一下你就知道安装了哪些命令，谁功能最复杂了——与之相比，shref协议就像busybox那样迷你呢。（一切皆如CGI，共享exe host）
+
+## 新的前后端范式
+
+两栏两层键值 pjo[{}] 提供了简单CRUD界面。设想一下，你只用 `/p 1, /j nth_item, /o 右键菜单补齐, /o 无参并输入编辑` 这样的方式访问对象列表和详情。它的适用范围极广，如系统服务和博文的列表。
+
+Hito对象模型还有一个类似CRUD的概念：CUIFS(`create update(is_deleted) ID  filter sort`)，ID一词涵盖了项的路径访问、项的卡片速览、用户ID鉴权。
+
+使用 p,per_page 关于屏幕大小分页。分页应用点顶栏应滚到最顶，有可选实现的 `/prev_page:id` 参数，id:0 表示滑动到首项=最后一次历史访问。
+
+过滤排序可使用 `?/q:@tag+@归类+@@uname+kws, /sort:1A+1B-2C, /dt_page:20080101-20261230, /dt_page:起始时间戳/p:1` 方式动态完成，但需要传入可用的相关列。
+
+1. 应使用路由别名显示分类，如 `a.com/@id => a.com/?/q:@@id`，表单ID使用 @+123 形式传输。
+1. 批量操作可 `POST /pet/new [{"id":A, "-act": "remove"}]`，修改内容、重设旗标数组。注意，根对象是[]而非{}
+1. 它支持给文件加【视频封面】等等。以 cpio(newc) 的格式传输每项：`dt dt1? uid? "(@uname)? tags \n{json元数据?}\n desc \n\0{Blob}"`
+    1. dt用3bit标注是否含uid、dt1(mtime)是否不等于dt而不省略、dt1是否保存点击量数字(dt1 & 2**32-1)。典型是"11,01"表本地和远程。块有4字节长度前缀。
+    1. 一般会在第一项出现 ".png\n\x89PNG" 预览图：如果是 `"desc\xBB\0{BlobBulk}"`，其中就有许多块 `路径/文件名.typ\n{blob}` 且以 "\x00\x01!\n" 结束
+    1. 所示元数据在 `let [dt_dur, owner_tags_str, desc]=blob.ID2, blob.DOT.json` 可访问
+
+CUIFS 使用 /\.u[vageztmup]/ 缩写视频、音频、图片、文档树、任意下载，剩下4项意味：模板和歌词字幕、3D、桌面、项目
+
+vageztmup 这个缩写可以与 CrscDM 安装模式搭配（这就像安卓的AppInfo/SAF界面）。C代码包含文本串，r有资源和样式表，s为状态，c为<2MB的配置。D为依赖链接，M为pid快照状态。
+
+运行时依赖，基本是 dlopen/execve 可容器化的，可以在包管理器查询。musl-busybox 现在也能配合SoLo开发大型软件了。
+
+> 其实，真正的HTTP动词只有 OG(HEAD,OPT) 鉴权SEO和 CDN(GET,SET) 可重放性需区别，没有代码=没有区别。至于 `curl -X POST` 一词用 `-d "body"` 是否为空替换就行。
+
+## 范式的一键登录与跨站SSO
+
+鉴权登录伪代码： `if tok:=chkpass(email, "az09rep8"): res.addCookie("HOME", tok) .. if not (u:=chkpass(req)) or u.balance<=0: error("More Money! #403E")`
+
+基于响应式的动词是 GET SET(PATCH) PUB(POST) OPT HEAD，因为UI变量的pub-sub本来就有可能触发跨端操作，完整后调用/new设定ID，或调用 /new&force={UUID}，可用于兼容reset默认值的PUT。
+
+CUIFS在登录请求（调用栈范围）上区分读写方向。SET 方向的 `chkpass(u,p)` 创建或忽略凭据键值表，而PUB方向尝试登录（`.jwt=true` 冻结后续键值修改）。
+
+服务端计算，如 `"邮箱激活码是："+chkpass({As: u=>u.freeze=NO})` 可生成用户操作函数（另见 OS. nextID0,ret2json），`chkpass("//b.com/")` 将向SNS服务端发送“注册OTP”并请求重定向到其UI
+
+如 `PUB //b.com/chkpass -d "a.com/chkpass?hole={}&id="`，只追加参数编码的 "id:otp:nextOTP"，将GET到的链接下发给js端，form submit 即可注册或登录。
+
+绑定同理。此流程会依据既有HOME注册类似 site:uid:otp 的状态，只要site调用并提供当前的 id:otp 就能插入绑定或登录，site请求己方验证时同理。
+
+扫码登录同样要用 hole={状态机} 变量，所以也支持 hole=.`uuid:site:{sha256("uuid:site"+salt+unixTime)}` 格式，有 .tag 非空和 .v（比如旧设备扫码上传文本，必须长轮询）
+
+## 防冲突的Damnver
+
+> 工程师应当明白：任意发布大版本不会使软件更成熟，却会对下游造成困扰。
+
+Damnver是静态检查的版本号规范，混合了 x.y.z、git的7位短提交号（9位十进制）、js（16位十进制）形式
+
+对于需要联网的库，必须使用 `v1_2026.9.2P{git}` 的日期格式，其他库可用 `v1.2P{git}`。
+
+只要有类、函数、全局变量的删除，v1 → v2，只要有新类型，.2 → .3，最重的要点：v1或v2的一栏不可以手动编辑。`import pkg` 严格导入 pkg@1
+
+（包应当不可后台联网，默认Stop-the-World，除非单模块后台 or 注册到Push框架）
+
+命令行工具一般传入 -v 参数显示P{git}校验和。v1_2026 存储为 int("402609")，注意v0编码为 "3"，无年份时为 301, 302.. ❤ <3
+
+如果API破坏的次数>9，会溢出并破坏两位月份。版本号最多发99次，就要随下一个月份或破坏性重构归零，相信优秀的组件API不会挑战这些限制。
+
+> 从两个端解决importmap太长，以及新版向下兼容的问题。禁止用“主版本号”虚荣、假谦虚，现在主版本就是小版本。禁止直接导入【最新版】，除非，它的兼容性仍是v1。
+
+
+
+
+

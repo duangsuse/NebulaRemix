@@ -111,7 +111,7 @@ lambda演算一般结合SExp的嵌套[Any List]树与链表实现并demo，在�
 
 组合、抽象、多态；封装、继承。多方法封装为单对象，是为了组合业务函数，而T1继承T0的方法虚表，是给已编译的调用者提供多态（多种函数体）。抽象就是“过程转函数”的栏目五答本身
 
-RACOW nelif_tagswitch
+RACOW nelif_tagstrip
 
 变量树的剪枝 RcWeak, Arena, cue资源层叠, ob_rc表, Worker可变共享
 数据的多动态 next, enum(Rust), len(iter&check), impl(subtypes), fixjump(next的JIT化) tag switch
@@ -143,7 +143,7 @@ JaiGo (洁构)是用于过程式艺术、编程的教学和科普、游戏设计
 
 六大设计变革：
 
-1. Pythonic let-inBlock (immutable), Auto Semicolon Ins(`\n  .wtf`), Lists: `are(1,2)/after("one"-1,)/inc(range or buildList-y{transient mut_})`
+1. Pythonic let-inBlock (immutable), Auto Semicolon Ins(`\n  .wtf`), Lists: `are(1,2)/am("one" - 1,)/inc(range or buildList-y{transient mut_})`
   - sugar: `!x to (not x), -x to -1x, (v1/*:Double*/)1_000; a[+?]==a[?-1], s[-?]=s[s.n-?]`, font ligatures, the DiffTour(#>PPT)
   - sugar: `#>litSlider (CSS exports), fg #rgba (1-lit calls)`; code taste: eg. `not _ && -> (not $1)&&`, `if{new A;..;new B} -> if{..;new A,B}` -X nvarloop
     - eg. `new a (b also { new b(a) })`
@@ -152,10 +152,10 @@ JaiGo (洁构)是用于过程式艺术、编程的教学和科普、游戏设计
      - 4UFCS: four Useful Func Call Syntax
   - shV5 UFCS  `./([^./])id/orSlash.MIME_fn`, `re'\n'.[gm]`, Tagless #enum; `char'\n' + f"{strSafe},fn<<__headDoc"; <<nestcmt`, `Str type(Int u){零参句尾调用}`
 2. Kotlin{u==it} blockCall, TS `u=>` lambdas. implicit typed, implicit scoping with "LEYB" `you,u (this); E=(outer local or module _ENV)`
-  - VALO(Vars Are Local Objects): `new i==0; new i (i+1) //&attrs,Lists`, plus the extfunc UFCS: `As{f(you)} As{f1(u)}` (farewell, `nonlocal i` && "shadowing")
+  - VALO(Vars Are Local Objects): `new i==0; new i: (i+1) //&attrs,Lists`, plus the extfunc UFCS: `As{f(you)} As{f1(u)}` (farewell, `nonlocal i` && "shadowing")
   - `Seer<I>{I see(Sum u){双层this}}`, square TVar syntax: `[T unique, T inject Copy Serde] benchCoW(T){ contract(ok=>{Post}){Pre} }`
   - 解决了kt里let/also/apply/run大杂烩与this@fname的问题，还包含（线性浅层） inHole/onreturn捕获
-3. declarative dataflow: ES6 Signals+serde util (HotReload `bg=inHole(refOld)`, LitRwSeer - a mutating Visitor)
+3. declarative dataflow: ES6 Signals+serde util (HotReload `bg=inHole(refOld)`, IEatDeeper - a mutating Visitor)
   - Add:=DefVal UFCS `vars { img { load("bg1.png", #setterGlobalOrU.(PImage/*arg1*/)) } }; jsOb.vars {strK.(Int); new strK (0)}`, delegates eg. `Pool.empty = attr(fget,fset=NO)`
   - As符合nulley(false/Error/null/NaNs-有符数最小值)，有Str.trim和ItemN{int n} 的(not)empty助手。提供 `final null=NO,true=ON`
   - `(A?? B!!); nulleyUser AskOr(0): age; AskOr "(new Error)wtf"` chain, (?.) replacedWith `@infix As`, AskOr(){catch} calls
