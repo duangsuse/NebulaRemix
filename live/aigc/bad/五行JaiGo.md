@@ -1,6 +1,117 @@
+## 有意义的词
+
+AZ.eat/双懒Bisect -BYGRPxBB/BBop  bracey{TDOP Word} BS-VOcXS链 .:[-=~>]:{括需块}:.
+
+  COM,gdbus,Apple/AHK跨脚本  跨端 RwSeer/spgjiaVM,Loadump,post_onMsg 管线
+
+
+
+`[unique T]=typealias T,  [[allow Copy Eq]]`
+
+
+  Web3 stdpayv拍物多签茧  pOTP链号登录圈  bioSMS端端私聊/隔空放币即拍即付 Web3Hook三前后端/pjoPager二层两栏两词列表详情协议
+
+
+
+ui tap和kbd快捷键(CAS-/^)
+varGITES bufsz=-msTime/cu,av,dpr  一等微分
+
+
+
+# C,bro..
+- targets C99, 100% C23-interopable(by Zig Aro)
+- links to Qt, stdc++, cosmolibc
+- Rust×Go-style OOP (fn/callback+data "fatptr", no vtable )
+- optional "dyn-linked bill" to Lua(`dostring`)
+- runtime supports:
+  - RcWeak+Arena+Actor runtime alloc, RAII `fopen().cue` (RAAC mem-model)
+  - ImplLitRwSeer style bliXX.so Visitors
+
+
+
+
 遇名五术 “鼠徕宝6词来表” 阴阳五行 创编六艺
 跨端七彩虹 JSON_ft名即旗表 三态四技 三字面四层变 栏目五答 
 拟态错假空(nulley漏你链) 拟态匹等 左右匹等 
+
+
+栏目答 蕊括式 控半同 括需饵 爬撕饵 硬特匹蕊特 码可揉
+函续续体  挖留   叩融听-回调链表 勘木排而-微迈细硬
+
+
+## JaiGo
+
+P4X ("Point for Cross", Point as in PowerPoint!)
+P4X is a PDE-style "Sweet Design Kit" for creative coding, using the web stack and [Feetless] native.
+
+实现：过程式艺术(Processing Java/JS)、探索式/笔记式编程(manim.py, Jupyter widgets)、混成式艺术(ShaderToy, taichi.py)
+提供：预览和悬停看定义、图-文双向调试、符号树/拖放式代码补齐，比REPL更高效的试-改-反馈循环，真正易调整可组合的demo库/云分叉remix
+目标：编程的教学和科普、游戏/课件设计、桌面壁纸和CSS组件、数据或算法可视化(echarts, explorabl.es)
+
+JaiGo (洁构)是用于过程式艺术、编程的教学和科普、游戏设计的多范式编程语言。
+
+- A little Java8, a few patterns (added as syntax)
+- simple as Go, but interopable with JVM, .NET, paste to convert java code.
+- compiler for "explorable tools": Java/Py/JS, planned: GL/Godot/Lua, TRuby/pwsh/AHK
+
+六大设计变革：
+
+1. Pythonic let-inBlock (immutable), Auto Semicolon Ins(`\n  .wtf`), Lists: `are(1,2)/am("one" - 1,)/inc(range or buildList-y{transient mut_})`
+  - sugar: `!x to (not x), -x to -1x, (v1/*:Double*/)1_000; a[+?]==a[?-1], s[-?]=s[s.n-?]`, font ligatures, the DiffTour(#>PPT)
+  - sugar: `#>litSlider (CSS exports), fg #rgba (1-lit calls)`; code taste: eg. `not _ && -> (not $1)&&`, `if{new A;..;new B} -> if{..;new A,B}` -X nvarloop
+    - eg. `new a (b also { new b(a) })`
+  - Swizzling + kwarg(kw2pos impl) UFCS: `u.[name age], D2v2(0).[xyva]`, `f(*tupleLocals)`, T#fn.kwdefaults
+     - `plt.(plot x_2 on x) {c='red'}` SVO args & kwcopy: `(HtopRing) { .n=1, buf=NO, typ } //mk buf@call, typ=typ`
+     - 4UFCS: four Useful Func Call Syntax
+  - shV5 UFCS  `./([^./])id/orSlash.MIME_fn`, `re'\n'.[gm]`, Tagless #enum; `char'\n' + f"{strSafe},fn<<__headDoc"; <<nestcmt`, `Str type(Int u){零参句尾调用}`
+2. Kotlin{u==it} blockCall, TS `u=>` lambdas. implicit typed, implicit scoping with "LEYB" `you,u (this); E=(outer local or module _ENV)`
+  - VALO(Vars Are Local Objects): `new i==0; new i: (i+1) //&attrs,Lists`, plus the extfunc UFCS: `As{f(you)} As{f1(u)}` (farewell, `nonlocal i` && "shadowing")
+  - `Seer<I>{I see(Sum u){双层this}}`, square TVar syntax: `[T unique, T inject Copy Serde] benchCoW(T){ contract(ok=>{Post}){Pre} }`
+  - 解决了kt里let/also/apply/run大杂烩与this@fname的问题，还包含（线性浅层） inHole/onreturn捕获
+3. declarative dataflow: ES6 Signals+serde util (HotReload `bg=inHole(refOld)`, IEatDeeper - a mutating Visitor)
+  - Add:=DefVal UFCS `vars { img { load("bg1.png", #setterGlobalOrU.(PImage/*arg1*/)) } }; jsOb.vars {strK.(Int); new strK (0)}`, delegates eg. `Pool.empty = attr(fget,fset=NO)`
+  - As符合nulley(false/Error/null/NaNs-有符数最小值)，有Str.trim和ItemN{int n} 的(not)empty助手。提供 `final null=NO,true=ON`
+  - `(A?? B!!); nulleyUser AskOr(0): age; AskOr "(new Error)wtf"` chain, (?.) replacedWith `@infix As`, AskOr(){catch} calls
+  - 只有结构体和(参数)赋值里允许有nulley。forif只接收集合与Bool，。 `us.first{age<18} As: KO(f"kids! {name.first}"); us.last{pr=="her"} AskOr(OK "for jokes") : u.pls "leave"`
+
+
+4. overloading: operator `十一Xノ`, if/for/jump syntax as Quine_ macro(blockCall, supports `@i18n`)
+5. CFAOS(Capitalized Funcs Are Obviously Structs) classes, IAOSA(Interfaces Are Obviously Static_asserted Adapters)
+  - OOP-ify str, ints, arrays, `s[-1]==s.At(s.n()-1)==s.charAt(s.length()-1)`; ndbind `At(T set, int... rngPairs)//0,NaN=I32_MIN,0,-1 for a[0,:]`
+  - 解决了OOP的(基类脆弱性/赋值传递罚抄化/构造期可变性)。构造链/前缀构造器/全参遮盖和转换链 配合kwdefaults"Builder"，用尽量零开销的方法迁移到Go/trait风格
+  - `Duck ImAnimal(){}`; `Pair Arg(Int A,B) { privates..; new Fun(private){swap..}; return new Fun() { toStr.. } }`, default public readonly, module internal `vars{public}`
+  - Go-istic impls & ctor shadowing: `Box ImPoint(v1 hue) {new Fun(){..}} final Box(){OK Point(1,2).Box(3.)}`; `Hero (Body b, Box yo)() {结构方法嵌入}`; `Hero (ImPoint)(..){}` for runtime delegate(`List.iftyp<ImPoint>`). 
+  - Type tree: (Arg)anyFP, (Row)anyKt (Ret2Exit)throw (pass)void; Arg(deep immut)/ArgTree/VarTree_/AutoBox; `(int heyPos, Ret2Exit... _, Arg kwonly){}`
+    - Is-tfm   (enum Is, interface It, json-union If, abstract Im)
+  - 允许OOP继承Arg结构体：把基类的Arg()改为Row()，然后补齐子类的构造器遮盖，让初始化链(or前缀初始化)一次性耦合，JaiGo便可把默认sealed改为extends。区分 Arg vs VarTree_ 不再有意义，因为子类函数表本身是可变量。
+6. RTTV `(RwSeer)(js)Type` runtime pmatch: `Pair(xVar,$xv) if q=>matchOrRetNull`, after-run "putbacks":
+  - `test{dd="display or recreplay @test"}`, TODO"AI", `;(1.0 A, "" B){OK 1.0.(Str)+""} //def wtf(A,B)` refactor
+  - Quine pasting `v1 sdDot(D2 p0, v1 len)(D2 p){}; f=sdDot(D2(0.),1.); f1(f)// asserts f crossinlined`
+  - comptime toplevels, `Quine_Proxy<T>()` & companion-interface Impl; dict+tup reflect, `build() import()` in-src
+    - `with(ways){if() if(autoelif)}; alike(two,typed); x.(CastOrNO)`, Zig @cast()-like builtins
+    - -X java 非脚本化语法 -X nogc(cue,never)   0xBCD1248_CDEF: B4 OxD4,8; LetBlock[] s
+    - Line(AOS/De_isinstance/unlikely/forBatch/num_quant) 
+
+前两项的目的是允许重载除字典类型（重载表+隐转）和变量查找以外的一切。 CFAOS(Is-tfm),IAOSA, 4UFCS 6Row, VALO, RTTV
+
+for(new i(0) not i==a.n){}contract{}  Rw.arena{}.act{replay}  
+
+Feetless(萨摩衔叶), the 1st provider of the PAWS(Produce Apps on Web Sandboxless) paradigm.
+shebang: `//env cyy/ or #!/env -ed k=v cyy/`  inject: `//= a.txt =/`, COvM FatELF
+
+UniAST(htmb/symb): Consolidating valid XML, PEG, CSS in proper (L(is)p) trees.
+- Node `E= (tagName attrs ..E) | Str`  vs  `E=[-tagName {-a 1 -b "kwarg" -XX "hidden flag"} ..E] | \tagName{-a 1}{oneText}`
+  - ..| `[+.cls ..E] # :is(div.cls) folded` | `\ This [-ul \li ONE] # p+ul>li`, attrs are optional, `'"(no) .//x.com /.png/bg1 <<__hereCMT <<CDATA \x1A`-6 strDelims
+  - symb deepAttrs are:"(tag-#ID ..E)" eg. `\Str-#groupId{mvnWhat}`,  mhtm inlines: `#= a.json =\n(#=|EOF)`, `#= a.png:sz =\n{u8*sz}\n#=^\n`
+
+.symb UniAST
+- well-formed `{class T[] {fun[x] (: x Int ~> Int) ..LetsTree }}`, lt=`OK x.(十 x)`, `y= x + x  OK y`
+  - no indirect varnames(ids) or optional ast-arg (structs ARE keywords), SSA `i=0;i++  -> i= inc(q(0)) (As i (mut/++ i))`, `u.f(x)(y) -> u.(f x).(As y)`
+- grouped/"lang-specific" syntax, and OOP `[class:withMainCtor  dicty:interface  Narg:*pass,kws  Ndef:overloads,impls,of-superDef  Name:static]`, `(^ public) (@ ./src:1:1)`
+- nonlocals. `[q:quotedJSON  uq:insertedExpr  qf:lambdaHas_uq  qk:globalDict_linker]`, holey args `{fun[A B](: A i32 B str) OK A+B} -> {fun[-2](:) OK (Str.cat (ItShows.str %0) %1) }`
+
+
+
 
 sikfaneCuRLD,0xEDF,0xBCD1248_CDEF,DamVer.bmp
 Row[ID0~2].DOT.lit CtrlSNOLY Is-tfm左递归名
@@ -90,16 +201,6 @@ JSON_ft名即旗表
 - 顶层只允许 {}, JSONL流, ""和裸串, 0-9,true。 不可写明null，空即假
 - `{"": "#-age", "\n":["Jack",18, "Rose",17, ..]}` 单个键含#的表以{"Jack":{age},}类型读写
 
-# C,bro..
-- targets C99, 100% C23-interopable(by Zig Aro)
-- links to Qt, stdc++, cosmolibc
-- Rust×Go-style OOP (fn/callback+data "fatptr", no vtable )
-- optional "dyn-linked bill" to Lua(`dostring`)
-- runtime supports:
-  - RcWeak+Arena+Actor runtime alloc, RAII `fopen().cue` (RAAC mem-model)
-  - ImplLitRwSeer style bliXX.so Visitors
-
-
 # 栏目五答×“祖冲之风纪”
 
 lambda是N栏目:1回答的算式，如 `(入a. 入x. x+a) 6` 二项宏展开为 `x=>x+6` (x+a, 但a为Cell_var,x=arg[0])： x局部、a类似 this.a、(+)为全局键or内建函数，这只是变量【域】
@@ -126,77 +227,6 @@ IOSEE入门4例： EchoArgs, CounterDown, Checklist_LiveGrep, ClocMiB_ForkJoin
 栏目5答、祖冲之风纪
 
 
-## JaiGo
-
-P4X ("Point for Cross", Point as in PowerPoint!)
-P4X is a PDE-style "Sweet Design Kit" for creative coding, using the web stack and [Feetless] native.
-
-实现：过程式艺术(Processing Java/JS)、探索式/笔记式编程(manim.py, Jupyter widgets)、混成式艺术(ShaderToy, taichi.py)
-提供：预览和悬停看定义、图-文双向调试、符号树/拖放式代码补齐，比REPL更高效的试-改-反馈循环，真正易调整可组合的demo库/云分叉remix
-目标：编程的教学和科普、游戏/课件设计、桌面壁纸和CSS组件、数据或算法可视化(echarts, explorabl.es)
-
-JaiGo (洁构)是用于过程式艺术、编程的教学和科普、游戏设计的多范式编程语言。
-
-- A little Java8, a few patterns (added as syntax)
-- simple as Go, but interopable with JVM, .NET, paste to convert java code.
-- compiler for "explorable tools": Java/Py/JS, planned: GL/Godot/Lua, TRuby/pwsh/AHK
-
-六大设计变革：
-
-1. Pythonic let-inBlock (immutable), Auto Semicolon Ins(`\n  .wtf`), Lists: `are(1,2)/am("one" - 1,)/inc(range or buildList-y{transient mut_})`
-  - sugar: `!x to (not x), -x to -1x, (v1/*:Double*/)1_000; a[+?]==a[?-1], s[-?]=s[s.n-?]`, font ligatures, the DiffTour(#>PPT)
-  - sugar: `#>litSlider (CSS exports), fg #rgba (1-lit calls)`; code taste: eg. `not _ && -> (not $1)&&`, `if{new A;..;new B} -> if{..;new A,B}` -X nvarloop
-    - eg. `new a (b also { new b(a) })`
-  - Swizzling + kwarg(kw2pos impl) UFCS: `u.[name age], D2v2(0).[xyva]`, `f(*tupleLocals)`, T#fn.kwdefaults
-     - `plt.(plot x_2 on x) {c='red'}` SVO args & kwcopy: `(HtopRing) { .n=1, buf=NO, typ } //mk buf@call, typ=typ`
-     - 4UFCS: four Useful Func Call Syntax
-  - shV5 UFCS  `./([^./])id/orSlash.MIME_fn`, `re'\n'.[gm]`, Tagless #enum; `char'\n' + f"{strSafe},fn<<__headDoc"; <<nestcmt`, `Str type(Int u){零参句尾调用}`
-2. Kotlin{u==it} blockCall, TS `u=>` lambdas. implicit typed, implicit scoping with "LEYB" `you,u (this); E=(outer local or module _ENV)`
-  - VALO(Vars Are Local Objects): `new i==0; new i: (i+1) //&attrs,Lists`, plus the extfunc UFCS: `As{f(you)} As{f1(u)}` (farewell, `nonlocal i` && "shadowing")
-  - `Seer<I>{I see(Sum u){双层this}}`, square TVar syntax: `[T unique, T inject Copy Serde] benchCoW(T){ contract(ok=>{Post}){Pre} }`
-  - 解决了kt里let/also/apply/run大杂烩与this@fname的问题，还包含（线性浅层） inHole/onreturn捕获
-3. declarative dataflow: ES6 Signals+serde util (HotReload `bg=inHole(refOld)`, IEatDeeper - a mutating Visitor)
-  - Add:=DefVal UFCS `vars { img { load("bg1.png", #setterGlobalOrU.(PImage/*arg1*/)) } }; jsOb.vars {strK.(Int); new strK (0)}`, delegates eg. `Pool.empty = attr(fget,fset=NO)`
-  - As符合nulley(false/Error/null/NaNs-有符数最小值)，有Str.trim和ItemN{int n} 的(not)empty助手。提供 `final null=NO,true=ON`
-  - `(A?? B!!); nulleyUser AskOr(0): age; AskOr "(new Error)wtf"` chain, (?.) replacedWith `@infix As`, AskOr(){catch} calls
-  - 只有结构体和(参数)赋值里允许有nulley。forif只接收集合与Bool，。 `us.first{age<18} As: KO(f"kids! {name.first}"); us.last{pr=="her"} AskOr(OK "for jokes") : u.pls "leave"`
-
-
-4. overloading: operator `十一Xノ`, if/for/jump syntax as Quine_ macro(blockCall, supports `@i18n`)
-5. CFAOS(Capitalized Funcs Are Obviously Structs) classes, IAOSA(Interfaces Are Obviously Static_asserted Adapters)
-  - OOP-ify str, ints, arrays, `s[-1]==s.At(s.n()-1)==s.charAt(s.length()-1)`; ndbind `At(T set, int... rngPairs)//0,NaN=I32_MIN,0,-1 for a[0,:]`
-  - 解决了OOP的(基类脆弱性/赋值传递罚抄化/构造期可变性)。构造链/前缀构造器/全参遮盖和转换链 配合kwdefaults"Builder"，用尽量零开销的方法迁移到Go/trait风格
-  - `Duck ImAnimal(){}`; `Pair Arg(Int A,B) { privates..; new Fun(private){swap..}; return new Fun() { toStr.. } }`, default public readonly, module internal `vars{public}`
-  - Go-istic impls & ctor shadowing: `Box ImPoint(v1 hue) {new Fun(){..}} final Box(){OK Point(1,2).Box(3.)}`; `Hero (Body b, Box yo)() {结构方法嵌入}`; `Hero (ImPoint)(..){}` for runtime delegate(`List.iftyp<ImPoint>`). 
-  - Type tree: (Arg)anyFP, (Row)anyKt (Ret2Exit)throw (pass)void; Arg(deep immut)/ArgTree/VarTree_/AutoBox; `(int heyPos, Ret2Exit... _, Arg kwonly){}`
-    - Is-tfm   (enum Is, interface It, json-union If, abstract Im)
-  - 允许OOP继承Arg结构体：把基类的Arg()改为Row()，然后补齐子类的构造器遮盖，让初始化链(or前缀初始化)一次性耦合，JaiGo便可把默认sealed改为extends。区分 Arg vs VarTree_ 不再有意义，因为子类函数表本身是可变量。
-6. RTTV `(RwSeer)(js)Type` runtime pmatch: `Pair(xVar,$xv) if q=>matchOrRetNull`, after-run "putbacks":
-  - `test{dd="display or recreplay @test"}`, TODO"AI", `;(1.0 A, "" B){OK 1.0.(Str)+""} //def wtf(A,B)` refactor
-  - Quine pasting `v1 sdDot(D2 p0, v1 len)(D2 p){}; f=sdDot(D2(0.),1.); f1(f)// asserts f crossinlined`
-  - comptime toplevels, `Quine_Proxy<T>()` & companion-interface Impl; dict+tup reflect, `build() import()` in-src
-    - `with(ways){if() if(autoelif)}; alike(two,typed); x.(CastOrNO)`, Zig @cast()-like builtins
-    - -X java 非脚本化语法 -X nogc(cue,never)   0xBCD1248_CDEF: B4 OxD4,8; LetBlock[] s
-    - Line(AOS/De_isinstance/unlikely/forBatch/num_quant) 
-
-前两项的目的是允许重载除字典类型（重载表+隐转）和变量查找以外的一切。 CFAOS(Is-tfm),IAOSA, 4UFCS 6Row, VALO, RTTV
-
-for(new i(0) not i==a.n){}contract{}  Rw.arena{}.act{replay}  
-
-Feetless(萨摩衔叶), the 1st provider of the PAWS(Produce Apps on Web Sandboxless) paradigm.
-shebang: `//env cyy/ or #!/env -ed k=v cyy/`  inject: `//= a.txt =/`, COvM FatELF
-
-UniAST(htmb/symb): Consolidating valid XML, PEG, CSS in proper (L(is)p) trees.
-- Node `E= (tagName attrs ..E) | Str`  vs  `E=[-tagName {-a 1 -b "kwarg" -XX "hidden flag"} ..E] | \tagName{-a 1}{oneText}`
-  - ..| `[+.cls ..E] # :is(div.cls) folded` | `\ This [-ul \li ONE] # p+ul>li`, attrs are optional, `'"(no) .//x.com /.png/bg1 <<__hereCMT <<CDATA \x1A`-6 strDelims
-  - symb deepAttrs are:"(tag-#ID ..E)" eg. `\Str-#groupId{mvnWhat}`,  mhtm inlines: `#= a.json =\n(#=|EOF)`, `#= a.png:sz =\n{u8*sz}\n#=^\n`
-
-.symb UniAST
-- well-formed `{class T[] {fun[x] (: x Int ~> Int) ..LetsTree }}`, lt=`OK x.(十 x)`, `y= x + x  OK y`
-  - no indirect varnames(ids) or optional ast-arg (structs ARE keywords), SSA `i=0;i++  -> i= inc(q(0)) (As i (mut/++ i))`, `u.f(x)(y) -> u.(f x).(As y)`
-- grouped/"lang-specific" syntax, and OOP `[class:withMainCtor  dicty:interface  Narg:*pass,kws  Ndef:overloads,impls,of-superDef  Name:static]`, `(^ public) (@ ./src:1:1)`
-- nonlocals. `[q:quotedJSON  uq:insertedExpr  qf:lambdaHas_uq  qk:globalDict_linker]`, holey args `{fun[A B](: A i32 B str) OK A+B} -> {fun[-2](:) OK (Str.cat (ItShows.str %0) %1) }`
-
 
 
 
@@ -207,10 +237,6 @@ UniAST(htmb/symb): Consolidating valid XML, PEG, CSS in proper (L(is)p) trees.
 
 pass print(int[] a) { inc(0, a.n-1) As i=>{ dd=f"{i}{a[i]}" };  }
 
-
-栏目答 括需儿 控半同 蕊括式
-叩题 叩融听 勘木排而
-码可揉  挖留 爬撕饵 硬特匹蕊特 微迈细硬
 
 
 

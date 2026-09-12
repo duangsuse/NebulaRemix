@@ -278,6 +278,90 @@ while是一个自旋，它和【事件队列】没太大关系。事件本质上
 libuv 的轮询依赖于 Linux vDSO `gettimeofday` 和 `epoll_wait(..., 50ms)`，是一个【保存/恢复现场】的内存镜像，从来就不是while在数步数！
 
 
+## userspace的交互式弊病
+
+shell本质上是种宏：切分逻辑行，把str展开到不能再展开，然后扔进eval模式匹配执行。但它却像AHK按键精灵一样范围强大，让人又爱又恨。
+
+如果这个过程能像Lisp那样 [处理好 [嵌套]] 你就烧高香了，因为它们最终会分不清 readline shorthand 和 syntax （臭名昭著的 IFS=' ' 和 test 的双引号），更缺乏Types(list, dict..) 和Modular(default local, import..)。 Ysh; amber-lang; plumbum.cmd和fire 试图改良这些毛病。
+
+Flatpak和AppImage搞了这么久才懂集成启动菜单与右键，apt这些至今看不懂PATH和ldd。明明是为了API或图标进行安装，非要以文件，甚至元数据（不含逐文件 openssl digest）的形式设计repo，对软件、服务启动链、etc配置、容器的认知不如AUR、Void、Nix、EasyOS/Lakka
+
+apt这些过度工程也有【朋友】。链接缓存，多大点事。 pip最开始是面向非破坏性升级的，没人会说它复杂，pnpm也不会很复杂。uv直接把实现细节的画风都变成红黑树一样了。
+
+默认为单用户安装或etc配置，需要时再sudo提升到/usr 的权限模型比chmod+x好太多了。一个解释器就能越权的设计不叫安全防呆，只是制造摩擦
+
+为了跨平台打包就要牺牲bash可调用性，或为了gcc链接器方便，就要拆成无数个发行版去打包，依赖各种 python-xx nodejs-xx 的包…… 看看内容hash就知道过度工程+缺少认知。做软件，不是拿gtk/qml写一遍网页，套个Adw或Breeze风格再加个表情包，而是搞清楚【为什么必须放在那？该不该？或者呢？】
+
+就像 https://magcius.github.io/xplain/article/index.html 用H5交互式讲解 xlib API
+
+与其说是单纯开发Linux，不如说是 pci/dts + udev/v4l2/alsa + SDL/evdev + fuse/overlay/init_rc 的组件化理解系统的树。UNIX本身的 blk/char_dev/pipes/ELF 基本没用，纯粹是拿glibc+各种 sh utils 去 cosplay JVM 的拙劣游戏，就相当于拿awk和perl去充当Python。
+
+MC里地图制作(Level editor)和游玩，是同一件事情，就像Adobe设计的swf和Kay启发的Scratch。你又是否能知道有哪些汉化过的字符串在一周目的游玩中没读过？就像地图界面能提示你哪些关卡还没体验那样？会编程的，不懂创作，会做视频的不爱开源，架构不咋地靠堆料，这也是一个普遍问题呢。
+
+MC里没有作者和玩家的割裂，每次游玩都是在【实时的体验自己的造物】，甚至还可以热重载Mod，使用命令方块（代码也是方块哦）。i18n的coverage（翻译覆盖率）也是这样的道理，如果你不玩过一周目，或不是在玩的过程中精调翻译（进行二创），怎么知道哪些文本没有翻译的信达雅？ 源码和ttf文生图的因果链是round-trip的，你看见，就记住。你保存，就变化。你搜到，就用到。
+
+玩家和工作者的创意工坊本来就是厂商，如果做不到，那是工具的问题。堆人数堆料、学院派解决不了生产消费的断裂。AUR的一键包、MC和PVZ的Mod世界、Live2D和ShaderToy的“壁纸引擎”，都以不同的形式展示了这种远超厂商的生产力，因为软件是“魔法墨水”，它不为了“性能”而丧失自我描述的生命力，从《可学习编程》，变成生产交付之间开裂的“快干水泥”。
+
+### 包管理问题：软件失忆
+
+几乎所有开发者都应该把 apt;rpm;yay 这些东西拉入黑名单，用mise和winget这些一键包。只有下的东西跑到 App Menu 或etc/var目录时，才解禁系统包，否则就等“开箱即用”时卸载重装吧。
+
+每次往【部署】走，都把【开发】的活依赖变成死文件。每次往【容器】走，都会弄丢调试和F5即跑的便捷性。 这简直像userspace的定律。
+
+它们完全就是个劣化版的zipapp，除了手动管理的repoCDN和版本地狱毫无价值
+
+即便你在【部署时】，也不可避免要到/etc或/{tmp,var}里填写好 first run 或查房，甚至查opensnoop，即便你在【模块外】，也总是需要读改你刚按Ctrl+S那个模块的变量。都没了。
+
+好像【软件失忆】了一般，它不是按截图录屏里的那个样子，不是以那样的方式被开发的。你不是以【运行频率】为参考敲的每一行代码，而是去补一个个该死的分号。
+
+一言以蔽之：make的人并不懂【C-dev手里】或【初次有意义运行/ OOB run】的“依赖”是什么样，他们只知道404不知道是dlopen在报错，更不可能知道每个发行版在CA块去重下几乎是一样的
+
+它们根本不理解软件， 只知道碎片文件。不知道exec,ldd，甚至不知道socket和setcap ——它们不能区分一个软件是qt还是gtk还是web C/S，只能手动加依赖，它们不知道【初次有意义运行】是否要抄etc模板，或有意义的文件放在var的哪里
+
+Docker真的不是少一个systemd单元格的事，它太省心了，你可以一键改yml、看文件库而不用查什么man，这是理所当然的。CI不仅是AI试错的必需品，更是发布/上线的必须。
+
+【发行版兼容表】纯粹是人多以后的凑数式贡献，背后毫无逻辑性，换成一张 ~/bin/hash 值的白名单和反代也没区别。
+
+libc世界的DT_NEED设计真的太失败了。没人想要管soname的鬼城和破事，整个/lib/*都应该是内容索引，通过pkconf这些来枚举，通过分块zsync更新，而不是发行版各自管各自
+
+这些发行版垃圾无法做到可复现构建，lib特征相同。你不能把deb的和fedora的lib自由交叉复制
+
+你不可以像PKGBUILD那样声明式的做事情，安装后也完全不知道该怎么办，除非PATH和etc里有同名文件
+
+它们假设系统上会有多于sudo;pkexec的uid0实现，又以为+x与否就可以禁止ld-linux的解释执行（让AppImage体验劣化）。 它们对信任链一无所知，却认为curl|sh不安全，同时又让任何一个脚本读取ssh和cookies.txt这些绝对的shadow
+
+## 【开发世界】好到哪里去呢？
+
+asprintf是glibc少数够像「扩展」的特性，尽管性能均衡上不如 std::format，却确实比cout符合直觉
+
+尽管如此，BSD的标准List/KV还是更胜一筹，这样C编程者至少在入门时，仅仅是需要一些特殊API而面向libc时，不会沦落在自制链表上
+
+在其他方面，glibc撕扯出无限二进制兼容性（尤其是未用到新特性=不向下兼容）的问题，在滚动发行上经常break shell 且无法bypass，一点也不像stdlib
+
+线程库（NPTL）、动态链接器（RTLD）、系统名称解析服务（NSS）、宽字符（iconv）、甚至历史遗留的 Sun RPC 都实现了，但是，集合类都没有。asprint和"\0".slice这样的高频工具少得可怜
+
+
+显然，有些CheatEngine擅长的强大功能，比如搜索替换数值
+
+你可以查看.so里的文本，甚至将其改为更短的任何常量(.rodata)
+
+但有没有工具让这种hack更自由. 【找到原代码中引用旧地址的那条指令】 这是最关键的。 理论上只有执行到才能完美patch，可是，找不到工具
+
+#reveng
+
+这个所谓的数据流分析，连 printf 都看不出，它不理解几乎所有已知类型。 它就是一个劣化的类型推理，并不理解bin是什么领域的（游戏、CLI、网络管道、……）
+
+在正向开发都不擅长的时候，试图零操作适配二开反编译，仅仅为补丁一两个指令的事。 如果要把bin还原成有可能AOP的 “超级nm”，怎么可能不需要具体类型和数据流，怎么可能不从运行时来倒推链接时
+
+真正【理论上完备】的逆向，一定是从已知函数和类型集，通过无数次路径采样，推测内部细节、数据流，乃至流控边界，就像一个超级F12通过常识还原超级nm。
+
+旗标足够多时，它甚至可以完全绕过内部细节，像给RenderDoc做了脚本那样，有独立模块的质量
+
+在剥离运行，只针对gcc/llvm处理时，逆向就是确定的过度工程，只是把-O3变成-O0，连字符串是字符串都不知道
+
+Frida + Qiling / QEMU-Nyx 的读档存档相比gdb更不可破坏，有内核恢复与交叉调试能力
+
+
 ## 系统内核和编译器的尾声
 
 > 结果是结果，过程是过程。“有码就能跑，能响就是歌？”
@@ -309,156 +393,6 @@ GOTO considered harmful, for today, `while(true)` should be SyntaxError.
 很遗憾编程界走向了await和AsyncIterator这种扯淡的共识，就像GOTO那次一样。
 
 
-
-
-
-
-
-add[-2] A+B # 表格列参数
-
-add[-A]:
-  OK([-B] { 1A+1B } Or ([-B] [A B] @[1 1]) ) # 单位化算术
-
-adder[-A] As: # As(走) 块内可含可变量，不可使用 [-A]:
-  new {-acc A -step 1}
-  # -x -y inc(0)  # new的平替inc，一般对数值和下标用。x=y=新表达式。
-  -op  [:]
-    new acc([-i] i + 1step), step(step+1)
-
-  OK(op) # 可变捕获了 {nonlocal acc}，也不需要随处大小 let
-
-test[:] #< 仅有的两类语法，加SAM接口不用As块
-  -k  am("n" 0)
-  -a  are([1 2 3]) # arr.map(it=>操作);
-  inc(1 3): [-> (i)]
-    k "n" (k "n" + 1) # 单位化读写，下标不搞特殊
-    a.(0, i-1) == i # 子数组，可广播
-  a #>1lit == a.0 lit # 交互式下标
-  a.(0, 0:2:+1) # a -As [0 inc(0 2 1)]
-
-变量名LEGB查找顺序，E包含this(u.varfun, F.useOld)参数，G为模块(imp.x)且高于this.x。
-
-imp包含所有全局键（对象和函数、py式模块），但类型一般要用iTdotLit元类格式： `imp.Array(_new=10), imp.Node.DOT.TEXT_NODE, imp.UIEvent.T==imp.Event`。
-
-元类体系(learn to "Argify") 主打SaveAsJson另存链和IEatDeeper标签长度深拷贝(col,cond, c_zeros,c_hasV)、impFnXIAA馈硬反射。
-
-Fn/Fu/FnHo, Row/Ro/RoLit+Arg 两端可编程
-
-- siLINQ__?.tri/inc/setterJQ_FRA/3m3var/htmb.u
-- 4大语法糖 As链-可空NO流控 规范化赋值和u闭包/u表示(json-tbl) 候数树和OK_dd  四个新模态
-- 9()运行时编程-热重载  #@0选区重录  源码遮盖/窥硬替换 TDDdGC与文学编程
-
-ROFI逻扉多态  .mut_/Build:易失的可变类型
-
-鸭猴鹰-组拆转接范式
-
-str,int各包含2个区间构造器，UNIX模型引入了 Uh/Um/fstr/dtStr/ahex。Um实现了dirGlob和index打开，D2点框速度(mat)都算区间
-
-mind,make,mutate; var.spy/noMemo/meetEq
-
-OK
-NO.Or(cue)
-has.XX,ON,pass
-
-it.As(op) 可写作 `js?.(u=>(n=u+1, n*2)); py._({n:=u+1, n*2})`
-
-Quac==cccl夸克公理
-
-.:彼此::上下?? (uOOI??友奥义 you our OK impl) 是仅有的6个硬关键词，如 protected(our??) open(impl?)，另有 I[msft]_ifcuup$T 类型前缀/键名后缀。
-
-If编码作 `u.if_animal={Duck:{name:"Donald"}} or {Cat:{iam:"Tom"}} or {"":"Cat",iam:"Tom"}`，将type和其他键名混在一起是个常见的设计错误，插件下拉不能选“预设过”的某插件，而要选插件+选预设，这是同一类型的误解。
-
-URow、Col、rdRw、Arg(F.n/FnHo)，行按可变性下降：Row、Ro、RoLit，应await或可空的后缀是_，v_（渲染为 v?），也可 v?.(u=>u+1) 访问。除了.Or("\u500e") 和404e其他异常要求函数名后缀如 fetchOK_()。见 [0xnBCD_8edf]
-
-典型除错的方法：400 重填 401 登录 402 付费或提升硬限 403 提权 404 重搜 405 重装或清数据 500 必须改代码 502 安装依赖或联网
-
-
-UFCS.01n 是hito的函数范式：文本和区间数据流、声明式流控、扁平化类类型。 incAB,#i, -XX复选框
-
-1. Are/AM/IsSome密封类
-1. Rd一元组和文件 Rw信号(Tk.Var, onvar/vi/isa/yield)
-1. F.n0, F.u1 等强转，Arg.paste 过程宏
-
-友好的并列乘法与内插语法： 1px; #39c5bb #(0,0) #>litSlider; ./uRow.ext; |,As:的别名 >>uRow $(ls) 都转为Dunder函数
-
-任何脚本由三个期构成：编辑期，解释期，编译期，其象征是 F12 Workspace 编辑功能、eval、loads/dumps。HOLP用 BLIP、QuineQuote、IEatDeeper来帮助实现
-
-数据类的革新更大
-
-.: Val-Addr-Come # class 三种可变性模式 {...}
-  add[-2] As:
-    new {n: A, "c": B} # 所有JSON字面支持！
-    CPU hang -while {n>0}:
-      new ([-c] c+1) # js 同理，倾向于 new(c=>c+1)
-      new n([-i] i-1) # py new(n={(i), i-1} or {u-1})
-    OK(c)
-    # py多行块，替代 @lambda f:on("wtf",f) def ret(ev: T):
-    # for ev[:T] in on("wtf"), ret: OK()
-
-  add-tailrec[-i-c_] [0 0 ~> 0]:
-    newArgs(i-1)(c+1) Or {c}: i==0 # js(.. {Or: c, if: i==0})  py (..) or c if i==0 else OK
-
-    # 平替(if门)
-    (i \= 0) (1==1): newArgs(i-1)(c+1)
-    OK(c)
-    ("war" \= "peace") Or("")
-    # 平替(when展开式)：
-    i :.
-      0: OK(c)
-      [->(n+1)]: newArgs(n)(c+1)
-
-  set-evFun[:]
-    -hi[:] alert(prompt "Hi?")
-    new nav({-btn {-onclick hi}}) # 太冗长
-    nav btn -new {onclick: hi, if: ON} # 太重复
-    # new(vars).onclick({ inp(ev){...} })，inp可以是键、函数或.setInp
-    # 同理 var.[x y] == dunderSwizzling(var.x)(var.y) 缩写
-    nav As:
-      new(vars) -onclick {
-        -btn hi
-        -inp [-ev] alert(inp value)
-      }
-
-对JSON式字面没有":,;"的特殊要求，但不能与箭头函数 [-1]和fn{u}{u} 或访问链 (a b attr) 混淆，不可空位。[*a], {*kw}, {[kst]:v, varAsKV} 需要完全分隔符。
-
-调用链(BS-Vocx)同理，a b "kst"/() 后方可跟随参数名，直到(子命令)或 : 块。a -b()() 可追加多子命令，-V链完整后 ('\或|' BS) 可换行继续访问
-
-  set-auth[-h] As:
-    k "n" (Math -random) # GET请求丢弃变更，即便容器(val a: [Int Come_]) 可变。HEAD(搜索/H5卡片)见URow
-    new [-noauth] inc(a)(a (-1))
-    # Hito 对可变性的标记相对注重 ^
-    #new(noauth => { a.push(a.at(-1)) })
-
-    h -ok new([-nobody] {
-      NO Or("\u403E 用户未登录")
-    }) Or "Token: {k "n"}"
-    
-    # 索引处insert和多维赋值 inc(a,"", u=>u[0])
-    inc(a)("first"): u #1
-    test: n(inc(NO)(a)) == inc(a)(NO)+2 # =5, a.pop(), a.shift().length
-    [[1 2] [*"AB"]] Tr #= 1A 2B, zip
-    [*(inc 1 4)] sep 2 +1 #= 12 23 34
-    
-    new {-b [["nest"]]}
-    inc(b)("深"): A.(0,0)
-    test: b.(0,0) #>1 == '深'
-
-.: Ro
-  Val-Addr-Come[-defl_-s_] [42 "hi"\ -inc 2] [{A B}]: #< class{} 内嵌了2个变量，必须在此处赋值或拟态类型(Litype)
-    new {
-      -k  am("n" 0)
-      -a  are(1 2 3)
-    }
-  App
-    #^ [{A B}] 是两个侯数，一般与 <input type> 绑定并推理类型
-
-Litype 详见 [sikxfaneCuRLDoom]拟态王国。有基本类型，也已经有 [CtrlSNOWLY] 6个Dunder非常有用了。
-
-Come(来/collections.abc) 只包含 in,iter,len 三接口写作： kv(K)(pass), kv()(rw_inHole)==ON有剩余, inc(a)("auto_id")
-
-FnHo 包含 .var[GITES] 数据流，rdNum/rdRows/rw/rws 区分用户是否写入变量，rws允许多监听/环形广播/队列Worker，`{"":type}值或空键_` 为 .varT
-
-除了.varE 变量都不支持.v=NO，但E也只能空初始化，用于解构遍历。.varS 被用于模块化，不同模块访问DOT.常量有不同值，这方便了 `import math: m; m.prec=0.01` 依赖注入零拷贝。
 
 HOLP 倾向于单例UIUX，即使用URL栈（分时复用）和同页面多窗口/内嵌（分参数集复用）实现多文档界面而拒绝new对象-元素配对（本质上基于显/隐）。在跨页playlist里单例的自然性尤为明显，与纯函数相悖。var.Swapfile/lit模板被作为helloworld
 
@@ -531,6 +465,14 @@ clean[-u ""] sed (re:'fuck'): "" join(u#1)("*" -repeat (n(u) -2))(u#-1)
 
 提问、查找、调试打印3句，拒绝随处大小let
 
+## 系统和图形
+
+UV-UW-PV  iTime(media元素时轴/rate,Lim/ease语法) iChannel(canvas像素/shaderToy.com) 支持CSS-js互事件和SVG互变量，自带擦拭去色等滤镜
+
+OS {json,urlCard,cpio,fastF5, chroot"USER", chcpu}, chop mint补丁-模块级cue-F.useOld(), imp.LEGB查变量  自动选线路import class-def的静态无序性
+
+CPU {foreign{Tx候选,Rx表,nextID0},trust_me, atom1Of数组指针,taskN进度撤销写法, UX UI UGC  Unix跨页的/GFX/DSP({特殊上文和导出}) } 跨页有支持transfer:[FnHo] 。 CAS支持 `rw.waitAsync?.(idx, 1); rw.compareAndSet(0, 1); rw?.((v,to)=>v+1)()新值, rw?.(+1)旧值`
+
 
 
 与URow、URL、UMat应用轻松交互
@@ -566,12 +508,6 @@ stdiox (F12-groups, files-pipe ::)
     - 将 path;ipr;ipa;ipa0~局域网编号 动态加入HOSTS，用到时显示 $(ipat ngrok) 推荐 TailScale/CF
     - 有 SK_某密码,DB=url,o=输出,port=8080 通用GUI界面
 
-## 系统和图形
-
-UV-UW-PV  iTime(media元素时轴/rate,Lim/ease语法) iChannel(canvas像素/shaderToy.com) 支持CSS-js互事件和SVG互变量，自带擦拭去色等滤镜
-
-OS {json,urlCard,cpio,fastF5, chroot"USER", chcpu}, chop mint补丁-模块级cue-F.useOld(), imp.LEGB查变量  自动选线路import class-def的静态无序性
-CPU {foreign{Tx候选,Rx表,nextID0},trust_me, atom1Of数组指针,taskN进度撤销写法, UX UI UGC  Unix跨页的/GFX/DSP({特殊上文和导出}) } 跨页有支持transfer:[FnHo] 。 CAS支持 `rw.waitAsync?.(idx, 1); rw.compareAndSet(0, 1); rw?.((v,to)=>v+1)()新值, rw?.(+1)旧值`
 
 
 - 易分辨Rpc子类型、错误边界、表格主键压缩（DeSer和DMM工具集）
@@ -629,9 +565,11 @@ CUIFS在数据流（调用栈范围）上区分读写方向。SET 方向的 `chk
 
 Damver是静态检查的版本号规范，兼容 x.y.z 和 js的16位十进制、git的7位短提交号（9位十进制）三种形式
 
-对于需要联网的库，必须使用 `v1_202609.2P{git}` 的日期格式，其他库可用 `v1.2P{git}`。只要有类、函数或全局变量删除，v1 → v2，只要有新类型，.2 → .3，v1或v2的一栏不可以手动编辑。`import pkg` 严格导入 pkg@1
+对于需要联网的库，必须使用 `v1_202609.2.P{git}` 的日期格式，其他库可用 `v1.2P{git}`。只要有类、函数或全局变量删除，v1 → v2，只要有新类型，.2 → .3，v1或v2的一栏不可以手动编辑。
 
-（我会要求包不可后台联网，默认Stop-the-World，除非标明权限 or 单模块后台 or 注册到Push框架）
+`import pkg` 严格导入 pkg@1
+
+作为对 “成品软件” 的鼓励和弥补，新包引用日期版本号的库时，应当设置pingback，在list和下载工具内显示 "checked: 2026-01-01"
 
 工程师应当明白：任意发布大版本不会使软件更成熟，却会对下游造成困扰。
 
@@ -641,10 +579,5 @@ Damver是静态检查的版本号规范，兼容 x.y.z 和 js的16位十进制�
 
 > 从两个端解决importmap太长，以及新版向下兼容的问题。禁止用“主版本号”虚荣、假谦虚，因为主版本就是小版本。禁止直接导入【最新版】，除非它的兼容性仍是v1。
 
-## PahQL解析控半同
+（我会要求包不可后台联网，默认Stop-the-World，除非标明权限 or 单模块后台 or 注册到Push框架）
 
-BYGRP代码高亮
-
-['-', 缩进语法/JSON.org所示的简单嵌套] 和'\xBB'标注的点号补齐
-
-PQL支持HiBLIP(Hilight-included BiBrace & Literals Incremental Parsing)

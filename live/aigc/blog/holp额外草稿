@@ -27,6 +27,59 @@ hosh解释器/hito编译打包/woj框架，提供被称为[OS43,Universe+ONE]和
 - 文档即demo，code&API即文档，`/**doc*/` 只是大纲，河图是面向人类编程的旅游周刊。 当心凑字数的范式！看面条代码+机翻文档的时间，不如多搜多写。
 - 开发者的课题，不是懂或不懂，是已知和未知。 我最怕HOLP比人还强大。强者积累于模板和算法，只烙印于领域。假如，编程是让懒得点黑框框的人用电脑，元编程就是让看不懂花花代码的人用编程。
 
+
+## 有意义的词
+
+-(#:;~ <|>\:"*?/   '.=/\<>+^!%|
+
+Visitor=TrimEvok+Tagienum
+
+BYGRP: 解析器高亮，蓝黄绿红粉💙🦐💚💓🟪 = 名 动 接(to,by等) 单项 形/刑(报错点)
+
+LOSN第一梯队
+
+#:~:mainEnv,   b=BYGRP.Bisect
+
+strfmt,fstr[fsql,x]  YMDhmszvZ周号mo
+
+快速调试 d=is,s,模块eval e=$0 dm=路径搜索   ev框架监听器API-执行  dt=ns/cu单位 numpath-treemap
+braceyTDOP 支持 (x:xs),(=>)的右结合，为流跟踪[缩进栈]- 类似于解析(not,-)时可指定stop级别-默认';'。
+sepRightFirst(';',[+-]) 自动插入优先级，(as Type)(? A:B)等运算作为后缀/调用链，即unifix多项折叠。 eat“双懒”基于双删丢行反冒泡
+
+PiyjxGnmhw n行m格,D1~4.xyavRGBA Leadpos框点导速 Lp1~4左反手座标系 NmNdDn
+
+GLOB
+Str 元字符 *+?()[]\
+*+ 只在()右侧或内中生效
+· 替代了空格(即 [s]+)， ?var(P) 模式表达?<var>或(?>P)
+(**) 视 //p 确定是[^/]或[S]
+
+- optional "dyn-linked bill" to Lua(`dostring`)
+
+
+m012p1   raceOk neg1Wait     ioFmt/cpio.9p  og_ivStack uname去前缀
+
+U.dev.neofetch.OS=nix/win/apk/mac/ios,x64,7 py 3;@m1m2.hdav.1.Lcd
+
+.so单例段:asm,lit,pfn,pool,kv,kvlit /exe apk ios dmg nix/  BSsiLFDzCARp(jk)
+
+need ] before  {if,env,edit,DA},tap/F{kbdrop}  dropzone
+
+root级文件或读取./_/*。全权755，除非指明是主目录(~_/vagezT3)数据库等资产，所有人都是root
+
+
+$ys//home_ etc v sys ip dev .res .bin .so
+
+sys/proc_ tmp tty class struct另见  pop-os/sysfs-class; linux-devmgmt; neofetch/btop
+
+sys/opt Boot,A:,C:  AOSP用户即多开, $R/./ 脚本资源和DAL访问。
+
+v/run lib srv db log # etc.self=localStorage; srv=sw run=mods lib=DOT变量 .so.rankmirrors=CDN列表 home/tmp=FSAA OPFS WASM Tailscale.js或.ft.js
+
+ip/path ipr
+
+
+
 编程范式的进化：
 
 - biosC=x86nasm+函数和8种整数的超链接
@@ -58,6 +111,156 @@ Py JS PHP Java Lua C C# Solidity/eBPF Scratch
 
 
 
+
+add[-2] A+B # 表格列参数
+
+add[-A]:
+  OK([-B] { 1A+1B } Or ([-B] [A B] @[1 1]) ) # 单位化算术
+
+adder[-A] As: # As(走) 块内可含可变量，不可使用 [-A]:
+  new {-acc A -step 1}
+  # -x -y inc(0)  # new的平替inc，一般对数值和下标用。x=y=新表达式。
+  -op  [:]
+    new acc([-i] i + 1step), step(step+1)
+
+  OK(op) # 可变捕获了 {nonlocal acc}，也不需要随处大小 let
+
+test[:] #< 仅有的两类语法，加SAM接口不用As块
+  -k  am("n" 0)
+  -a  are([1 2 3]) # arr.map(it=>操作);
+  inc(1 3): [-> (i)]
+    k "n" (k "n" + 1) # 单位化读写，下标不搞特殊
+    a.(0, i-1) == i # 子数组，可广播
+  a #>1lit == a.0 lit # 交互式下标
+  a.(0, 0:2:+1) # a -As [0 inc(0 2 1)]
+
+变量名LEGB查找顺序，E包含this(u.varfun, F.useOld)参数，G为模块(imp.x)且高于this.x。
+
+imp包含所有全局键（对象和函数、py式模块），但类型一般要用iTdotLit元类格式： `imp.Array(_new=10), imp.Node.DOT.TEXT_NODE, imp.UIEvent.T==imp.Event`。
+
+元类体系(learn to "Argify") 主打SaveAsJson另存链和IEatDeeper标签长度深拷贝(col,cond, c_zeros,c_hasV)、impFnXIAA馈硬反射。
+
+Fn/Fu/FnHo, Row/Ro/RoLit+Arg 两端可编程
+
+- siLINQ__?.tri/inc/setterJQ_FRA/3m3var/htmb.u
+- 4大语法糖 As链-可空NO流控 规范化赋值和u闭包/u表示(json-tbl) 候数树和OK_dd  四个新模态
+- 9()运行时编程-热重载  #@0选区重录  源码遮盖/窥硬替换 TDDdGC与文学编程
+
+ROFI逻扉多态  .mut_/Build:易失的可变类型
+
+鸭猴鹰-组拆转接范式
+
+str,int各包含2个区间构造器，UNIX模型引入了 Uh/Um/fstr/dtStr/ahex。Um实现了dirGlob和index打开，D2点框速度(mat)都算区间
+
+mind,make,mutate; var.spy/noMemo/meetEq
+
+OK
+NO.Or(cue)
+has.XX,ON,pass
+
+it.As(op) 可写作 `js?.(u=>(n=u+1, n*2)); py._({n:=u+1, n*2})`
+
+Quac==cccl夸克公理
+
+.:彼此::上下?? (uOOI??友奥义 you our OK impl) 是仅有的6个硬关键词，如 protected(our??) open(impl?)，另有 I[msft]_ifcuup$T 类型前缀/键名后缀。
+
+If编码作 `u.if_animal={Duck:{name:"Donald"}} or {Cat:{iam:"Tom"}} or {"":"Cat",iam:"Tom"}`，将type和其他键名混在一起是个常见的设计错误，插件下拉不能选“预设过”的某插件，而要选插件+选预设，这是同一类型的误解。
+
+URow、Col、rdRw、Arg(F.n/FnHo)，行按可变性下降：Row、Ro、RoLit，应await或可空的后缀是_，v_（渲染为 v?），也可 v?.(u=>u+1) 访问。除了.Or("\u500e") 和404e其他异常要求函数名后缀如 fetchOK_()。见 [0xnBCD_8edf]
+
+典型除错的方法：400 重填 401 登录 402 付费或提升硬限 403 提权 404 重搜 405 重装或清数据 500 必须改代码 502 安装依赖或联网
+
+
+UFCS.01n 是hito的函数范式：文本和区间数据流、声明式流控、扁平化类类型。 incAB,#i, -XX复选框
+
+1. Are/AM/IsSome密封类
+1. Rd一元组和文件 Rw信号(Tk.Var, onvar/vi/isa/yield)
+1. F.n0, F.u1 等强转，Arg.paste 过程宏
+
+友好的并列乘法与内插语法： 1px; #39c5bb #(0,0) #>litSlider; ./uRow.ext; |,As:的别名 >>uRow $(ls) 都转为Dunder函数
+
+任何脚本由三个期构成：编辑期，解释期，编译期，其象征是 F12 Workspace 编辑功能、eval、loads/dumps。HOLP用 BLIP、QuineQuote、IEatDeeper来帮助实现
+
+数据类的革新更大
+
+.: Val-Addr-Come # class 三种可变性模式 {...}
+  add[-2] As:
+    new {n: A, "c": B} # 所有JSON字面支持！
+    CPU hang -while {n>0}:
+      new ([-c] c+1) # js 同理，倾向于 new(c=>c+1)
+      new n([-i] i-1) # py new(n={(i), i-1} or {u-1})
+    OK(c)
+    # py多行块，替代 @lambda f:on("wtf",f) def ret(ev: T):
+    # for ev[:T] in on("wtf"), ret: OK()
+
+  add-tailrec[-i-c_] [0 0 ~> 0]:
+    newArgs(i-1)(c+1) Or {c}: i==0 # js(.. {Or: c, if: i==0})  py (..) or c if i==0 else OK
+
+    # 平替(if门)
+    (i \= 0) (1==1): newArgs(i-1)(c+1)
+    OK(c)
+    ("war" \= "peace") Or("")
+    # 平替(when展开式)：
+    i :.
+      0: OK(c)
+      [->(n+1)]: newArgs(n)(c+1)
+
+  set-evFun[:]
+    -hi[:] alert(prompt "Hi?")
+    new nav({-btn {-onclick hi}}) # 太冗长
+    nav btn -new {onclick: hi, if: ON} # 太重复
+    # new(vars).onclick({ inp(ev){...} })，inp可以是键、函数或.setInp
+    # 同理 var.[x y] == dunderSwizzling(var.x)(var.y) 缩写
+    nav As:
+      new(vars) -onclick {
+        -btn hi
+        -inp [-ev] alert(inp value)
+      }
+
+对JSON式字面没有":,;"的特殊要求，但不能与箭头函数 [-1]和fn{u}{u} 或访问链 (a b attr) 混淆，不可空位。[*a], {*kw}, {[kst]:v, varAsKV} 需要完全分隔符。
+
+调用链(BS-Vocx)同理，a b "kst"/() 后方可跟随参数名，直到(子命令)或 : 块。a -b()() 可追加多子命令，-V链完整后 ('\或|' BS) 可换行继续访问
+
+  set-auth[-h] As:
+    k "n" (Math -random) # GET请求丢弃变更，即便容器(val a: [Int Come_]) 可变。HEAD(搜索/H5卡片)见URow
+    new [-noauth] inc(a)(a (-1))
+    # Hito 对可变性的标记相对注重 ^
+    #new(noauth => { a.push(a.at(-1)) })
+
+    h -ok new([-nobody] {
+      NO Or("\u403E 用户未登录")
+    }) Or "Token: {k "n"}"
+    
+    # 索引处insert和多维赋值 inc(a,"", u=>u[0])
+    inc(a)("first"): u #1
+    test: n(inc(NO)(a)) == inc(a)(NO)+2 # =5, a.pop(), a.shift().length
+    [[1 2] [*"AB"]] Tr #= 1A 2B, zip
+    [*(inc 1 4)] sep 2 +1 #= 12 23 34
+    
+    new {-b [["nest"]]}
+    inc(b)("深"): A.(0,0)
+    test: b.(0,0) #>1 == '深'
+
+.: Ro
+  Val-Addr-Come[-defl_-s_] [42 "hi"\ -inc 2] [{A B}]: #< class{} 内嵌了2个变量，必须在此处赋值或拟态类型(Litype)
+    new {
+      -k  am("n" 0)
+      -a  are(1 2 3)
+    }
+  App
+    #^ [{A B}] 是两个侯数，一般与 <input type> 绑定并推理类型
+
+Litype 详见 [sikxfaneCuRLDoom]拟态王国。有基本类型，也已经有 [CtrlSNOWLY] 6个Dunder非常有用了。
+
+Come(来/collections.abc) 只包含 in,iter,len 三接口写作： kv(K)(pass), kv()(rw_inHole)==ON有剩余, inc(a)("auto_id")
+
+FnHo 包含 .var[GITES] 数据流，rdNum/rdRows/rw/rws 区分用户是否写入变量，rws允许多监听/环形广播/队列Worker，`{"":type}值或空键_` 为 .varT
+
+除了.varE 变量都不支持.v=NO，但E也只能空初始化，用于解构遍历。.varS 被用于模块化，不同模块访问DOT.常量有不同值，这方便了 `import math: m; m.prec=0.01` 依赖注入零拷贝。
+
+
+
+
 拟态评判sikxfaneCuRLpod areBE'con.:--'inc __,As2isALL.pass As4pass 3严谨+布尔错控查; 圈行算数RowboChef  TblaodyAs_ika控(h5 lists sh datT ytdl)  5常量+空字面另写&cForRUD[Lval]和表格传删复/DLti_fn:etcxX 右值即左值.UI ; 万能调定链 BS-VO.:C--(ipPUT pyjs sql sh menu.aw) BBop生排深 FNeg As零参参通局部.:链, 6As4Sa
 
 叠加叠合AsumOf4 baRgoTs5Sum,are(A12BBC) 叹号cue/歪嘴kill9; 行列多形态 `^(I[fsm]?[^a-z])` `TrimLits.IAm[P](T..).Tr` ICue3,IConv,ICmp串.ID1哈,IStat bbc-BDFL类,ed;n=bcbd;c=tf_格 bla#ID@f12 IAmLists方括内Tr"","F#sub"
@@ -83,6 +286,150 @@ Py JS PHP Java Lua C C# Solidity/eBPF Scratch
 YY NN NO XXis oo NOpass,ALL.arg inc&RE&Fn.T/广义假空&条件   Robo=pass检查~NOp
 
 Dincoo选区 imp/ALL.kwd
+
+
+
+C=mk{Pair{A=="hi"; B==0}} //不使用upsert，这样要另set{},不能复制粘贴了
+R=Pair{B==0}, Pair{by(A);ret(A);all_uniq(B to Max); B>0}, Pair.buf(100){}.p(0)
+U=Pair{set{A=="bye"} B==0}
+D=..set(null)
+RC=Pair{setNew{B==B+1} B==0}
+连接词= Is({A==x}, {B==y; 1<2}), 包括 _ !is, *like,in
+链接表= join(INNER){Film.starring==Actor.id}; +代表unionAll
+宏=Pair(Pair.sql {B==0}), on f2 AB
+集合类= [a b c].sql<Pair>{B==0}
+事务= commit{}
+
+[Lua5.3](https://www.lua.org/manual/5.3/manual.html) 是词法域小语言的典范
+
+```js
+句(;|调用| (var,)=(言,) |
+  if 言 then 句 (elseif 言 then 句)*(else 句)? end | 
+  break  | (while 言)? do | repeat 句 until 言 | 
+  goto 名| ('::'名'::') |
+
+  for  名=言,言(,言)? do | 
+  for (名,) in (言,) do  | 
+  local((名,) (= (言,) )?|
+    fun 名 域)
+    fun 名(.名)*(:名)? 域
+)* 返?
+域 '('(名,) ','? '...'?')' 句 end
+do 'do' 句 end
+返 return (言,);?
+
+val :链('('言')' |名) //左递归本质
+var :val([言]|.名,名)
+调用:val( (':'名)? ('('(言,)')' |文|KV) )
+KV {:隔("[,;]", 名=言 | [言]=言 | 言)?}
+
+:隔 $1 ($0 $1)* $0?
+fun "function"
+
+言 :算符小先(JSON|nil|... |KV|val|fun 域,
+ '^^; * / // %; + -; ^..; << >>;&;~;|; == < > <= >= ~=; and; or', '# - ~ not')
+```
+
+
+
+mdd(Mark2D) 是在粗斜体和缩进换行上不遵循 CommonMarks.org 的子集和替代品。作为HTML在UGC世界的代言，mdd支持#tag、table list 尾注、LaTeX和告示框
+
+对标 gfm, Telegraph, Telegram 富文本和AI对话。
+
+mdd还能预览颜色/勾选/进度条/大纲，有更自然的HTML内嵌、(圆(括号)脑图)和flowchart.js、文学编程(预处理器 #line".py")
+
+_Mark2D_ the MD syntax for <_Web_ devs>>  _Web <Apps>>_
+
+> 这是blockquote
+> 换行
+>> 嵌套注释
+>> Linus: XML is nasty to parse for humans, and it's a disaster to parse even for computers, for document markup, anything else - config files, build scripts... sure, XML is horrible
+
+> 注：XML基本=txt+ `<"'/>&` (lt;gt;amp转义), TOML基本=ini+[[nest.keys]]+moreJSONlitVals
+
+## 这是标题2
+<h1~6>内嵌</>
+
+#tag @提及 和裸链接也可触发回调 #@请求AI-注释
+
+以下按富文本、链接和格式、小结构的顺序介绍。 还请重视 [中文排版](https://github.com/sparanoid/chinese-copywriting-guidelines) 如 hanzi.pro/Heti 。[可转换自剪贴板](https://euangoddard.github.io/clipboard2markdown/)，也有[Regex式高亮](https://regex101.com/r/AljM9u/1)
+
+```py
+源码 <code.language-py>
+不支持1Tab或4Space的语法，建议1Tab渲染2空格
+```
+
+这是 `pre code`py ，所用语言加在'`'后
+
+_粗体_ <Book书名 斜体> _粗<斜>体_ <斜 _粗_ 体 > <_唯一粗斜_>
+
+[链接](方+圆括号) [!img](方括号+叹) [^悬停注解; Abbr;title] [^1自动尾注](引用) <footer/> <h1></>
+
+~~黑幕s~~ ~~高亮~~mark ~~真删了~~del  [^^上标sup] ~~下标sub~~sub ~~注意力u~~u
+
+URL前缀可缩写，统一放在文章末尾 `[!](goog/favicon.ico)  [goog]: https://www.google.com/` ，支持相对链接和 `# 标题` 锚点
+
+支持 f"---\n{yaml元数据}\n---", slug,type,date,tags
+
+[注音 ruby; rt rt] `#RRGGBB` 颜色预览 `Ctrl+W` kbd标签 [:trollface: 表情包](https://github.com/ikatyang/emoji-cheat-sheet/blob/master/README.md#person-role)
+
+--- 小结构。居中名言
+
+---
+
+- [ ] TODO list [80%] 可包含百分progress
+
+- ul
+  - 无序列表
+
+- 这是dl
+  - 没错
+- dt
+  - dd
+
+- 1. ol
+- 无序转有序列表
+  - 1. 嵌套2-1
+
+- 1. 第一步
+
+打鸡蛋
+
+- 2. 第二步
+
+加油炒鸡蛋
+
+>
+连续多行引用块
+
+-- 1.
+多行的ol
+-
+内部是li
+
+--
+多行的ul
+-
+内部是li
+
+Pair|A|B
+-:|-|-
+f|x|y
+±|+|-
+
+> [!TIP]  快速表格: `|3x3` 和 `- x3`  Ctrl+S
+> [!NOTE] 快速重排: `A|B<<1|C` Ctrl+S
+> [!IMPORTANT]
+> [!WARNING]
+> [!CAUTION]
+> 请注意 `[+-*.]` 里只有-被用于创建列表，但可以转化自/至既有 `.md` 项目
+
+-- details
+内部
+多行
+^为折叠
+-^
+
 
 
 
