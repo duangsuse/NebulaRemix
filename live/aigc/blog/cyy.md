@@ -10,6 +10,35 @@ cyy 的 REPL-first 至少可以达到ChatUI的水准。比如，可以编辑旧�
 
 尽管可以接入标准的 Android/PDM/LuaRocks 包管理发布，它也更倾向于JBang式的依赖管理，并鼓励你“录制”一段REPL为独立文件的函数或动作(Squeaky fun)。你同样能复制 w@打印，并跳转到源码(zws.im)，或者在test{}块后看到其 :{长文本输出}。
 
+## 简洁哲学
+
+cyy 不是另一个 “C-Like 编程语言”，尽管它用起来也不会劣于 “工业级编译型语言”。将以此为第一性原理设计。
+
+尽管【运行期即编辑期】【像玩音游一样编程】，如 `#@1 AI重录选区, set{} :{prompt覆写}, #> #< 可点击源码中的按钮/快速字面配置, (TUI工具界面) git先提交后命名`，是它的显著特征，cyy 也和 Java, JS 一样有着很普通的语法。
+
+以下六个关键字均有2个版本，“实”字是4个语言特性的助记词。
+
+```
+依一是，悟易实 req -/一/OK/Or fun set-our .if{}Or{} for([]>>$u){u}
+
+以时移，五忆拾 row ?.{}.().[],${1 x y}  inc  I[msft]十一Xノ   var  [see 1.~4. below]
+
+语言中立版cyy： #> Lang emo #> Lang zh newbie  （CtrlX时只查看语法贴士）
+
+🤏 依 🚫 一 ⛳️ 是 🔗🔒 悟吾 🤔😡 易或 🧲 实
+✨ 以 💬 时 😅 移 🚫 五 🚩 忆 🧲 实   💭 Your Comment\n multiline..
+🚫 u 🗺 imp 👉 F 👈 FnHo 🚫 ON,NO,OK^ 😡 Or ♻️ cue   # yump Vonho Unlockor cue 😏.  name_: [ON orNO] bool, or [ON 🤔✅], f(.., Xopt.n 开启尾部bool)
+🆎 am 💌 isMounter 🚥 are 🍡 Args 🏁 test IN📦,OK📦 ItAteDeeper  It🔏 ItNeverDup  💭 value types a: are_(["", 0]) unchanged..
+🔍 fetch 🏠 open 📻 exec 📠 sqli 🚧 Throwables ▶️ Contexts ⏩ Events 🔂 Chan 👑 F.next 🔁 Loop 🚮 Deprecated
+```
+
+1. 认假为空、认空为错(NO,NaN,[]{}.N=0)，空和async必须有_ 后缀，ON-NO默认推理为旗标 [ON orNO]。 CDEF/ErrDef+Loadumper ，用于支持Java串读串写（序列化Visitor）和 import cffi 的一张基本类型的表格，[参考b4=i32, c4=u32,d4=f32等](串读串写支持)
+1. 【命名】最简字面即类型、通配命名即类型 `row var implicit (- Str "", - i* 0  - s* "str" - t* (0.) - a* [b4 are])`，字面比如 `[are((""), "init.[0]")  am(([0,""]), )]` 对应可变 `[Str are_]` 等
+  -  F体系包括 F.next(super) F.next{KW,XO}，F.u3 首参命名空间化和 `f ((3)>[A B C], {u})` 的表格列参数也是好特性。As{for{}} 中心填OK^就相当于continue，而Or{cue}取代了SEH错误处理
+1. 【侯数】惰性迭代器 `- obj { yielder_([{w}],arg) { (w?.(1)==arg) Or "received not {arg}"; OK Loop() } }` 为 [b4 b4 iter]，二参数表示next时可传入，?.f 是 await f
+1. 【autofix】和非JSON字面  路径 `./x.path.open()  ./dir/x.txt = (U._txt.dir.x), //./r/es = (Uh.r.es)` 网络 `//>http/goog.le/{path}/?/{{k:v}} = http(反引号调用)` 颜色 `[#000  #66ccff #(0,0,0) ]` 免点号 `m .04A = (m.[5].A); a b -c d "" = (a.b.c(d,""))`，除了 十一Xノ infix_写函数名上
+
+【依一是悟易实，以时移五忆实】，记住这个会时移的五色神犬！这就行了，比Python还简单 ——只要你会编程的话 😏
 
 如果main所用函数类型均完整，将可以编译到 Vlang .so (✨: Vinix OS, vsql, ved)、Haxe fatjar (✨: FNF game)（唯一支持那个有 record,sealed,var 和 `List<>()` 的Java版本），甚至 Zig (WIP)。基于libc生态时均可选 [cosmocc](https://github.com/jart/cosmopolitan)/emcc 两种 zipapp
 
@@ -42,7 +71,7 @@ cyy 的 REPL-first 至少可以达到ChatUI的水准。比如，可以编辑旧�
 
 不像绝大部分REPL，cyy以单文件内CtrlX+热重载+TUI只读面板，实现命令行交互。REPL总是attach到哪怕是空白C程序中运行，作为免安装 Web-pkgs-playground/eval.js 的补充。
 
-暂时强制单语言兼容。比如 `:req { py first json pandas:pd; py os re }`，py风格模块化。作者尽量使用 Babel/tstl 等既有工具拓展cyy可调用的软件生态数，并利用TDOP解析和SourceMap等技术【转译】复用目标的LSP支持。
+暂时强制单语言兼容。比如 `:req { py first json pandas:pd; py os re; ./ wtf; ../ wtf }`，py风格模块化。作者尽量使用 Babel/tstl 等既有工具拓展cyy可调用的软件生态数，并利用TDOP解析和SourceMap等技术【转译】复用目标的LSP支持。
 
 REPL宿主称为 so_site，它提供了一组解释器状态+ldd依赖和同目录下res资源。TUI默认列出或创建 hookable_cat 🐱
 
@@ -64,7 +93,7 @@ HiBLIP 允许在容易出错的函数开头加 `9()` （弹出调试时有 `\(^_
 
 `req u.myFun(1, "2")` 可替换既存不存函数。比如为u类型写入新的库函数，'{' 后自动加9()，进入 `\(^_^)>` 接管模态。直到输入 `OK(res)` 前你都实时的扮演myFun，通过ABC..指代其参数，通过删掉 `\(^_^)>` 并CtrlX来读档，删掉9()CtrlX来写入。
 
-【动态模式匹配】fun内使用 `clear(0, $_a, $_b); swap($_a, $_b)` 两个FnHo可交换其值（若未初始化读取/未限定类型则报错）， fn([{..}]) row{} 中 `div(p($_e1, "Hi"), button($b1))` 可多方法共同绑定私有变量，函数参数后加 ` |>u+1 声明处编辑` 可调用autofix批量替换
+【动态模式匹配】类似于 `for(xs >> $x){}` 即 if-let，fun内使用 `clear(0, $_a, $_b); swap($_a, $_b)` 两个FnHo可交换其值（若未初始化读取/未限定类型则报错）， fn([{..}]) row{} 中 `div(p($_e1, "Hi"), button($b1))` 可多方法，共同绑定私有变量，函数参数后加 ` |>id u+1 声明处编辑` 可调用autofix改绑到新建局部变量id
 
 cyy 单文件笔记本配合 F12 Workspace 时，可随CSS一同热编辑。REPL不支持FnHo，但仍可热编辑row函数，也包括箭头函数提升和this函数转发，如 `let i=FnHo(0); setInterval(()=> alert(i.v++), 1000)` 会被命名为 `()=>cyy.$xxx(i)` 对应 bind(null)。动作和数值均可替换。栈分配和闭包是啥？咱不知道！
 
@@ -127,7 +156,7 @@ Roar.cyy 需要热重载 test 函数充当REPL，并使用 kbd "📸" 开头的�
 
 ## 中文编程支持
 
-只提示正确语法的保留字：`val class mod do as await try when while inline impl enum`
+只提示正确语法的保留字：`val class mod do as await try when while inline impl enum break`，比如 OK^ crossinline 函数式流控就需要科普文档
 
 为未来框架的保留字：`읏の你的是且或而去了`，介词：`就要以外于 不如有才咋啥去`。命名中包含介词，视为有点号分词，如 `b1以red外绿 == b1.以(red).外绿; dict(1就2); (1==1)才行`。
 
@@ -181,34 +210,6 @@ cyy的块语法和UFCS已经够“乱”了，变成Perl或 Ruby do 那样？只
 
 ## 以实例学语法
 
-cyy 不是另一个 “C-Like 编程语言”，尽管它用起来也不会劣于 “工业级编译型语言”。将以此为第一性原理设计。
-
-尽管【运行期即编辑期】【像玩音游一样编程】，如 `#@1 AI重录选区, #> #< 点击源码中的按钮/快速字面配置, (TUI工具界面) git先提交后命名`，是它的显著特征，cyy 也和 Java, JS 一样有着很普通的语法。
-
-以下六个关键字均有2个版本，“实”字是4个语言特性的助记词。
-
-```
-依一是，悟易实 req -/一/OK/Or fun set-our .if{}Or{} for([]){}
-
-以时移，五忆拾 row ?.{}.().[],${1 x y}  inc  I[msft]十一Xノ   var  [see 1.~4. below]
-
-语言中立版cyy：
-
-🤏 依 🚫 一 🚩 是 🔗🔒 悟吾 🤔😡 易或 🧲 实
-✨ 以 💬 时 😅 移 🚫 五 🏁 忆 🧲 实
-🚫 u 🗺 imp 👉 F 👈 FnHo 🚫 ON,NO,OK^ 😡 Or ♻️ cue   # name_: [ON orNO] bool, or [ON 🤔✅]  💭 Your Comment\n multiline..
-🆎 am 💌 is 🚥 are 🍡 Args 🙋 test IN📦,OK📦 ItAteDeeper  It🔏 ItNeverDup  💭 value types a: are_(["", 0]) unchanged..
-🔍 fetch 🏠 open 📻 exec 📠 sqli 🚧 Throwables ▶️ Contexts ⏩ Events 🔂 Chan 👑 F.next 🔁 Loop 🚮 Deprecated
-```
-
-1. 【命名】最简字面即类型、通配即类型 `row var globstar (- Str "", - i* 0  - s* "str"  - a* [b4 are])`，字面比如 `[are((""), "init.[0]")  am(([0,""]), )]` 对应可变 `[Str are_]` 等
-  -  b4=i32, c4=u32 [见下文](#串读串写支持)。 `f ((3)>[A B C], {u})` 的表格列参数也属于简写
-1. 【侯数】惰性迭代器 `- obj { yielder_([{w}],arg) { (w?.(1)==arg) Or "received not {arg}"; Loop() } }` 为 [b4 b4 iter]，二参数表示next时可传入，?.f 是 await f
-1. 【autofix】和非JSON字面  路径 `./x.path.open()  ./dir/x.txt = (U._txt.dir.x), //./r/es = (Uh.r.es)` 网络 `//>http/goog.le/{path}/?/{{k:v}} = http(反引号调用)` 颜色 `[#000  #66ccff #(0,0,0) ]` 免点号 `m .04A = (m.[5].A); a b -c d "" = (a.b.c(d,""))`，除了 十一Xノ infix_写函数名上
-1. CDEF/ErrDef+Loadumper ，用于支持Java串读串写（序列化Visitor）和 import cffi 的一张基本类型的表格，参考b4
-
-【依一是悟易实，以时移五忆实】，记住这个会时移的五色神犬！这就行了，比Python还简单 ——只要你会编程的话 😏
-
 语法范例：
 
 ```
@@ -218,7 +219,7 @@ row var (
 # 允许文件级语句。row等类型值只能先定义，后调用；允许字面和闭包热更新，OK语句即检查点
 
 - N 1_000 # 大写默认const
-- n 250 # FileCyy.class 里的 final int
+- n 250 # FileCyy.class 里的 final int。非交互文件视为包在 var row{} 里必须写成 n()- 250
 
 - s1 (N==1)?. {"1st"} 或 {"nth"} # ?. 的函数名为As() 或 走()
 
@@ -230,10 +231,10 @@ row var (
   # null表达式即 else -> （一般写双路if）
 } Or (u==10)?. { "✅" } Or("panic")
 
-- s3 n.if var { u+1; u*2; u.Str } # "502"
+- s3 n.if var { u; u+1; u*2; u.Str } # "502"
 
 # - n 250 # 禁止变量名遮盖
-var acc are_((0)) # .([int are_])!!，搭配某种动作。可变集合均含有后缀_
+var acc are_((0)) # .([int are_])!!，搭配某种动作。可变集合均含有后缀_ （但类名不可以_结尾）
 
 - cnt FnHo(0)
 vars.memo({cnt}) # 侯数+json状态管理，不怕 unload
@@ -277,20 +278,20 @@ w@ "".join {
 inc(0, oo(a))?. { say`{a.[idx]}` } ## ∞ == a.at_(), for(let i=0,N=∞; i!=N; i++){}
 
 row Wtf() set ItCloses {
-  set close
+  set close # final override funs
   close()> w@ "Good 4 u"
 }
 var row Wtf {} # same-name object
 
 - or0 "".(["" orNO])
-As {
-  [Wtf() Wtf()]?.{ u.cue } # res dispose (As {} scope)
-  or0 Or{ OK^ } # retearly
+Or('_') {
+  [Wtf() Wtf()]?.{ u.cue } # res dispose (As {} scope). \('_')> SEH try-throw now offically deprecated
+  or0 Or{ OK } # retearly
 
   for ([Args(1~100)]) {
     say`--> {u}`  # list(*range) forEach
-    OK() # for:continue
-    OK^() # for:break, uses IIFE return or do{}while(0);
+    OK^() # for:continue
+    OK # for:break, uses IIFE return or do{}while(0);
   }
 }
 
@@ -318,9 +319,9 @@ var ki am_([0,""]); var az are_((""), "init.[0]")
 
 row Pair$2(- first A - second B) # 表格列参数，TypeVar()时同理
 fun {
-  set Str #, .. override funs, set? for open(override) fun
+  set Str #, .. override funs, set? for open fun in Im/Imp class
   our swap(nth 2) # private funs, our? for internal, ?!protected
-  # 泛型的 in/out, T? 可空性问题：需要 our $0(in/out/继承类名)
+  #^ 已有_前缀的不得用our。 private<3 个lint会建议用下划线
 
 
   swap()> Pair(second, first)
@@ -335,7 +336,7 @@ fun {
 }
 
 row Rect set ItPoint { DeriveTo_(u, ItPoint) } # 自动实现宏
-req `ItPoint` set ItInStr, ItCanEq { x() 0  y() 0 } # Go式结构化类型，编译为 LOOKUP.findVirtual; 有 hashCode()
+req `ItPoint` set ItInStr, ItCanEq { x()> 0  y()> 0 } # Go式结构化类型，编译为 LOOKUP.findVirtual; 有 hashCode()
 
 # 如果你不实现就 var p_ ItPoint; inc({p_: Rect(0,0) })
 # 会提示 T.404: 以 Rect 悟 ItPoint {}
@@ -353,7 +354,7 @@ OK test { # OK (语句)，在文件尾收集到main
 
 fun {
   area(u Rect)> u.len?. { 1 x y } # u.len.As(u => (u.x*u.y)) # .len?.((u) {1x y})， ?.{} 是唯二的箭头函数语法
-  sum(A 0, B (0)) var.{prec: 100} { OK(1 prec Math.floor((A+B)/prec)) }
+  sum(A 0, B (0)) Xopt.{prec: 100} { OK(1 prec Math.floor((A+B)/prec)) }
   # F.nextKW={prec:1}; sum(0,0) 或 sum?.(Args([0], {prec:1})) 以调用
 }
 ```
@@ -364,19 +365,27 @@ fun {
 # AbstractBox 自动映射，是 ItBox 但允许存在默认构造器，但构造器，除了验证和简化参数啥都访问不了
 
 row ImpBox(- tag "") var { /^_/.test(tag).Or() }
-# 如果想加构造逻辑，var{} 换成扩展 fun { make(pargs)> F.next(args) } 就会隐藏默认构造器，但不能多加了。
+fun {
+  open()
+  size()> 0
+}
+# 如果想加构造逻辑，var{} 换成扩展 fun { make(pargs)> F.next(args); ... } 就会隐藏默认构造器，但不能多加了。
 
 row ImKitty set ImpBox("_cat") # 继续 non-final class，必须加Im前缀
 fun {
+  set open, size # autofix defs.
+  set open {ABC arg-order test, test(u)} :{ My prompt and quickdoc. }
   born(u, age 0) var row { w@ age }
 }
 
 var row Tom set ImKitty() { # ImKitty类型键名必须为 .im_XX，但Tom不需要。
-  set [JvmStatic] tag
-  #^ object{} with static tag=Proxy, annotation @Jvm("static")
+  our [JvmStatic] myVal myGet
+  #^ object{} with static myVal=Proxy, annotation @Jvm("static")
+  # 泛型的声明处 in/out, T? 可空性问题：需要 our $0(in/out/where限定类名)
+  # 顶/底/void/untyped 类型为 [Any orNO],ThreadDie,NO,!!
 
-  myVal(): 1+1
-  myBox(): FnHop((v)> v) { say`setter: = ${u}` }
+  myVal()- 1+1
+  myBox()- FnHop((v)> v) { say`setter: = ${u}` }
   myGet()> "get"
   
   say`Hello` # 零参数 fun T=object{} 不需要额外val=T()，同时允许尾部语句块(SAM impl, ABCD args)
@@ -407,7 +416,7 @@ fun {
   show()> u?.({
     As(N u)> "{n}",
     As(Op u)> k.id?.({ .MUL: ()>"{A.show} {B.show}" }) Or("")
-    #^ .MUL 可补齐， 自动生成 when-Any-is
+    #^ .MUL 可补齐， 自动生成 when-is .(Any)!!
   })
 }
 ```
@@ -493,7 +502,7 @@ y2k/c10k/nulls/safe_strs/ paired_ptrs (eg. OOB segfault, funarg problem, io_urin
 
 【扩展3】从链接和 '命令' 获取输出到单数组。支持 -j N -timeout 1 -enc auto 、背压传导、整体.abort不exit。考核并发基础与REPL库的可玩性。可选断点续传（HTTP Range缓存）支持
 
-【扩展J】7GUIs 和 component-party.dev 的所有测试
+【扩展J】7GUIs 和 component-party.dev 的所有测试，并与 https://madewithvuejs.com 的主流Apps进行质量对照。
 
 > 【程序设计】应该重视【截图和可视化, Q&A, Before&After, Awesome Lists, Build in Public 】五个要素，这样才能称为 Learnable Programming
 

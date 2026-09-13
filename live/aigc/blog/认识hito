@@ -6,17 +6,17 @@ hito所属的范式也称 HOLP, Human Oriented Lists-Proc，大致上是 FP+响�
 
 hito的字面和JSON[串读串写器: Loadumper]有四种大限制：
 
-- {..} 内不能只含0或1项，且要求 `!["\n", "", "-XX"].includes(键名)`。
+- {..} 内不能只含0或1项，且要求 `!["\n", "", "-XO"].includes(键名)`。
 - 除非 /^if_/ 前缀的键名，对象包含的键数、键类型深度不可变。不含if_前缀的 `[0, "", true]` 式数组同样受其限制。因此首项为对象的数组，总不可含字面或null项！
     - /^im_/ 对 Imp Im It 前缀类型名和数组，同样必须使用。需指定 `{allowlist: [Types]}` 才能导出接口对象。有 .ID1 的对象KV同样有json表格优化封送。
 - 除非 /^up_?/ 前缀的键名，绝不可循环引用，up的值不可为Str。你可以理解为Weak、Arena.ID或#html对象池。类没有能独占外键引用时，必须使用非空 /^m_/ 。这对模块化与Builder内存优化是好习惯。
 - 类似 /^_/ 的键名需要指定 `{hideVars:/[]/}` 才能传输，否则需在 T.CtrlN 里重算。可.cue 的值双向绑定 /^cu_/ 键名，文件路径一般是 .kp_键名，这两者自动绝对化、transfer() 和清理(`OS.unload?.`)。
 
-/Ctrl[SNOWLY]|[十一Xノ]/ 是hito里主要的dunder动作的写法。代表 Save New Open(isMoutingAB) Word免引号 LitStr安全模板。
+/Ctrl[SNOWLY]|[十一Xノ]/ 是hito里主要的dunder动作的写法。代表 Save New Open(isMounter) Word免引号 LitStr安全模板。
 
 而 CtrlY 并不存在，但它提醒你 ItAteDeeper/ItAteVars (strm Visitor) 和动态查找的 `IWtf: ImplFor; IWtf[T](..)` 才是hito的串读串写接口。也有一组 ID2,lit,dup,T,DOT 的万能属性，序列化含BSIJCZ,BDFL快速封送、深拷贝和可空验证
 
-类似 isMoutingAB(u,jso) 的双向合并赋值，isLitype(jso,u) 常用于类型T和上述四种限制的判断，再如enum、常量Regex验证都支持。
+类似 isMounter(u,jso) 的双向合并赋值，isLitype(jso,u) 常用于类型T和上述四种限制的判断，再如enum、常量Regex验证都支持。
 
 {}被视为一种联立条件而 []类似union条件、[OK,{}，{}] 类似接口extends。`[]?.(If({k:v}))` 就是这样， inc(new_=>{} or noauth=>{}) 可以在找不到项时新建，或允许未登录写权限
 
@@ -32,7 +32,7 @@ am_, are_, at_ 可变集合类是少数“不可等待”的下划线函数，JS
 
 - {..} 内..
     - Map和Blob将使用 `{"": [[k,"\b{MIME},{Base64|UUID}"], "\t1Map"]}`，正常解码 `Map([k, new Blob(..)])`，Error传递为 `{k: "\f\u404e Not Found"}`
-    - {} 被读取为NO，它响应As和Or并模拟JS可选链的null。`{if_k:{}}` 实现多态，`{"-XX": "bm", child:{"-XX": "bad admin"}}` 实现bash旗标。
+    - {} 被读取为NO，它响应As和Or并模拟JS可选链的null。`{if_k:{}}` 实现多态，`{"-XO": "bm", child:{"-XO": "bad admin"}}` 实现bash旗标。
     - '\[' 开头的文件视为TOML读取，且支持 `[..it] [it.a b c]` 标头，`{it:{"":"[a b c]", "\n":[Row1Each3]}` 这样的深度和表格拓展
 - 除非 /^up_?/..
     - 推荐使用 `inc({obj: {y: never(wtf.x)}})` 来“移动”独占对象。如果数组或对象的inc赋值中alias了 .x，在 vars.DBG 模式下会报错。使用 `never(never.target=[0])?.(u=>u+1)` 可原地映射过滤。可移动的键不可空。
@@ -50,13 +50,13 @@ NaN是空而0不是（m_oo0nBits规则），o.k=pass 和 delete o.k 在hito库�
 
 1. OK/Loop
 1. NO.Or(cue)
-1. has.XX,ON,dd
+1. Xopt,ON,dd
 
 `u?.(f)` 支持四个操作：map或each并返回自身(k;k,v都支持)+filterMap+firstIndex, f.AS(kwarg={ALL:vararg}, ..) 参见 FnXNAA
 
 类似 ?.() 的 $() 也有支持 `$('#island:overlay').append(ww.Counter({n:0}))` 的抓取式挂载，可以对attr和p文本预处理。
 
-调试的DTFM9协议 vars.spy.dd_dt `dd="out", 9()=断点语句, d[DTFM]=(w=)+help()+varspy+F12_JQevt` ，`vars.noMemo(c, {num: u=>0})` 重置模块内全局状态，FnHop(c)() 用于录制和切换预设文件，支持时轴CtrlZ，#:~:mainHop可以按CtrlD收藏访问它
+调试的DTFM9协议 w@,w=,dd= 的 vars.spy.dd_dt `dd="out", 9()=断点语句, d[DTFM]=(w=)+help()+varspy+F12_JQevt` ，`vars.noMemo(c, {num: u=>0})` 重置模块内全局状态，FnHop(c)() 用于录制和切换预设文件，支持时轴CtrlZ，#:~:mainHop可以按CtrlD收藏访问它
 
 除 `imp.包名.树` 全局默认为模块变量（支持dm=id=>调试），全局变量只可小写。 `mind='py A B; js C:D; esm.E'` 用于导入包ABC，别名D，E的import*
 
@@ -74,7 +74,7 @@ NO NO NO ——组合优于继承，RoLi实现了默认 ID1(hash) 和 CtrlO(equa
 
 即便Pair可以含变量，也只有 `Pair_` 类型上可赋值。在传参或返回时，am和are也会自动退化为不可变的，比如 `new {a: are((0), 1,2,3)}; OK(a._) //aΔ` ，aΔ 在a创建后只可获取一次（针对 if-inc 和Builder）。
 
-am/are 需要最简构造参数以确定类型，如上文的 (0)[1,2,3] 和 `am((['',0]), ['k',99])`，只能写 isLitype.s=='' 这样的最简参数。sep,Tr 是行切分和列zip组合，与filterMap搭配
+am/are 需要最简构造参数以确定类型，如上文的 (0)[1,2,3] 和 `am((['',0]), ['k',99])`，只能写 isLitype.s=='' 这样的最简参数。sep,Tr,Join21 是行切分和列zip组合，与filterMap搭配
 
 建议用 `aΔ?.(u=>{多次修改})` 。别怕“mut恐惧症”，不用到处Boxing和RefCell。Ro子树被允许包含 Pair_ 可变性或 FnHo 响应式，只是在封送时深拷贝（可填写转移 aΔ 子树的绑定Worker，FnHo自动共享）
 
@@ -127,14 +127,16 @@ Quine:用窥硬实现sexpXML。调用窥硬的lib函数不得无测试覆盖。
 
 Join21(fAB, fx, ()=>0) 另存为， 安全内插字符串。 az词组、ahex字节、Ymd是另外三种shell类型，ahex 支持 TypedArray(1248CDEF)
 
-【FnXNAA】 As可调用RE组匹配和替换、revPipe、Promise和job组、DFS或Loop。 `[]?.(rwi, (i,u)=>firstIndex)` 可以实现向后搜索。区分搜索/过滤/遍历，在于初次是否返回bool或pass
+"".has(glob())?. 单双参可执行RE组匹配、替换
+
+【FnXNAA】 As可调用revPipe、Promise和job组、DFS或Loop。 `[]?.(rwi, (i,u)=>firstIndex)` 可以实现向后搜索。区分搜索/过滤/遍历，在于初次是否返回bool或pass
 
 【FnXNAA】 ik.indexOf关键字转顺序参数 ia.verOf多版本单项的选择，是 imp.T.fn 的扩展方法。`am().inc('ord' or NO)` 就可实现有序Map、Set的接口
 
 
 revPipe 绑定AB正反管道，如 `F.revPipe.num().then((A,B)=>{ A?.(u=>B(u+1)); B?.(u=>A(u-1)) })`
 
-函数有“十全十美”： F. vars next(override)/nextKW_XX pipe revPipe bind fill Yup idIsSelf   _404(馈硬可返{}) Fn1~5(不默认首参主语)
+函数有“十全十美”： F. vars next(override)/nextKW_XO pipe revPipe bind fill Yup idIsSelf   _404(馈硬可返{}) Fn1~5(不默认首参主语)
 
 
 FSAA/OPFS的WASM支持。H5 特性集上超过 gpuix 的部分需要在htm头部加 <!doctype html> （一般为隐式添加）
@@ -142,7 +144,7 @@ FSAA/OPFS的WASM支持。H5 特性集上超过 gpuix 的部分需要在htm头部
 【表格列参数】 Row1~3 D1~D4  (F)n0~n5免前缀 实现了 kotlin.Pair 和vec3这些列表广播计算的功能。
 
 
-Um菜单/Uh.index打开，类似 Str.kwTrie(补齐树) 但不会自动刷新。路径嵌套并不罕见，如 Str.AZ.TDOP"+-×/" 构成 `(+ A (* B C))` 时深者先替换
+Um菜单/Uh.index打开，类似 Str.kwTrie(补齐树) 但不会自动刷新。路径嵌套并不罕见，如 (Str.AZ.PahQL).TDOP"+-×/" 构成 `(+ A (* B C))` 时深者先替换
 
 处理了 jvmU16大小端, existsOk和mkdir的问题，默认可以异步读取tty WASD输入。 ID2=[dir base ext exts]
 
