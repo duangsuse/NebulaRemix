@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>animStroke</title>
+<style>
+  html,body{margin:0;height:100%;background:#1b1b1b;overflow:hidden}
+  canvas{display:block}
+  .lil-gui>:has(.xxl) {
+    --widget-height: 40px;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
+<script type="module">
+  import * as MLMatrix from 'https://cdn.jsdelivr.net/npm/ml-matrix@6.10.4/+esm';
+  window.MLMatrix = MLMatrix;
+  window.Matrix = MLMatrix.Matrix;
+  // 400LoC, 笔画拆分 彩虹色 ease
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/coffeescript@2.7.0/lib/coffeescript-browser-compiler-legacy/coffeescript.js"></script>
+</head>
+<body>
+<canvas tabindex="0" id="c"></canvas>
+<script type="text/coffeescript">
+DUR  = 600
+ease = (t) -> 1 - (1 - t) ** 3
+lerp = (a, b, k) -> a + (b - a) * k
+
+SANS    = 'https://cdn.jsdelivr.net/gh/ZaneL1u/TTF-Min@main/dist/ttf-思源黑体/SourceHanSansSC-Light.ttf'
+WEIGHTS = ['ExtraLight', 'Heavy', 'Light', 'Normal', 'Regular', 'Medium', 'Bold']
+
+P =
+  url: SANS, weight: 'Light', size: 80, text: '你好世界', serif: false, iAnim: 3, live: true,
+  xDelay: 1.5, randRatio: .3, randMs: 300, serifAdv: 100, rainbow: true, anim: ''
+
+font = null; window.items = []; raf = null
+cv  = document.getElementById 'c'
+ctx = cv.getContext '2d'
+
+dd=(f,r)=>(a...)=> r=f(a...); console.log(r, a); r
+
+# ================= 笔画拆分 =================
+bboxOf = (cmds) ->
+  b = x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity
+  for c in cmds when c.x?
+    for [x, y] in [[c.x, c.y], [c.x1, c.y1], [c.x2, c.y2]] when x?
+      b.x0 = Math.min b.x0, x; b.x1 = Math.max b.x1, x
+      b.y0 = Math.min b.y0, y; b.y1 = Math.max b.y1, y
+  b
+area     = (b) -> (b.x1 - b.x0) * (b.y1 - b.y0)
+contains = (a, b) -> a.x0 <= b.x0 and a.y0 <= b.y0 and a.x1 >= b.x1 and a.y1 >= b.y1
+
+# 每个轮廓≈一笔; 被包含的内轮廓(孔洞)并入外轮廓, evenodd 填充保住孔
+# 如果一个轮廓的矩形包围盒被另一个更大的包围盒完全包含，就认为它是孔洞并合并。
+groupStrokes1 = (cmds) ->
+  cs = []; cur = null
+  for c in cmds
+    if c.type is 'M' then cur = []; cs.push cur
+    cur?.push c
+  cs = (cmds: c, b: bboxOf c for c in cs)
+  cs.sort (a, b) -> area(b.b) - area(a.b)
+  groups = []
+  # 文字（包括带孔洞的字母如 O、B，带偏旁/声调的复合字形如 é、i）拆成在视觉上独立的“笔画/连通块（Strokes）”，同时避免把镂空孔洞
+  for c in cs
+    g = groups.find (g) -> contains g.b, c.b
+    if g then g.cmds = g.cmds.concat c.cmds else groups.push cmds: c.cmds, b: c.b
+  groups
+
+# 复合字形优先按 glyph.components 拆, 否则按轮廓拆
+glyphStrokes = (f, glyph, x, y, size) ->
+  if glyph.components?.length
+    k = size / f.unitsPerEm
+    for comp in glyph.components
+      cmds = f.glyphs.get(comp.glyphIndex).getPath(x + comp.dx * k, y - comp.dy * k, size).commands
+      cmds: cmds, b: bboxOf cmds
+  else
+    dd(if P.serif then this.groupStrokes else groupStrokes1) (glyph.getPath(x, y, size).commands)
+
+layout = (f, text, x, y, size) ->
+  span = []; ci = 0
+  f.forEachGlyph text, x, y, size, {kerning: true}, (g, gx, gy) ->
+    for s in glyphStrokes f, g, gx, gy, size
+      s.ci = ci; s.cx = (s.b.x0 + s.b.x1) / 2; s.cy = (s.b.y0 + s.b.y1) / 2
+      span.push s
+    ci++
+  span
+
+# ================= animStroke =================
+# span: 笔画数组; fn(e): 定义每个笔画的【起始状态】, 动画缓动回静止态
+# e = {tx, ty, alpha, scale, rot, serif, ci}   (e.translate+=30,30 写作 e.tx+=30; e.ty+=30)
+animStroke = (span, fn, o = {}) ->
+  xDelay = o.xDelay ? 4; randRatio = o.randRatio ? .2; randMs = o.randMs ? 150
+  serif  = !!o.serif;    serifAdv  = if serif then (o.serifAdv ? 100) else 0
+  x0 = Math.min (s.b.x0 for s in span)...
+  chars = {}                                   # 按字符随机: 20% 的字略微延迟
+  for s in span
+    chars[s.ci] ?= if Math.random() < randRatio then Math.random() * randMs else 0
+    e = tx: 0, ty: 0, alpha: 0, scale: 1, rot: 0, serif: serif, ci: s.ci
+    fn e
+    s.from  = e
+    s.delay = (s.cx - x0) * xDelay + chars[s.ci] - serifAdv   # 衬线体整体提早
+  span.t0 = performance.now()
+  span
+
+# ================= 渲染 =================
+fillCmds = (cmds) ->
+  ctx.beginPath()
+  for c in cmds
+    switch c.type
+      when 'M' then ctx.moveTo c.x, c.y
+      when 'L' then ctx.lineTo c.x, c.y
+      when 'C' then ctx.bezierCurveTo c.x1, c.y1, c.x2, c.y2, c.x, c.y
+      when 'Q' then ctx.quadraticCurveTo c.x1, c.y1, c.x, c.y
+      when 'Z' then ctx.closePath()
+  ctx.fill 'evenodd'
+
+detectSerif = (f) ->
+  n = (f.names.fontFamily?.en ? '') + (f.names.postScriptName?.en ? '')
+  p = f.tables.os2?.panose
+  (/serif|song|ming|宋|明/i.test(n) and not /sans/i.test(n)) or (p?[0] is 2 and 2 <= p[1] <= 10)
+
+setTimeout ->
+  ease = easeAOP ctx, P, ease
+
+draw = ->
+  dpr = devicePixelRatio or 1
+  ctx.setTransform dpr, 0, 0, dpr, 0, 0
+  ctx.clearRect 0, 0, innerWidth, innerHeight
+  now = performance.now(); busy = false
+  unless items.length
+    ctx.fillStyle = '#666'; ctx.font = '16px sans-serif'
+    ctx.fillText (if font then '左键点击画布：在该坐标放置文字并播放动画' else '字体加载中…'), 20, 30
+  for span in items
+    for s, i in span
+      t = (now - span.t0 - s.delay) / DUR
+      busy = true if t < 1
+      continue if t < 0
+      k = ease Math.min t, 1
+      original_from = s.from or {}
+      # 创建一个新的 f 对象，为每个动画属性提供默认值
+      f =
+        alpha: original_from.alpha ? 0
+        tx:    original_from.tx    ? 0
+        ty:    original_from.ty    ? 0
+        rot:   original_from.rot   ? 0
+        scale: original_from.scale ? 0
+
+      ctx.save()
+      ctx.globalAlpha = lerp f.alpha, 1, k
+      ctx.translate s.cx + lerp(f.tx, 0, k), s.cy + lerp(f.ty, 0, k)
+      ctx.rotate lerp f.rot, 0, k
+      sc = lerp f.scale, 1, k; ctx.scale sc, sc
+      ctx.translate -s.cx, -s.cy
+      ctx.fillStyle = if P.rainbow then "hsl(#{i * 47 % 360} 80% 60%)" else '#eee'
+      fillCmds s.cmds
+      ctx.restore()
+  busy
+
+tick = -> raf = if draw() then requestAnimationFrame tick else null
+kick = -> raf ?= requestAnimationFrame tick; P.live=true
+
+# ================= 交互 =================
+
+ANIMS =
+  slide: (e) -> e.tx += 30; e.ty += 30; e.alpha = 1          # 规格示例
+  drop:  (e) -> e.ty -= 40; e.alpha = 0
+  spin:  (e) -> e.rot = (if e.serif then 1 else -1) * Math.PI / 2; e.scale = .1; e.alpha = 0
+
+run = (span) ->
+  animStroke span, (if span.animName.call then span.animName else ANIMS[span.animName]),
+    xDelay: P.xDelay, randRatio: P.randRatio, randMs: P.randMs, serifAdv: P.serifAdv, serif: span.serif
+
+replay = ->
+  run s for s in items
+  kick()
+
+window.aotf={replay}
+aotf.place = (x, y) ->
+  return unless font
+  if x instanceof Element
+    P.text = x.innerText
+    P.anim = y if y
+    # Get the element's position and size relative to the viewport
+    rect = x.getBoundingClientRect()
+    # Calculate the center of the element to use as the new x, y
+    x = rect.left + rect.width / 2
+    y = rect.top + rect.height / 2
+
+  span = layout font, P.text, x, y, P.size
+  span.serif = P.serif
+  span.animName = P.anim
+
+  span._layout =
+    font: font
+    text: P.text
+    size: P.size
+    x: x
+    y: y
+
+  items.push run span
+  kick()
+  span
+
+pick = (i) ->
+  name=Object.keys(ANIMS)
+  cv.addEventListener 'keydown', (e) -> P.anim = name[parseInt(e.key) - 1 +P.iAnim] if e.key in ['1', '2', '3']
+  k = name[i+P.iAnim]
+  P.anim = k
+  for last in items
+    last.animName = k; run last; kick()
+
+
+
+loadBuf = (buf, name) ->
+  font = opentype.parse buf
+  P.serif = detectSerif font
+  gui.controllersRecursive().forEach (c) -> c.updateDisplay()
+  document.title = "animStroke – #{font.names.fullName?.en ? name}"
+  kick()
+loadURL = ->
+  fetch(P.url).then((r) -> r.arrayBuffer()).then((b) -> loadBuf b, P.url).catch (e) -> alert e
+
+
+cv.addEventListener 'pointerdown', (ev) -> p0=[ev.offsetX, ev.offsetY]; aotf.place(p0...) if ev.button is 0
+resize = ->
+  dpr = devicePixelRatio or 1
+  cv.width = innerWidth * dpr; cv.height = innerHeight * dpr
+  cv.style.cssText = "position: absolute; top: 0; left: 0; width: #{innerWidth}px; height: #{innerHeight}px"
+
+
+  kick()
+addEventListener 'resize', resize
+
+moveSpan = (old, x, y) ->
+  src = old._layout
+
+  span = layout src.font, src.text, x, y, src.size
+  span.serif = old.serif
+
+  # 旧布局相对于新布局的偏移，作为动画起点
+  dx = src.x - x
+  dy = src.y - y
+
+  span.animName = (e) ->
+    e.tx += dx
+    e.ty += dy
+    e.alpha = 1
+    ANIMS[P.anim](e)
+
+  # 更新位置，供下一次移动使用
+  span._layout =
+    font: src.font
+    text: src.text
+    size: src.size
+    x: x
+    y: y
+
+  run span
+
+cv.addEventListener 'contextmenu', (ev) ->
+  ev.preventDefault()
+
+  # 与 place 使用相同的坐标系
+  x = ev.offsetX
+  y = ev.offsetY
+
+  for span, i in items
+    items[i] = moveSpan span, x, y+(i*P.size)
+
+  kick()
+
+# ================= GUI =================
+gui = new lil.GUI title: 'animStroke'
+fF = gui.addFolder '字体'
+fF.add(P, 'url').name 'URL'
+fF.add(P, 'weight', WEIGHTS).name('字重').onChange (w) ->
+  P.url = P.url.replace ///-(#{WEIGHTS.join '|'})\.///, "-#{w}."
+  loadURL()
+
+fF.add(P, 'size', 12, 160, 1).name '字号 px'
+fF.add(P, 'text').name '文本'
+fF.add(P, 'rainbow').name('笔画彩虹高亮').onChange kick
+fF.add(P, 'serif').name '细粒度分割'
+fD = gui.addFolder 'Delay'
+fD.add(P, 'xDelay', 0, 20, .5).name 'ms / px (x轴)'
+fD.add(P, 'randRatio', 0, 1, .05).name '随机延迟比例'
+fD.add(P, 'randMs', 0, 600, 10).name '随机延迟 ms'
+fD.add({s:''}, 's', {
+  'Fraunces': 'https://cdn.jsdelivr.net/npm/@fontsource/fraunces@5/files/fraunces-latin-400-normal.woff',
+  'Lora': 'https://cdn.jsdelivr.net/npm/@fontsource/lora@5/files/lora-latin-400-normal.woff',
+  'Roboto Serif': 'https://cdn.jsdelivr.net/npm/@fontsource/roboto-serif@5/files/roboto-serif-latin-400-normal.woff',
+  'Noto': 'https://cdn.jsdelivr.net/npm/@fontsource/noto-serif@5/files/noto-serif-latin-400-normal.woff'
+}).name('衬线示例').onChange (w) -> P.url = w; P.text = 'Serif Stroke Anim éàö çñ'; loadURL()
+
+
+fA = gui.addFolder '示例动画'
+fA.add({f: -> pick 0}, 'f').name '① Slide 30px (e.t{xy}rsa)'
+fA.add({f: -> pick 1},  'f').name '② Drop-in (下落淡入)'
+fA.add({f: -> pick 2},  'f').name '③ Spin (旋转-细粒度反向)'
+
+fA.add({f: replay}, 'f').name('重播全部').domElement.classList.add 'xxl'
+gui.add({f: ->
+  v=(x)-> c.style.setProperty('--rate', x); P.xDelay=x
+  v(-1); replay()
+  await sets((->raf),null)
+  v(1)
+  window.items = [] ; kick()
+}, 'f').name '清空'
+
+resize(); loadURL()
+
+setTimeout ->
+  fD.add({s:''}, 's', Object.fromEntries(ANIMS.easing.map((s)=>[s.slice(15,20), s])) ).name('弹性动画').onChange (s) -> c.style.setProperty('--ease', s); replay()
+  fD.add(P, 'iAnim', 0, 6, 3).name '默认动画集合'
+  pick 0
+
+
+sets = (k, v) -> new Promise (ok) ->
+  # Store the interval ID so we can clear it later
+  intervalId = setInterval ->
+    if k() == v
+      clearInterval(intervalId)
+      ok()
+  , 100
+
+# 散落的笔画聚拢
+ANIMS.scatter = (e) ->
+  a = Math.random() * Math.PI * 2
+  r = 60 + Math.random() * 120
+  e.tx += Math.cos(a) * r
+  e.ty += Math.sin(a) * r
+  e.rot = (Math.random() - .5) * Math.PI
+  e.scale = .2
+  e.alpha = 0
+
+# 笔画从四周旋转汇入，形成漩涡效果
+ANIMS.vortex = (e) ->
+  a = Math.random() * Math.PI * 2
+  r = 80 + Math.random() * 80
+  # 结合径向和切向位移，制造旋转进入的效果
+  e.tx += Math.cos(a) * r - Math.sin(a) * 50
+  e.ty += Math.sin(a) * r + Math.cos(a) * 50
+  e.rot = a + Math.PI # 笔画旋转着朝向中心
+
+# 放大、旋转后收束到正常大小
+ANIMS.zoom = (e) ->
+  e.scale = 3
+  e.rot = (if e.serif then -1 else 1) * Math.PI / 5
+
+
+# 笔画从左右两侧水平滑入
+ANIMS.sideswipe = (e) ->
+  # 根据类型，决定从左侧还是右侧进入
+  e.tx = (if e.serif then 1 else -1) * 250
+  # 增加一点随机的垂直偏移和旋转，避免过于呆板
+  e.ty += (Math.random() - .5) * 20
+  e.rot = (if e.serif then .1 else -.1) * Math.PI
+
+# 流星：从左上方斜向飞入
+ANIMS.meteor = (e) ->
+  d = 100 + Math.random() * 100
+  e.tx -= (if e.serif then d else -d)
+  e.ty -= d * .7
+  e.rot = -Math.PI / 6
+  e.scale = .5
+
+ANIMS.rot1 = (e) ->
+  e.rot = (if e.serif then -1 else 1) * Math.PI / 2; e.scale = .3
+
+ANIMS.easing="""
+linear(0, 0.01 0.7%, 0.046 1.5%, 0.192 3.2%, 0.391 4.8%, 0.954 8.8%, 1.201 11%, 1.347 13%, 1.388 14%, 1.41 15.1%, 1.411 15.9%, 1.4 16.8%, 1.342 18.6%, 1.256 20.3%, 1.013 24.5%, 0.913 26.7%, 0.857 28.6%, 0.831 30.6%, 0.833 32.1%, 0.851 33.7%, 1.024 41.6%, 1.055 43.8%, 1.069 46%, 1.061 49.3%, 0.991 57.1%, 0.972 61.4%, 0.974 64.8%, 1.011 76.7%, 0.996 91.2%, 1)
+
+linear(0, 0.518 5.9%, 0.902 12.3%, 1.156 19.2%, 1.24 23%, 1.294 27%, 1.325 32.3%, 1.317 38.4%, 1.27 45.9%, 1.105 64.6%, 1.049 73.3%, 1.009 84.9%, 1)
+
+linear(0, 0.013 0.5%, 0.049 1%, 0.199 2.1%, 1.009 5.8%, 1.262 7.2%, 1.412 8.5%, 1.45 9.1%, 1.471 9.8%, 1.47 10.3%, 1.454 10.9%, 1.379 12.1%, 0.997 15.8%, 0.871 17.3%, 0.806 18.5%, 0.778 19.8%, 0.786 20.9%, 0.821 22.1%, 1.06 27.3%, 1.093 28.6%, 1.105 29.8%, 1.101 30.9%, 1.085 32.1%, 0.972 37.3%, 0.951 39.8%, 0.96 42.1%, 1.013 47.3%, 1.023 49.8%, 0.989 59.7%, 1.005 69.7%, 0.998 79.4%, 1)
+
+linear(0, 0.01 0.7%, 0.043 1.5%, 0.164 3.1%, 0.829 8.8%, 1.059 11.2%, 1.201 13.5%, 1.243 14.7%, 1.265 15.9%, 1.268 17.4%, 1.246 19%, 1.201 20.8%, 0.995 27.5%, 0.949 30%, 0.929 32.6%, 0.934 35.8%, 1.001 44.2%, 1.019 49.2%, 0.995 65.6%, 1)
+
+linear(0, 0.472 20.4%, 1 37.8%, 0.842 44.6%, 0.805 47.6%, 0.793 50.5%, 0.804 53.2%, 0.834 56%, 0.999 65.5%, 0.951 69.4%, 0.935 73.2%, 0.945 76.7%, 1 84.5%, 0.988 89.3%, 1)
+
+linear(0, -0.011 5.8%, -0.052 11.1%, -0.115 15.8%, -0.272 25.3%, -0.317 29%, -0.333 32.3%, -0.321 35.2%, -0.286 37.5%, -0.231 39.6%, -0.053 43.6%, 0.212 47.2%, 0.956 54.9%, 1.16 58.5%, 1.286 62.5%, 1.331 66.2%, 1.333 68.2%, 1.322 70.4%, 1.275 74.5%, 1.115 84.2%, 1.051 89%, 1.011 94.2%, 1)
+
+linear(0, 0.432 3.9%, 0.723 7.4%, 0.893 10.8%, 0.935 12.5%, 0.948 14.2%, 0.938 15.7%, 0.907 17.3%, 0.774 20.8%, -0.095 35.9%, -0.221 39.5%, -0.289 43.1%, -0.305 46.3%, -0.282 49.8%, -0.049 63.6%, -0.004 67.3%, 0.022 70.9%, 0.033 77.2%, 0.005 90.7%, 0)
+""".trim().split('\n\n')
+</script>
+
+<script type="text/coffeescript">
+# ---------- 1. 解析 CSS linear() 作为 ease(t) ----------
+parseLinear = (src) ->
+  m = /^\s*linear\((.*)\)\s*$/i.exec src
+  return null unless m
+  pts = []
+  for stop in m[1].split ','
+    [y, xs...] = stop.trim().split /\s+/
+    y = parseFloat y
+    return null if isNaN y
+    if xs.length                          # 1~2 个百分比
+      pts.push {x: parseFloat(x) / 100, y} for x in xs
+    else
+      pts.push {x: null, y}               # 位置留空，稍后补全
+  return null if pts.length < 2
+
+  pts[0].x ?= 0
+  pts[pts.length - 1].x ?= 1
+
+  hi = -Infinity                          # 输入位置必须单调不减
+  for p in pts when p.x?
+    p.x = hi = Math.max hi, p.x
+
+  i = 0                                   # 缺省位置在相邻已知点间等分
+  while i < pts.length
+    unless pts[i].x?
+      j = i
+      j++ until pts[j].x?
+      x0 = pts[i - 1].x; x1 = pts[j].x
+      pts[n].x = x0 + (x1 - x0) * (n - i + 1) / (j - i + 1) for n in [i...j]
+      i = j
+    i++
+  pts
+
+evalLinear = (pts) -> (t) ->
+  return pts[0].y if t <= pts[0].x
+  last = pts[pts.length - 1]
+  return last.y if t >= last.x
+  i = 1
+  i++ while pts[i].x < t
+  a = pts[i - 1]; b = pts[i]
+  return a.y if b.x is a.x
+  a.y + (b.y - a.y) * (t - a.x) / (b.x - a.x)
+
+# ---------- 2. AOP 包装 ----------
+# ease = easeAOP ctx              # 默认兜底为线性
+# ease = easeAOP ctx, myEase      # 没写 --ease 时兜底为 myEase
+window.easeAOP = (ctx, opts = {}, fallback = (t) -> t) ->
+  style = getComputedStyle ctx.canvas
+  read  = ->
+    src  = style.getPropertyValue('--ease').trim() or style.animationTimingFunction
+    pts  = parseLinear src
+    rate = parseFloat style.getPropertyValue '--rate'
+    rate = 1 if isNaN(rate) or rate is 0
+    curve: (if pts then evalLinear pts else fallback)
+    sign:  (if rate < 0 then -1 else 1)
+    speed: Math.max 1, Math.abs rate     # <1 会导致动画收不到尾，直接钳为 >1
+
+  cfg = read()
+  (t) ->
+    if opts.live            # 需要中途改 CSS 时打开
+      cfg = read(); opts.live^=1
+    t = Math.min 1, t * cfg.speed
+    t = 1 - t if cfg.sign < 0
+
+    cfg.curve t
+</script>
+
+
+<script type="module">
+import * as OT from 'https://esm.sh/opentype.js@1.3.4';
+const opentype = OT.parse ? OT : OT.default;
+
+/* ============================================================
+ *  groupStrokes(cmds, opts) —— 把一个字形的 path 命令切成“笔画块”
+ *  cmds: [{type:'M'|'L'|'Q'|'C'|'Z', x,y,x1,y1,x2,y2}]
+ *  返回: [{cmds, b:{x0,y0,x1,y1}, ci, cx, cy, delay}]
+ * ============================================================ */
+const DEG = Math.PI / 180;
+const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y });
+const cross = (a, b) => a.x * b.y - a.y * b.x;
+const dot = (a, b) => a.x * b.x + a.y * b.y;
+const vlen = a => Math.hypot(a.x, a.y);
+const norm = a => { const l = vlen(a) || 1; return { x: a.x / l, y: a.y / l }; };
+const turnAng = (u, v) => Math.atan2(cross(u, v), dot(u, v)); // 有符号转角
+const angBetween = (u, v) => Math.abs(turnAng(u, v));
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+window.groupStrokes=function (cmds, opts = {}) {
+  const em = opts.em ?? estimateEm(cmds);
+  const P = {
+    em,
+    W: em * (opts.window ?? 0.10),          // 曲率累计窗口（弧长）
+    minTurn: (opts.minTurn ?? 45) * DEG,      // 窗口内累计凹转角阈值
+    ratio: opts.ratio ?? 2,                   // 相对邻域的“尖锐度”
+    maxCut: em * (opts.maxCut ?? 0.5),        // 最长切线
+    snapAng: (opts.snapAng ?? 15) * DEG,      // 凹角互指的角度容差
+    snapDist: em * 0.01,
+    eps: em * 0.002,
+    colors: opts.colors ?? 10,
+    delayStep: opts.delayStep ?? 40,
+  };
+  const rings = flatten(cmds, em);
+  if (!rings.length) return [];
+  normalizeOrientation(rings);
+  const corners = findCorners(rings, P);
+  const chords = makeCuts(rings, corners, P);
+  const pieces = extractFaces(rings, chords, P);
+  return finish(pieces, P);
+}
+
+function estimateEm(cmds) {
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const c of cmds) if (c.x !== undefined) {
+    x0 = Math.min(x0, c.x); x1 = Math.max(x1, c.x); y0 = Math.min(y0, c.y); y1 = Math.max(y1, c.y);
+  }
+  return Math.max(x1 - x0, y1 - y0, 1) * 1.5;
+}
+
+/* ---------- 1. 拉平为多边形环 ---------- */
+function flatten(cmds, em) {
+  const rings = [], step = em * 0.015;
+  let cur = null, pen = null, start = null;
+  const push = (x, y) => {
+    if (!cur) return;
+    const l = cur[cur.length - 1];
+    if (l && Math.abs(l.x - x) < 1e-9 && Math.abs(l.y - y) < 1e-9) return;
+    cur.push({ x, y });
+  };
+  const close = () => {
+    if (cur) {
+      const f = cur[0], l = cur[cur.length - 1];
+      if (cur.length > 1 && Math.abs(f.x - l.x) < 1e-9 && Math.abs(f.y - l.y) < 1e-9) cur.pop();
+      if (cur.length >= 3) rings.push(cur);
+    }
+    cur = null;
+  };
+  for (const c of cmds) {
+    switch (c.type) {
+      case 'M': close(); cur = [{ x: c.x, y: c.y }]; pen = start = { x: c.x, y: c.y }; break;
+      case 'L': push(c.x, c.y); pen = { x: c.x, y: c.y }; break;
+      case 'Q': {
+        const p0 = pen, p1 = { x: c.x1, y: c.y1 }, p2 = { x: c.x, y: c.y };
+        const L = dist(p0, p1) + dist(p1, p2), n = Math.min(32, Math.max(3, Math.ceil(L / step)));
+        for (let i = 1; i <= n; i++) {
+          const t = i / n, m = 1 - t;
+          push(m * m * p0.x + 2 * m * t * p1.x + t * t * p2.x, m * m * p0.y + 2 * m * t * p1.y + t * t * p2.y);
+        }
+        pen = p2; break;
+      }
+      case 'C': {
+        const p0 = pen, p1 = { x: c.x1, y: c.y1 }, p2 = { x: c.x2, y: c.y2 }, p3 = { x: c.x, y: c.y };
+        const L = dist(p0, p1) + dist(p1, p2) + dist(p2, p3), n = Math.min(32, Math.max(3, Math.ceil(L / step)));
+        for (let i = 1; i <= n; i++) {
+          const t = i / n, m = 1 - t, a = m * m * m, b = 3 * m * m * t, cc = 3 * m * t * t, d = t * t * t;
+          push(a * p0.x + b * p1.x + cc * p2.x + d * p3.x, a * p0.y + b * p1.y + cc * p2.y + d * p3.y);
+        }
+        pen = p3; break;
+      }
+      case 'Z': close(); pen = start; break;
+    }
+  }
+  close();
+  return rings;
+}
+
+/* ---------- 2. 定向：外轮廓面积>0，洞<0（区域始终在边的左侧） ---------- */
+function area(r) { let s = 0; for (let i = 0, n = r.length; i < n; i++) s += cross(r[i], r[(i + 1) % n]); return s / 2; }
+function pointInRing(p, r) {
+  let ins = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const a = r[i], b = r[j];
+    if ((a.y > p.y) !== (b.y > p.y)) {
+      const x = a.x + (p.y - a.y) * (b.x - a.x) / (b.y - a.y);
+      if (x > p.x) ins = !ins;
+    }
+  }
+  return ins;
+}
+function normalizeOrientation(rings) {
+  rings.forEach((r, i) => {
+    let depth = 0;
+    rings.forEach((o, j) => { if (j !== i && pointInRing(r[0], o)) depth++; });
+    const wantPos = depth % 2 === 0;
+    if ((area(r) > 0) !== wantPos) r.reverse();
+  });
+}
+const insideGlyph = (rings, p) => rings.reduce((c, r) => c + (pointInRing(p, r) ? 1 : 0), 0) % 2 === 1;
+
+/* ---------- 3. 凹角检测（窗口累计转角，兼容圆滑的托脚） ---------- */
+function findCorners(rings, P) {
+  const out = [], half = P.W / 2;
+  for (const ring of rings) {
+    const n = ring.length, d = [], L = [], cum = [0];
+    for (let i = 0; i < n; i++) { const v = sub(ring[(i + 1) % n], ring[i]); L.push(vlen(v)); d.push(norm(v)); cum.push(cum[i] + L[i]); }
+    const total = cum[n];
+    const turn = d.map((_, i) => turnAng(d[(i - 1 + n) % n], d[i]));
+    // 沿环走动：dir=-1 向后，dir=+1 向前，弧长在 (from,to] 内的顶点回调
+    const walk = (i, dir, from, to, fn) => {
+      let j = i, acc = 0;
+      for (let c = 0; c < n - 1; c++) {
+        const seg = dir < 0 ? (j - 1 + n) % n : j;
+        acc += L[seg]; j = dir < 0 ? seg : (j + 1) % n;
+        if (acc > to) break;
+        if (acc > from) fn(j);
+      }
+    };
+    const tangent = (i, dir) => {
+      let j = i, acc = 0, seg = i;
+      for (let c = 0; c < n; c++) {
+        seg = dir < 0 ? (j - 1 + n) % n : j;
+        acc += L[seg];
+        if (acc >= half) break;
+        j = dir < 0 ? seg : (j + 1) % n;
+      }
+      return d[seg];
+    };
+    const cand = [];
+    for (let i = 0; i < n; i++) {
+      let S = turn[i], Lb = 0, Lf = 0;
+      walk(i, -1, 0, half, j => S += turn[j]);
+      walk(i, +1, 0, half, j => S += turn[j]);
+      if (S > -P.minTurn) continue;
+      walk(i, -1, half, 3 * half, j => Lb += Math.min(0, turn[j]));
+      walk(i, +1, half, 3 * half, j => Lf += Math.min(0, turn[j]));
+      if (-S < P.ratio * Math.max(-Lb, -Lf)) continue; // 不够“尖”，是普通弯曲
+      cand.push({ i, S });
+    }
+    cand.sort((a, b) => a.S - b.S || turn[a.i] - turn[b.i]);
+    const acc = [];
+    const arcDist = (i, j) => { const x = Math.abs(cum[i] - cum[j]); return Math.min(x, total - x); };
+    for (const c of cand) {
+      if (acc.some(a => arcDist(a.i, c.i) < P.W)) continue; // 非极大值抑制
+      acc.push(c);
+      const din = tangent(c.i, -1), dout = tangent(c.i, +1);
+      out.push({ ring, p: ring[c.i], exts: [din, { x: -dout.x, y: -dout.y }] });
+    }
+  }
+  return out;
+}
+
+/* ---------- 4. 切割 ---------- */
+function rayHit(p, d, a, b) {
+  const e = sub(b, a), den = cross(d, e);
+  if (Math.abs(den) < 1e-12) return null;
+  const ap = sub(a, p), t = cross(ap, e) / den, s = cross(ap, d) / den;
+  if (s < -1e-9 || s > 1 + 1e-9 || t <= 0) return null;
+  return { t, s, pt: { x: p.x + d.x * t, y: p.y + d.y * t } };
+}
+function makeCuts(rings, corners, P) {
+  const chords = [], used = new Set();
+  const nearestHit = (p, d) => {
+    let best = null;
+    for (const r of rings) for (let k = 0, n = r.length; k < n; k++) {
+      const a = r[k], b = r[(k + 1) % n];
+      if (a === p || b === p) continue;
+      const h = rayHit(p, d, a, b);
+      if (h && h.t > P.eps && (!best || h.t < best.t)) best = { ...h, kind: 'ring', ring: r, k };
+    }
+    for (const c of chords) {
+      if (c[0] === p || c[1] === p) continue;
+      const h = rayHit(p, d, c[0], c[1]);
+      if (h && h.t > P.eps && (!best || h.t < best.t)) best = { ...h, kind: 'chord', chord: c };
+    }
+    return best;
+  };
+  const chordValid = (p, q) => {
+    const d = sub(q, p);
+    if (!insideGlyph(rings, { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 })) return false;
+    for (const r of rings) for (let k = 0, n = r.length; k < n; k++) {
+      const a = r[k], b = r[(k + 1) % n];
+      if (a === p || b === p || a === q || b === q) continue;
+      const h = rayHit(p, d, a, b); if (h && h.t < 1 - 1e-9) return false;
+    }
+    for (const c of chords) {
+      if (c.includes(p) || c.includes(q)) continue;
+      const h = rayHit(p, d, c[0], c[1]); if (h && h.t < 1 - 1e-9) return false;
+    }
+    return true;
+  };
+  const addChord = (p, q) => {
+    if (p === q) return;
+    if (chords.some(c => (c[0] === p && c[1] === q) || (c[0] === q && c[1] === p))) return;
+    chords.push([p, q]);
+  };
+
+  // 4a. 互相指向的凹角对（serif 两侧托脚、x 的对角等）—— 优先
+  const pairs = [];
+  for (let i = 0; i < corners.length; i++) for (let j = i + 1; j < corners.length; j++) {
+    const A = corners[i], B = corners[j], v = sub(B.p, A.p), l = vlen(v);
+    if (l < P.eps || l > P.maxCut) continue;
+    const nv = norm(v), rv = { x: -nv.x, y: -nv.y };
+    const ok = (dir, vec) => angBetween(dir, vec) <= P.snapAng || Math.abs(cross(dir, v)) <= P.snapDist && dot(dir, v) > 0;
+    if (A.exts.some(d => ok(d, nv)) && B.exts.some(d => ok(d, rv))) pairs.push({ A, B, l });
+  }
+  pairs.sort((a, b) => a.l - b.l);
+  for (const { A, B } of pairs) {
+    if (used.has(A) || used.has(B) || !chordValid(A.p, B.p)) continue;
+    addChord(A.p, B.p); used.add(A); used.add(B);
+  }
+
+  // 4b. 其余凹角：沿两条边延长，取最短命中
+  for (const c of corners) {
+    if (used.has(c)) continue;
+    let best = null;
+    for (const d of c.exts) {
+      if (!insideGlyph(rings, { x: c.p.x + d.x * P.eps * 4, y: c.p.y + d.y * P.eps * 4 })) continue;
+      const h = nearestHit(c.p, d);
+      if (h && h.t <= P.maxCut && (!best || h.t < best.t)) best = h;
+    }
+    if (!best) continue;
+    let q;
+    if (best.kind === 'ring') {
+      const r = best.ring, a = r[best.k], b = r[(best.k + 1) % r.length];
+      if (dist(best.pt, a) < P.eps) q = a;
+      else if (dist(best.pt, b) < P.eps) q = b;
+      else { q = best.pt; r.splice(best.k + 1, 0, q); }
+    } else {
+      const [a, b] = best.chord;
+      if (dist(best.pt, a) < P.eps) q = a;
+      else if (dist(best.pt, b) < P.eps) q = b;
+      else { q = best.pt; chords.splice(chords.indexOf(best.chord), 1, [a, q], [q, b]); }
+    }
+    addChord(c.p, q);
+  }
+  return chords;
+}
+
+/* ---------- 5. 平面图 → 面（每个面就是一块笔画） ---------- */
+function extractFaces(rings, chords, P) {
+  const id = new Map(), pts = [], out = [];
+  const gid = p => { let i = id.get(p); if (i === undefined) { i = pts.length; id.set(p, i); pts.push(p); out.push([]); } return i; };
+  for (const r of rings) for (let k = 0; k < r.length; k++) out[gid(r[k])].push(gid(r[(k + 1) % r.length]));
+  for (const [a, b] of chords) {
+    const u = gid(a), v = gid(b);
+    if (u === v || out[u].includes(v)) continue;
+    out[u].push(v); out[v].push(u);
+  }
+  const visited = new Set(), key = (u, v) => u * 1048576 + v, faces = [];
+  for (let u = 0; u < pts.length; u++) for (const v of out[u]) {
+    if (visited.has(key(u, v))) continue;
+    const face = []; let cu = u, cv = v, guard = 0;
+    for (;;) {
+      visited.add(key(cu, cv)); face.push(pts[cu]);
+      const din = sub(pts[cv], pts[cu]), outs = out[cv];
+      let bw = -1, bt = -Infinity;
+      for (const w of outs) {
+        if (w === cu && outs.length > 1) continue;
+        const t = turnAng(din, sub(pts[w], pts[cv]));       // 最左转 → 左侧的面
+        if (t > bt) { bt = t; bw = w; }
+      }
+      if (bw < 0) break;
+      cu = cv; cv = bw;
+      if ((cu === u && cv === v) || ++guard > pts.length * 4) break;
+    }
+    if (face.length >= 3) faces.push(face);
+  }
+  const minA = P.em * P.em * 1e-6;
+  const pieces = [], holes = [];
+  for (const f of faces) {
+    const a = area(f);
+    if (Math.abs(a) < minA) continue;
+    (a > 0 ? pieces : holes).push({ ring: f, a: Math.abs(a) });
+  }
+  const res = pieces.map(p => ({ outer: p.ring, a: p.a, holes: [] }));
+  for (const h of holes) { // 未被切线连到的洞（如 o）挂到包含它的最小面
+    let best = null;
+    for (const pc of res) if (pointInRing(h.ring[0], pc.outer) && (!best || pc.a < best.a)) best = pc;
+    if (best) best.holes.push(h.ring);
+  }
+  return res;
+}
+
+/* ---------- 6. 输出：bbox、相邻不同色、延时 ---------- */
+function finish(pieces, P) {
+  const ringCmds = r => [{ type: 'M', x: r[0].x, y: r[0].y }, ...r.slice(1).map(p => ({ type: 'L', x: p.x, y: p.y })), { type: 'Z' }];
+  const items = pieces.map(pc => {
+    const b = { x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity };
+    for (const p of pc.outer) { b.x0 = Math.min(b.x0, p.x); b.x1 = Math.max(b.x1, p.x); b.y0 = Math.min(b.y0, p.y); b.y1 = Math.max(b.y1, p.y); }
+    return { cmds: [...ringCmds(pc.outer), ...pc.holes.flatMap(ringCmds)], b, cx: (b.x0 + b.x1) / 2, cy: (b.y0 + b.y1) / 2, _pts: new Set([...pc.outer, ...pc.holes.flat()]) };
+  });
+  items.sort((a, b) => a.cx - b.cx || a.cy - b.cy);
+  items.forEach((it, i) => {
+    const forb = new Set();
+    for (let j = 0; j < i; j++) { const o = items[j]; for (const p of o._pts??[]) if (it._pts.has(p)) { forb.add(o.ci); break; } }
+    let ci = i % P.colors;
+    for (let k = 0; k < P.colors && forb.has(ci); k++) ci = (ci + 1) % P.colors;
+    it.ci = ci; it.delay = i * P.delayStep; delete it._pts;
+  });
+  return items;
+}</script>
+
+</body>
+</html>

@@ -219,6 +219,27 @@ async function quickText(text) {
 f_tools.add({ run: () => quickText(prompt('TAU')||'2pi=τAU').then(addCustom) }, 'run').name('🚀 TTF Guru');
 
 
+// Typr 路径 -> Path2D (px, y 翻转)，同时算 bbox
+function glyphPath(font, gid, s) {
+  const p = Typr.U.glyphToPath(font, gid);
+  const P = new Path2D(), c = p.crds;
+  let k = 0, x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const pt = (x, y) => {
+    x *= s; y *= -s;
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    return [x, y];
+  };
+  for (const cmd of p.cmds) {
+    if (cmd === 'M') { const [x, y] = pt(c[k++], c[k++]); P.moveTo(x, y); }
+    else if (cmd === 'L') { const [x, y] = pt(c[k++], c[k++]); P.lineTo(x, y); }
+    else if (cmd === 'Q') { const [ax, ay] = pt(c[k++], c[k++]); const [x, y] = pt(c[k++], c[k++]); P.quadraticCurveTo(ax, ay, x, y); }
+    else if (cmd === 'C') { const [ax, ay] = pt(c[k++], c[k++]); const [bx, by] = pt(c[k++], c[k++]); const [x, y] = pt(c[k++], c[k++]); P.bezierCurveTo(ax, ay, bx, by, x, y); }
+    else if (cmd === 'Z') P.closePath();
+  }
+  const empty = p.cmds.length === 0;
+  return { path: P, empty, x0: empty ? 0 : x0, x1: empty ? 0 : x1 };
+}
+
 // Text Processing: Render -> Edge Detect -> Sort (Nearest Neighbor)
 let textToPath = async (txt) => {
   let tc = document.createElement('canvas'), tx = tc.getContext('2d')

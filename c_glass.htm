@@ -46,6 +46,7 @@ window.C = {
     bru: 0.1, frc: 0.04, dmp: 0.98, ref: 0.08, chr: 0.03, shi: 60,
     lgt: 1.5, iri: 1.4, frs: 0.6, bld: true, Ajel: true,
 
+    REC(){eBg.capture()},
     Add1(e){e=document.body.appendChild(p1.cloneNode(1)); e.id=`p${++bkIDn}`;bkID.max(bkIDn); posPut(e)({clientX:bkIDn*100});liquidPool(e);},
     _bg:0, get bg(){return document.getElementById('p'+C._bg)?? p1}
 };
@@ -61,6 +62,7 @@ gui.add(C, 'img', demoImgs).name('Demo / 电脑壁纸').onChange(load);
 bk.add(C, 'url').name('img URL').onFinishChange(load);
 bk.add(C, 'Ajel').name('A通道防锯齿🏳️‍🌈');
 let bkID=bk.add(C, '_bg').step(1).min(0).name('MouseR 定位'), bkIDn=1
+bk.add(C, 'REC')
 bk.add(C, 'Add1')
 fx.add(C, 'frc', 0.005, 0.2).name('Force / 波纹疾走');
 fx.add(C, 'shi', 10, 77).name('HiShini/ ✨透亮修理');
@@ -204,6 +206,33 @@ regl.frame(() => {
     if (M[0] >= 0) pM = M;
     draw({ S: next });
 });
+
+eBg.capture = async () => {
+  eBg.stop?.()
+  const stream = await navigator.mediaDevices.getDisplayMedia({
+    video: { displaySurface: 'browser' },
+    selfBrowserSurface: 'exclude',
+  });
+
+  const v = Object.assign(document.createElement('video'), {
+    srcObject: stream,
+    muted: true,
+    playsInline: true,
+  });
+  // 挂载至 DOM 但移出视口（切勿用 display:none，否则浏览器会挂起帧解码与 rVFC）
+  v.style.cssText = 'position:fixed;top:-9999px;opacity:0;pointer-events:none';
+  document.body.append(v);
+
+  await v.play();
+  bg = regl.texture({ data: v, mag: 'linear', min: 'linear' });
+
+  const tick = () => stream.active && (bg.subimage(v), v.requestVideoFrameCallback(tick));
+  v.requestVideoFrameCallback(tick);
+
+  // 停止函数：停流、移除 DOM 元素
+  eBg.stop = () => (stream.getTracks().forEach(t => t.stop()), v.remove());
+  stream.getVideoTracks()[0].onended = eBg.stop;
+};
 
 })(p1)
 

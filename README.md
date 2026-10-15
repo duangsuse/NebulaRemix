@@ -16,7 +16,7 @@ more retro-goods like Phase Beam、Bubble、Nexus、Water Ripple、Grass can be 
 
 normal phys(**gravity sensors supported!**):
 
-- [🔴balls_bezier](./demo/balls_bezier.htm), Classic.
+- [🔴balls_bezier](./demo/balls_bezier.htm), [🔴文A bounce easing](./demo/otf.htm), Classic.
 - [🔴balls](./demo/balls.htm)... [🏀 Box 3D balls!](https://codepen.io/duangsuz/full/OPRzoBL), [CG101: `D2(x,y)(runs,turn)` func](https://editor.p5js.org/duangsuse/sketches/bwMmjzmX_)
 - [👠Constraint P/Link](./demo/field/cstr.htm)
 - [🍥fft XYs2rhoTaus](./demo/fft.htm), [(Eq. used)](https://paidax01.github.io/math-curve-loaders/)

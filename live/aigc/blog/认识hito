@@ -24,7 +24,7 @@ hito的字面和JSON[串读串写器: Loadumper]有四种大限制：
 
 /I[msft][^a-z]/ 里If类名和上述if_键名职责相同，`Im=abstract It=interface Is=enum`，命名以 /_$/ 结尾的才可空、或表示await(`u.f_()`)，这些命名法都属于[sikfane前缀类型]。
 
-没错：`变量_` 可空，`函数_` 可等待，`类型_` 可赋值。再搭配上 `f=(x, [{$v=响应式, $_r=可写值}])=>bind(el, <{$v}>)` 和 `def f(x, /, v): "字体渲染为 x, Δ v"` 就有意义了。$v 的键名为 "v"
+没错：`变量_` 可空，`函数_` 可等待，`类型_` 可赋值。再搭配上 `f=([{v=响应式, _r=可写入}], x)=>bind(el, {val:v,onalert:_r})` 和 `def f(x, /, v): "字体渲染为 x, Δ v"` 就有意义了。$v 的键名为 "v"
 
 am_, are_, at_ 可变集合类是少数“不可等待”的下划线函数，JSON类型非常通用，而集合类应当允许重载([1] == are(1))，因此它获得殊荣。
 
@@ -44,9 +44,13 @@ am_, are_, at_ 可变集合类是少数“不可等待”的下划线函数，JS
 
 作者显然认为错误和SIGINT一样，不可能有太多种子类情况吧？对了，/[十一Xノ]/ 四则如 1.十(2)，又缺了 n.RemLesser(10), Lt,Gt,Eq, NoLt 等7项
 
-缺了 at_()=len 以及相关索引， `n.一() == -n, NO.一() = ON, Bits.十(Bits.pos(-8,b),it)==(b<<8)|it, .Xfer=&, .Xor(n)=~n, .uint(8)=2**8-1` 也包括 `Sum=(A@B,einsum) inc(1,10)(x).一()` 这些物理逻辑计算
+还缺了 at_()=len 以及相关索引。 `n.一() == -n, NO.一() = ON, Bits.十(Bits.pos(-8,b),it)==(b<<8)|it, .Xfer=&, .Xor(n)=~n, .uint(8)=2**8-1` 也包括 `Sum=(A@B,einsum) inc(1,10)(x).一()` 这些物理逻辑计算
 
-NaN是空而0不是（m_oo0nBits规则），o.k=pass 和 delete o.k 在hito库表现一致。区间类型可以inc两点为动量/方框，即 PiyjxGnmhw D2v2 规则，支持丢帧和DPI。D2v2 双向量支持 draw/rules/load 定时事件并可重放场景
+Bits 字面上， are_(0x0_b1,4) 是4个字节，相当于0u8但对构造器直接传入177 。0xEDAb4 不带下划线，即为真16进制。"01" 配合Excel风格索引 `m .04A = (m.[3].A)`， 0b1010 只能常量编码为 `[1 0 1 0]@2..pow`
+
+`inc(0, oo(a)) == inc.[0:len(a)], inc.at_([0, a.length])` ，切片均是py风格。右不包含的区间类型可以inc两点为动量/方框，即 PiyjxGnmhw D2v2 规则
+
+NaN是空而0不是（m_oo0nBits规则），o.k=pass 和 delete o.k 在hito集合库表现一致。D2v2 双向量支持 draw/rules/load 定时事件并可重放场景，支持丢帧和DPI。
 
 1. OK/Loop
 1. NO.Or(cue)
@@ -56,7 +60,7 @@ NaN是空而0不是（m_oo0nBits规则），o.k=pass 和 delete o.k 在hito库�
 
 类似 ?.() 的 $() 也有支持 `$('#island:overlay').append(ww.Counter({n:0}))` 的抓取式挂载，可以对attr和p文本预处理。
 
-调试的DTFM9协议 w@,w=,dd= 的 vars.spy.dd_dt `dd="out", 9()=断点语句, d[DTFM]=(w=)+help()+varspy+F12_JQevt` ，`vars.noMemo(c, {num: u=>0})` 重置模块内全局状态，FnHop(c)() 用于录制和切换预设文件，支持时轴CtrlZ，#:~:mainHop可以按CtrlD收藏访问它
+调试的DTFM9协议 w@,w=,dd= 的 vars.spy.dd_dt `dd="out", 9()=断点语句, d[DTFM]=(w=)+help()+varspy+F12_JQevt` ，`vars.noMemo(c, {num: u=>0})` 重置模块内全局状态，FnHop(c)() 用于录制和切换预设文件，支持时轴CtrlZ，#:~:hop=mainHop可以按CtrlD收藏访问它
 
 除 `imp.包名.树` 全局默认为模块变量（支持dm=id=>调试），全局变量只可小写。 `mind='py A B; js C:D; esm.E'` 用于导入包ABC，别名D，E的import*
 
@@ -100,7 +104,7 @@ hito没有“静态编译期”，编译期就是hook掉了argv/fs/sock的自顶
 
 .ID1 在大部分对象上有效。 "kidnt-FlitDOTT" 是其列表.map()缓存键的助记符，即 key id name title 和Row属性
 
-Row包含 ID0（绝对路径/[CPU.foreign已共享]）  ID1（文件名/.key.id/xmlID/hash）  ID2（.desc.tags.title 等全文搜索名），以及 T（原型链接表） DOT（弱类型键值/xmlAttr/imp.类的static） lit（json=OS.repr/outerHTML）。这三种ID联机时的意义请读[CUIFS协议]
+Row包含 ID0（绝对路径/[CPU.foreign已共享]）  ID1（文件名/.key.id/xmlID/hash）  ID2（.desc.tags.title 等全文搜索名），以及 T（原型链接表） DOT（弱类型键值/xmlAttr/imp.类的static） lit（outerHTML htmb语法、json=OS.repr）。这三种ID联机时的意义请读[CUIFS协议]
 
 - .varG 支持 -msTime,+len,行缓冲 (短的分隔符/bufSize/时间片/单独监听 EOF=>{})。 dpr和dt 在动画-svg组件中也用于广义微分
 - FnHo(are([k,v]))?.(Join21.kv({key: a=>a[0]})) 是字典UI（for模板）作为值的方法。Join支持侯数监听，而am()没有侯数
@@ -129,14 +133,14 @@ Join21(fAB, fx, ()=>0) 另存为， 安全内插字符串。 az词组、ahex字�
 
 "".has(glob())?. 单双参可执行RE组匹配、替换
 
-【FnXNAA】 As可调用revPipe、Promise和job组、DFS或Loop。 `[]?.(rwi, (i,u)=>firstIndex)` 可以实现向后搜索。区分搜索/过滤/遍历，在于初次是否返回bool或pass
+【FnXNAA】 As可调用pipeFlip、Promise和job组、DFS或Loop。 `[]?.(rwi, (i,u)=>firstIndex)` 可以实现向后搜索。区分搜索/过滤/遍历，在于初次是否返回bool或pass
 
 【FnXNAA】 ik.indexOf关键字转顺序参数 ia.verOf多版本单项的选择，是 imp.T.fn 的扩展方法。`am().inc('ord' or NO)` 就可实现有序Map、Set的接口
 
 
-revPipe 绑定AB正反管道，如 `F.revPipe.num().then((A,B)=>{ A?.(u=>B(u+1)); B?.(u=>A(u-1)) })`
+pipeFlip 绑定AB正反管道，如 `F.pipeFlip.num().then((A,B)=>{ A?.(u=>B(u+1)); B?.(u=>A(u-1)) })`
 
-函数有“十全十美”： F. vars next(override)/nextKW_XO pipe revPipe bind fill Yup idIsSelf   _404(馈硬可返{}) Fn1~5(不默认首参主语)
+函数有“十全十美”： F. vars bind next(override)/nextKW_XO_AT pipeFlip pipe fill Yup idIsSelf   _404(馈硬可返{}) Fn1~5(不默认首参主语)
 
 
 FSAA/OPFS的WASM支持。H5 特性集上超过 gpuix 的部分需要在htm头部加 <!doctype html> （一般为隐式添加）
@@ -152,7 +156,7 @@ Uh.github.user_.repo_?.()=(后处理参数+无点号域名) U.rank.gh=候选镜�
 
 UX UI UGC离线缓存 GFX/DSP Unix跨页工作
 
-atom1(arr) waitN add1 chan race mayStop eachRacer(()=>重入) select1([]) trust_me
+atom1(arr) waitN add1 chan race mayStop eachRacer(()=>重入) select1([]) CPU.trust_me允许循环阻塞（显示栈溢出停机的confirm）
 
 CAS支持 `rw.waitAsync?.(idx, 1); rw.compareAndSet(0, 1); rw?.((v,to)=>v+1)()新值, rw?.(+1)旧值`
 
@@ -160,18 +164,28 @@ CAS支持 `rw.waitAsync?.(idx, 1); rw.compareAndSet(0, 1); rw?.((v,to)=>v+1)()�
 
 tap:OP {menu📌,nav,leftTab深2}   ptr:iMouse.xyz_WH {drop,dropSort🧲,dragXYWH,CtrlB变量}   kbd{vkbdApp测试时延小猫,lilGUI,i3wm 代码快捷键(CAS _- $/ ^)}   L_D2{inScr,inCSS,全屏转屏焦点}
 
-UV-UW-PV_Ping  iTime(media元素时轴/rate,Lim/ease语法) iChannel(canvas像素/shaderToy.com) 支持CSS-js互事件和SVG互变量，pos/size/scrArea
+UV-UW-PV_Ping  iTime(media元素时轴/rate,Lim/ease语法) iChannel(canvas像素/shaderToy.com) 支持CSS-js互事件和SVG互变量，pos/size/scrArea，Menu的左右键问题、drop或粘贴问题、PinPut列表排序
 
 自带擦拭换色等滤镜，CSS.fx.ease 带许多弹性曲线、mask与飞入等擦拭预设。 D2、D2v2 在性能上支持 ArenaSoA 彩-球共存不共更新、Verlet(xyz/rt)便于广播分组、ECS按classList预分组，因此与 m(shape,dtype) 属于不同世界
 
+`<script type=sw>` 包含PWA元数据和noMemo缓存配置，默认SWR，fetch时网络优先，js/css等仅本地（#:~:ver=d 弹出版本选择=调试版）
 
-## PahQL解析控半同
+## PahQL解析控伴同
 
-PQL支持HiBLIP(Hilight-included BiBrace & Literals Incremental Parsing) 和 PQL.BYGRP 五色代码高亮
+PQL支持HiBLIP(Hilight-included BiBrace & Literals Incremental Parsing) 包含 PQL.BYGRP 五色代码高亮
 
-PahQL `\\.[+-*] =>` 不仅有简单于treesitter的eDSL，clike/json/csv 示范的DSL
+主张EDDE四语法层级 ——Ex Do Def Em，表达式、forif、可导出接口、局部声明（Em1参数,Em2 let..）。在py里Def可能是有时序的，极端情况下会写在forif里。这就像“强类型弱类型”理解也会遇到C的弱检查和py的强检查，但我们仍然应该按常理区分。
+
+`def foo(item: $1, container: [$1 List]) -> int: # f.copy(tvar=[int, None])`
+
+建议使用 `f[1].em[0].T.str|list|dict` 的接口来支持泛型，比如 "int", "str", "$1 (TypeVar)" 和 `[str List], [str [int List] Dict]`，而不是作为单独节点。推导完 [$1 List] 这样的类型深拷贝到var即可由后续 `push: [[$1 List] $1 F.u2]` 检查 
+
+
+`\\.[+-*] =>`
+
+PahQL 不仅有简单于treesitter的eDSL，clike/json/csv 示范的DSL
 - 还有配套的span高亮、CST函数体保注释替换、BLIP增量解析接口（文件和 `class{..` 开头就被独立为.head 区间）
-- 甚至连 TDOP/indent/forCond 的 Tag(E,N)um AST 语法树数组和参数局部.set(lit) 都想统一
+- 甚至连 TDOP十一Xノ/indent/forCond 的 Tag(E,N)um AST 语法树数组和参数局部.set(lit) 都想统一
 - 它不是str2any甚至不止正反，它管理编辑框，用stack可视化爬抠过程
 
 细节：
