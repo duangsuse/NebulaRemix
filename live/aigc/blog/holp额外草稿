@@ -80,6 +80,195 @@ ip/path ipr
 
 
 
+Join21(fAB, fx, ()=>0) 另存为， 安全内插字符串。 az词组、ahex字节、Ymd是另外三种shell类型，ahex 支持 TypedArray(1248CDEF)
+
+- 删 '('  ',' 自带右侧区间，']' 自动恢复和加逗号。删Expr留下 '()' 即【补齐点】'a.b.' 不满时读出 'a.b.\xBB' 的带【补齐点】AST 
+
+Tag(E,N)um AST 语法树数组。(Tag, e可步进Eval, n个Num)
+
+Quine:用窥硬实现sexpXML。调用窥硬的lib函数不得无测试覆盖。
+
+`obj?.(u=> {隐含 obj.xx 作用域})`  是动态的，有时需前置 F.vars({a,b..}) 否则报错。
+
+- 换首律：追溯调用 QuineOp_() 的函数名，替换 src/ 栈帧下行号含(..)的首个区间为 `"&&"+首次输出`。
+    - 强制输出 comptime 常量可 `全局=isLityped.run((x,y,)=>Q_(xyTreeDSL..))`
+    - Ret_("a z") 用于az分词等简单常量折叠。被替换行不可以含运算符。
+- 内插律：`.Quine_($=>{})` 内 `a=Args.lit($=>[()=>op, ()=>nxt])`; a[i] 首次引用，插入其变量名，而魔法在于op块中 `(值的JSON或cell名)` 内联。由此得名LetsBlock/lb
+    - 用 `$.log(op => print(vars))` 记录副作用
+    - `OK(Args.lit([_=>A.v+B.v,_=>B.v==0?A:pass, _=>A.十(B)]))` 常量折叠优化
+- css实用律：窥硬即展开/折叠/内嵌，如 constifyAdd, sexpXML, swapAB 有惯用法。
+    - sexpXML在多个lb里将attr上树并append所有节点，swapAB将A,B=FnHo引用内联为var
+    - lb[i]可用于 `forif,$.T.callFuns, $[1]=For语句的var, $[0](If句的OK)`，c=Args.lit({op(){}}) 将内联箭头等(cell=c.op)
+
+灵感来源为 https://pypi.org/project/tkgui 。Quine_ 的流控函数也类似LOSN
+
+
+{}被视为一种联立条件而 []类似union条件、[OK,{}，{}] 类似接口extends。`[]?.(If({k:v}))` 就是这样， inc(new_=>{} or noauth=>{}) 可以在找不到项时新建，或允许未登录写权限
+
+`<script type=sw>` 包含PWA元数据和noMemo缓存配置，默认SWR，fetch时网络优先，js/css等仅本地（#:~:ver=d 弹出版本选择=调试版）
+
+tap:OP {menu📌,nav,leftTab深2}   ptr:iMouse.xyz_WH {drop,dropSort🧲,dragXYWH,CtrlB变量}   kbd{vkbdApp测试时延小猫,lilGUI,i3wm 代码快捷键(CAS _- $/ ^)}   L_D2{inScr,inCSS,全屏转屏焦点}
+
+UX UI UGC离线缓存 GFX/DSP Unix跨页工作
+
+atom1(arr) waitN add1 chan race mayStop eachRacer(()=>重入) select1([]) CPU.trust_me允许循环阻塞（显示栈溢出停机的confirm）
+
+CAS支持 `rw.waitAsync?.(idx, 1); rw.compareAndSet(0, 1); rw?.((v,to)=>v+1)()新值, rw?.(+1)旧值`
+
+
+UV-UW-PV_Ping  iTime(media元素时轴/rate,Lim/ease语法) iChannel(canvas像素/shaderToy.com) 支持CSS-js互事件和SVG互变量，pos/size/scrArea，Menu的左右键问题、drop或粘贴问题、PinPut列表排序
+
+UV-UW-PV  iTime(media元素时轴/rate,Lim/ease语法) iChannel(canvas像素/shaderToy.com) 支持CSS-js互事件和SVG互变量，自带擦拭去色等滤镜
+
+OS {json,urlCard,cpio,fastF5, chroot"USER", chcpu}, chop mint补丁-模块级cue-F.useOld(), imp.LEGB查变量  自动选线路import class-def的静态无序性
+
+CPU {foreign{Tx候选,Rx表,nextID0},trust_me, atom1Of数组指针,taskN进度撤销写法, UX UI UGC  Unix跨页的/GFX/DSP({特殊上文和导出}) } 跨页有支持transfer:[FnHo] 。 CAS支持 `rw.waitAsync?.(idx, 1); rw.compareAndSet(0, 1); rw?.((v,to)=>v+1)()新值, rw?.(+1)旧值`
+
+
+
+自带擦拭换色等滤镜，CSS.fx.ease 带许多弹性曲线、mask与飞入等擦拭预设。 D2、D2v2 在性能上支持 ArenaSoA 彩-球共存不共更新、Verlet(xyz/rt)便于广播分组、ECS按classList预分组，因此与 m(shape,dtype) 属于不同世界
+
+除了六种根基，`FnHop|$1|[A B T$2]|Args` 这四种特殊类型用于还原泛型、DSL和CRDT(git log)
+
+我们曾认为(FnHo "abc123")是唯一的“引用类型”，即有类似 `u.* = v1` 的deref赋值（虽然和监听队列混在一起），而 FnHop(v0默认值) 使用 `-arena1 FnHo { inc {u: V} }; main[-argv] Or"": cue(arena1); u==V` 制造和临时打开一组侯数，很像[hito模块变量: static var]的独立不共享。可持久化。
+
+`\\.[+-*] =>`
+
+PahQL 不仅有简单于treesitter的eDSL，clike/json/csv 示范的DSL
+- 还有配套的span高亮、CST函数体保注释替换、BLIP增量解析接口（文件和 `class{..` 开头就被独立为.head 区间）
+- 甚至连 TDOP十一Xノ/indent/forCond 的 Tag(E,N)um AST 语法树数组和参数局部.set(lit) 都想统一
+- 它不是str2any甚至不止正反，它管理编辑框，用stack可视化爬抠过程
+
+细节：
+- code/hex 均支持6种结构符: "+*-=> "，比纯PCRE写json验证器还简单
+- 删 '('  ',' 自带右侧区间，']' 自动恢复和加逗号。删Expr留下 '()' 即【补齐点】
+- '-' 括号配对，`['=', ['=']], ['*', [],[]]` 死递归和for-cond管道链（用于JSON和OOP）， '>' 为keywords补齐和命名作用域。'a.b.' 不满时读出 'a.b.\xBB' 的带【补齐点】AST 
+- 可用 `JSON.parse("")` <JSON.org> 的报错信息提取前缀， (s,OK)=> 随处嵌入。 s(2)peek, s(-2, s=>{})跳过并监听字面； res.on({}) 遍历和lisp树化AST 
+
+
+
+## Basic CLI
+
+w@ f"{1=}"
+wrtHoles(boy=>{wrt`Hi, ${boy}`; boy.v})
+n=>mutate(rw=>{while(n-->0) rw?.(n)})
+
+for u in w@":IXE": w@"no trail \n"
+rdList=(a)=>`render() a on update`
+rwFile=U.txt.a，需要cue (defer绑定)
+
+## Console Fmt
+
+stdiox (F12-groups, files-pipe ::)
+
+1. vars.spy.dd_dt `dd="out", d[DTFM]=dbg_print,F12_jq,help()`
+1. wrt.BeSQRUT，类似 BS-VOCX
+1. wrt.BYGRP
+
+- 5Ufs: 4$5U, $ys,$h,$tate,$end 协议, $ys/p = /p; $h/p = ~/p
+- 三种新文件类型 .dmm; dir.fn/; index.* ，dmm配置决定文件夹下（链接是否带过滤器、文件显示名），dir.fn/** 打开或cd前都要touch(a/ 显示为 a::)；index可cd和执行文件夹
+- 5U: dev{3h3m}  sys{Boot, A:C:, T/背光等类, ip.fn/, ip.dmm蓝牙WIFI等, mnt/U盘等}  lib{.py,.java, .c/{lib和bil.so反射@PATH.so}, @PATH二进制}
+    - ussr{icons,menu,font, 各种App资源..}  v{tmp,log,db,run, 动态记录..}
+    - m0空读写(zero,full同类) m1内存 m2p1,sd2p1(sda), hid/{mouse,key}, hdi{a0,a1,v0@RGBA,v0.dmm}, hci{WebUSB}
+    - 将 path;ipr;ipa;ipa0~局域网编号 动态加入HOSTS，用到时显示 $(ipat ngrok) 推荐 TailScale/CF
+    - 有 SK_某密码,DB=url,o=输出,port=8080 通用GUI界面
+
+
+
+- 易分辨Rpc子类型、错误边界、表格主键压缩（DeSer和DMM工具集）
+- 可爬性预知
+- 盘旋参数
+
+
+## Console Table
+
+1. 按钮组和图片嵌入、进度条状态词#.:
+1. 列表组、链接（精确到行列,秒）、AI重录
+1. 两行两栏两层[{}] 简单CRUD界面，FLST+FLIP(first, last, [subst, topup]+[inverse, play]) 列表和动画
+
+Um,Uh,UGC(./, globDir/, dir/index.XX, //链接?/参数:值)
+
+tap:OP {menu📌,nav,leftTab深2}   ptr:Pxyz_WH {drop,dropSort🧲,dragXYWH,CtrlB变量}   kbd{vkbdApp含时延小猫,lilGUI,i3wm}   L_D2{inScr,inCSS,全屏转屏焦点}
+
+
+## shref协议
+
+因为stdioe之中err流太多余，就以此设计了类似 F12 console 的协议。支持颜色、进度、小文件管道写入和zenity式选择等等。如果用惯了Gtk或TTK，woutk 五个字可作为它的昵称？
+
+以下可嵌入在源码和网页code： `#> 命令或./文件路径  #>[按钮]命令 #>多行按钮换行 #> 命令 $it < 多行列表单选,首词,不含空格  $it:menu 下方同理右键  #<=>折叠批注开始  #</>已关闭 #<|>已拉开 #>>[append此折叠区到路径的按钮]`，匹配 /^\s*[-#/]+>/
+
+`    #>大写提示或章节  #< 配置:flags\n ((lit)) #@1 AI重录 @#` 这些需要框架和编辑器支持，不支持写入stderr。配置库(TOML)可在关于菜单或u命令查看。双斜杠同样可用， #//<^v> 快捷箭头可用于指示字体
+
+输出 /^:[IWEX\.]:\d+=\n/，如 `:I:4=exit` 为粗体信息，可含 "🟦🟨🟩🟥🟪🏙⬛⬜" BYGRP等八种颜色，如 `$(🏙_)$(⬛)$(🟪)bold pink on cyan$(⬜)`。
+
+就像BYGRP那样易用：pacman/pacaptr 式的BeSQRUT包和服务管理用法。又如， pm -Sw = winget/scoop; -Sm brew:via-miseUse; -Sj pnpm; -Sp uv/venv
+
+你可能想用 $(⬜_) 标注链接或 `\x1B[{y};{x}H` 控制print(if isatty)，除了 `"\r无符号状态词 $(⬜% 90) flip"`，通过 `\r line[##--] flip` 手动渲染进度也好办。终端游戏想直接获取按键？ lihaoyi.com 完整描述了bash/py自己在用的ANSI事件流。
+
+`cmd 2&>|o 1` 即点击第1按钮。`$(o .png magick a.bmp)` 或 `o -png magick|yazi $(o)` 可实现非文本管道， `o port:8080 http-server` 为端口选择，port=localhost=默认, prot=0.0.0.0, ipa=本机ip, ipr=USB上网时手机名 ipr1=本用户本局域网第1次出现的MAC，开服会显示本机地址列表。
+
+`o ctrlv {image,oncopy} [./mk/path 并写入]|o ctrlc` 是基于 OSC52/klipper，`:-1=a.date_log\n` 日志tee到当前日期。类型化嵌入（如图片）用 `:6=.txt\n?` 即可，用 `o a.` 将最后一张存入 a.txt。
+
+如果程序冷启动较快的话，`if argv[i]=="\xBB"` 时查找此位置的Tab补齐，再 `echo "-W a b c";exit 1` 就会好用不少。大致仿照了 `#> help compgen`，-Ad接受目录 -Ac接受子命令 -Wd 为编译时缓存的-W，`-Af image/* -Af *.png` 是处理图片的两种写法，用file和glob命令过滤。
+
+更类似Juypter组件库的图片显示？只需前置 :=.url 的嵌入，内容比如 `?id=1&xywh=0,0,80,1,z999&file=(SHM,empty2clear)&fps=60&set_fail=load%20fail`，再细节的功能如 o -quiet, bash d||w, DB.SK_密码变量管理, DBG=012 运行时lint
+
+当然，`argv[1]=="-h": echo "#> {$0}..."` 才能启用Tab功能，-opt 补齐同样来源于-h，格式上可以确保 `eval ''{ruby,lua,sed,curl,pacman,docker}' -h|head -n10;'` 正确补齐和高亮。ssh;find;grep 那种命令建议换tldr。
+
+`#> dust -r /usr/share/bash-completion/completions` 一下你就知道安装了哪些命令，谁功能最复杂了——与之相比，shref协议就像busybox那样迷你呢。（一切皆如CGI，共享exe host）
+
+## 新的前后端范式
+
+两栏两层键值 pjoCRUD[{}] 提供了简单CRUD界面。设想一下，你只用 `/p 1, /j nth_item, /o 右键菜单补齐, /o 无参并输入编辑` 这样的方式访问对象列表和详情。它的适用范围极广，如系统服务和博文的列表。
+
+Hito对象模型还有一个类似CRUD的概念：CUIFS(`create update(is_deleted) ID  filter sort`)，ID一词涵盖了项的路径访问、项的卡片速览、用户ID鉴权。
+
+使用 p,per_page 关于屏幕大小分页。分页应用点顶栏应滚到最顶，有可选实现的 `/prev_page:id` 参数，id:0 表示滑动到首项=最后一次历史访问。
+
+过滤排序可使用 `?/q:@tag+@归类+@@uname+kws, /sort:1A+1B-2C, /dt_page:20080101-20261230, /dt_page:起始时间戳/p:1` 方式动态完成，但需要传入可用的相关列。
+
+1. 应使用路由别名显示分类，如 `a.com/@id => a.com/?/q:@@id`，表单ID使用 @+123 形式传输。
+1. 批量操作可 `POST /pet/new [{"id":A, "-act": "remove"}]`，修改内容、重设旗标数组。注意，根对象是[]而非{}
+1. 它支持给文件加【视频封面】等等。以 cpio(newc) 的格式传输每项：`dt dt1? uid? "(@uname)? tags \n{json元数据?}\n desc \n\0{Blob}"`
+    1. dt用3bit标注是否含uid、dt1(mtime)是否不等于dt而不省略、dt1是否保存点击量数字(dt1 & 2**32-1)。典型是"11,01"表本地和远程。块有4字节长度前缀。
+    1. 一般会在第一项出现 ".png\n\x89PNG" 预览图：如果是 `"desc\xBB\0{BlobBulk}"`，其中就有许多块 `路径/文件名.typ\n{blob}` 且以 "\x00\x01!\n" 结束
+    1. 所示元数据在 `let [dt_dur, owner_tags_str, desc]=blob.ID2, blob.DOT.json` 可访问
+
+CUIFS 使用 /\.u[vageztmup]/ 缩写视频、音频、图片、文档树、任意下载，剩下4项意味：模板和歌词字幕、3D、桌面、项目
+
+vageztmup 这个缩写可以与 CrsaDM 安装模式搭配（这就像安卓的AppInfo/SAF界面）。C代码包含文本串，r有资源和样式表，s为状态，a为<2MB的配置和敏感数据。D为依赖链接，M为pid快照状态。
+
+运行时依赖，基本是 dlopen/execve 可容器化的，可以在包管理器查询。musl-busybox 现在也能配合SoLo开发大型软件了。
+
+> 其实，真正的HTTP动词只有 OG(HEAD,OPT) 鉴权SEO和 CDN(GET,SET) 可重放性需区别，没有代码=没有区别。至于 `curl -X POST` 一词用 `-d "body"` 是否为空替换就行。
+
+## 范式的一键登录与跨站SSO
+
+OS.userKV_ ，一个按登录用户隔离的GSetJQ全局环境。未登录则为空。
+
+鉴权登录伪代码： `if tok:=chkpass(email, "az09rep8"): res.addCookie("HOME", tok) .. if not (u:=chkpass(req)) or u.balance<=0: error("More Money! #403E")`
+
+基于响应式的动词是 GET SET(PATCH) PUB(POST) OPT HEAD，因为UI变量的pub-sub本来就有可能触发跨端操作，完整后调用/new设定ID，或调用 /new&force={UUID}，可用于兼容reset默认值的PUT。
+
+CUIFS在登录请求（调用栈范围）上区分读写方向。SET 方向的 `chkpass(u,p)` 创建或忽略凭据键值表，而PUB方向尝试登录（`.jwt=true` 冻结后续键值修改）。 PUB 可用于恢复默认值
+
+服务端计算，
+
+## 防冲突的Damnver
+
+> 工程师应当明白：任意发布大版本不会使软件更成熟，却会对下游造成困扰。
+
+Damnver是静态检查的版本号规范，混合了 x.y.z、git的7位短提交号（9位十进制）、js（16位十进制）形式
+
+对于需要联网的库，必须使用 `v1_2026.9.2P{git}` 的日期格式，其他库可用 `v1.2P{git}`。
+
+只要有类、函数、全局变量的删除，v1 → v2，只要有新类型，.2 → .3，最重的要点：v1或v2的一栏不可以手动编辑。`import pkg` 严格导入 pkg@1
+
+（包应当不可后台联网，默认Stop-the-World，除非单模块后台 or 注册到Push框架）
+
+
+
+
 编程范式的进化：
 
 - biosC=x86nasm+函数和8种整数的超链接

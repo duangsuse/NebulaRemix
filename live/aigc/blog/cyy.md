@@ -18,6 +18,7 @@ cyy 不是另一个 “C-Like 编程语言”，尽管它用起来也不会劣�
 
 以下六个关键字均有2个版本，“实”字是4个语言特性的助记词。
 
+
 ```
 依一是，悟易实 req -/一/OK/Or fun set-our ${1 x y} ?.{}.().[]
 
@@ -80,7 +81,7 @@ REPL宿主称为 soPID，它提供了一组解释器状态+ldd依赖和同目录
 1. Squeaky Paw ：面向断点编程体系+网文链接渲染(BOP-MOP)。在报错、未定义、任意库函数开头时REPL试错、验收后自动替换函数体，Markdown笔记即文档支持
 1. Squeaky Entr ：解析，存档重放进程和数据流环境依赖，如 open/exec/curl(F12 cdp) 类接口，实现外部服务交互转文本+热重载，支持onCurl/onResp脚本
 1. Squeaky Choir ：基于最底线键鼠-窗口xywh的录制重放测试工具，也用于存档GTK4/Qt6/X窗口进程为时间旅行截屏（Winforks），快速触发按钮编辑框等
-1. Squeaky Beg  ：像DarkReader那样用转译器查看ChatUI。单串多文件（面向剪贴板编程）、【测试即跑分】多平台转译对比工具。 BEgAST+数据流的块内符号迁移重构器、typer和Quine_使用的【Mock运行计算】流控框架
+1. Squeaky Knit  ：像DarkReader那样用转译器查看ChatUI。单串多文件（面向剪贴板编程）、【测试即跑分】多平台转译对比工具。 BEgAST+数据流的块内符号迁移重构器、typer和Quine_使用的【Mock运行计算】流控框架
 
 
 HiBLIP 允许在容易出错的函数开头加 `9()` 载入REPL（弹出调试时有 `\(^_^)> traceback_with_vars` 注释和各参数类型），这样，你就可以不断热编辑它，直到函数跑通并功能正确，再删掉 "9()" 记号，自动写入fun。其他位置写9()可打断点
@@ -153,16 +154,6 @@ Squeaky fun 也有过3版设计：
 - 空函数加 9() 就能在断点中试错
 - 前置req就能传参调用任何404的函数，然后交互式的学习它。为什么不在事件中用9()暂停，再调用进它的req函数呢？像扮演gcc那样！
 - 对了， 9() 9() 的嵌套调试之上，每次有至多3行 `\(^_^)> traceback_with_vars`，是可CtrlX展开的。函数热重构就像Haskell的>>=，Bash的$_一样，是本项目的Logo来源。
-
-cyy vs hito：
-
-- 都支持HOLP和FuOP范式，在响应式与API跨端上表现一致，但roadmap不同。
-  - hito可以与 Haxe(--jvm,php mostly) 之外的非脚本目标互相转译，而且有h2js等运行时依赖，会区分 Row_/Ro/RoLit 深度冻结而不只是 Any/NO/ItNeverDup
-  - 所以，cyy更原生的支持 ps1,lua, GDScript, Amber.sh+AHK，甚至可测试 scratch3-extension->Leopard热重载 <Shadertoy.com> 小游戏流 (npx tstl ts2gd coffee-ahk js2coffee)
-- cyy仍然保留了点号调用和ABAB函数签名，hito则完全转向bash-kebab风格与AABB函数签名
-- hito语法文化中立、不可以自由压行，纪律性更适合大型仓库维护、系统编程，但在快速调试和编程教育上，与cyy差距较大
-  - 可变退化不限于集合类：返回不写明 Box_(1)._ 都退化为Box，._只可读取1次/Δ lateinit。令牌资源仅 inc-never 可移动 `Builders_,cue,bufChan`，never.target可让filtmap原地（或先dup），FnHop?.{}可全局共享
-
 
 ## FuOP的三个组件
 
@@ -628,6 +619,14 @@ LUCID-MeowDict 是用于跨语言/跨平台开发的心智模型写法测试，�
 是在编程语言中数一数二的【超导特性】，比如强类型，它既可以把dev当傻瓜来惩罚，也可以实现探索补齐和存储优化。 不是看 user. 前缀，是补齐出带示例的调用，并且根据光标下参数的类型补齐变量和属性！
 
 git和区块链像【文件夹历史记录】，socket则像【文件夹监听-创建回应文件流】。
+
+ID|vartree变量树|callgraph参数管线|API.SDK框架生态
+:-|-|-|-
+Any|组合与解构(✍️积攒章节,两两链接)|复用或代换(✍️术语表,好懂比喻)|自顶向下,选型
+Clike|byte struct{偏移量}, 无类型难GC|“硬”模块化 `T前缀_op(Tdata,*argv)`|高吞吐低延迟,系统编程等
+OOP|集中为T{constructor}, 访问链|继承, 方法表覆盖|和REST一样广,全栈
+FP|(a:b:[])lists, json, 解构匹配。区分可空，不分值/引用|接口, [泛型函数SAM闭包](https://zh.javascript.info/closure#tasks)|偏理论,正被前端界炒作
+HOLP|🦆鸭子类型Excel+🙉猴子补丁|🐦鸽群赋值+五合一调| --“海陆空[侃半同 组合子]”
 
 🐧 pthreads： 你们终于重新发明了pid和 cat|less 的背压暂停，还把kill和Promise.all一挂全挂当成独家特性来做了。
 

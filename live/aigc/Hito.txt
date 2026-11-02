@@ -467,13 +467,6 @@ clean[-u ""] sed (re:'fuck'): "" join(u#1)("*" -repeat (n(u) -2))(u#-1)
 
 ## 系统和图形
 
-UV-UW-PV  iTime(media元素时轴/rate,Lim/ease语法) iChannel(canvas像素/shaderToy.com) 支持CSS-js互事件和SVG互变量，自带擦拭去色等滤镜
-
-OS {json,urlCard,cpio,fastF5, chroot"USER", chcpu}, chop mint补丁-模块级cue-F.useOld(), imp.LEGB查变量  自动选线路import class-def的静态无序性
-
-CPU {foreign{Tx候选,Rx表,nextID0},trust_me, atom1Of数组指针,taskN进度撤销写法, UX UI UGC  Unix跨页的/GFX/DSP({特殊上文和导出}) } 跨页有支持transfer:[FnHo] 。 CAS支持 `rw.waitAsync?.(idx, 1); rw.compareAndSet(0, 1); rw?.((v,to)=>v+1)()新值, rw?.(+1)旧值`
-
-
 
 与URow、URL、UMat应用轻松交互
 
@@ -481,49 +474,6 @@ Row读写器
 
 无GC时的 [T rw] 如 (int argc,char** v={{"./wtf"}}){} 默认全*const，CPU.trust_me{} 可算指针
 
-
-## Basic CLI
-
-w@ f"{1=}"
-wrtHoles(boy=>{wrt`Hi, ${boy}`; boy.v})
-n=>mutate(rw=>{while(n-->0) rw?.(n)})
-
-for u in w@":IXE": w@"no trail \n"
-rdList=(a)=>`render() a on update`
-rwFile=U.txt.a，需要cue (defer绑定)
-
-## Console Fmt
-
-stdiox (F12-groups, files-pipe ::)
-
-1. vars.spy.dd_dt `dd="out", d[DTFM]=dbg_print,F12_jq,help()`
-1. wrt.BeSQRUT，类似 BS-VOCX
-1. wrt.BYGRP
-
-- 5Ufs: 4$5U, $ys,$h,$tate,$end 协议, $ys/p = /p; $h/p = ~/p
-- 三种新文件类型 .dmm; dir.fn/; index.* ，dmm配置决定文件夹下（链接是否带过滤器、文件显示名），dir.fn/** 打开或cd前都要touch(a/ 显示为 a::)；index可cd和执行文件夹
-- 5U: dev{3h3m}  sys{Boot, A:C:, T/背光等类, ip.fn/, ip.dmm蓝牙WIFI等, mnt/U盘等}  lib{.py,.java, .c/{lib和bil.so反射@PATH.so}, @PATH二进制}
-    - ussr{icons,menu,font, 各种App资源..}  v{tmp,log,db,run, 动态记录..}
-    - m0空读写(zero,full同类) m1内存 m2p1,sd2p1(sda), hid/{mouse,key}, hdi{a0,a1,v0@RGBA,v0.dmm}, hci{WebUSB}
-    - 将 path;ipr;ipa;ipa0~局域网编号 动态加入HOSTS，用到时显示 $(ipat ngrok) 推荐 TailScale/CF
-    - 有 SK_某密码,DB=url,o=输出,port=8080 通用GUI界面
-
-
-
-- 易分辨Rpc子类型、错误边界、表格主键压缩（DeSer和DMM工具集）
-- 可爬性预知
-- 盘旋参数
-
-
-## Console Table
-
-1. 按钮组和图片嵌入、进度条状态词#.:
-1. 列表组、链接（精确到行列,秒）、AI重录
-1. 两行两栏两层[{}] 简单CRUD界面，FLST+FLIP(first, last, [subst, topup]+[inverse, play]) 列表和动画
-
-Um,Uh,UGC(./, globDir/, dir/index.XX, //链接?/参数:值)
-
-tap:OP {menu📌,nav,leftTab深2}   ptr:Pxyz_WH {drop,dropSort🧲,dragXYWH,CtrlB变量}   kbd{vkbdApp含时延小猫,lilGUI,i3wm}   L_D2{inScr,inCSS,全屏转屏焦点}
 
 ## 新的前后端范式
 
