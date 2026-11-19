@@ -16,7 +16,7 @@ HOLP兼容编程语言|cyy (直观像 kt,ESM)|hito (bash,py,Go)|LOSN (lisp,ES6)
 场景和哲学|活进程时移调试、pyjs单框架双兼容、Agent可协作、母语编程教育(autofix/参考Hazel)|通用编程、工程化/转译器、C/Cosmolibc/Goose语言免费融合，zipapp/redbean H5打包|P5.js/GDScript热重载、零样板RPC、Feetless应用平台的编程模型
 调用词法风格|点号.(并列调用)和ABAB函数签名|可自动转bash -kebab风格、强制AABB函数签名|如 `pid.(parent)..(kill 9)`，管道和方法并存
 def和排版|`F.n2.{}; f.{\(A B)> ..}` <br>强调函数签名处0缩进|`f [-2] {}; F.n2:` 强调单参/单块参的绝对优先、文化中立性|简化hito的 `[-A-B]>` 与命令式 `def 新类型()`
-视觉边界感的打磨|`~> ⌐> === --- - ..{} .{} \(2)>`|`[-A-B 0 1 ~>""] [{sig1}] {-k v} -op()() on"": .: It类型  when句 :.` 支持缩进或花括号，不可自由压行|`[-A 0 -B 1]> [].() .{}` **无分词能力。空格不可随意**
+视觉边界感的打磨|`~> ⌐> === --- - ..{} .{} \(2)>`|`[-A-B 0 1 ~>""] [{sig1}] {-k v} -op()() on"": .: It类型  when句 :. ::req` 支持缩进或花括号，不可自由压行|`[-A 0 -B 1]> [].() .{}` **无分词能力。空格不可随意**
 集合类检查/lityper|只默认 `[].(inc"")` 带类型冻结<br>拟态匹等，不是"首插"检查|深度冻结区分 `RoLit,Ro,Row_` 并提供构造期可变、FnHop遮盖性可变|不区分冻结且允许无类型[]{}，有[].{}.{}.inc造匿名原型的[{}]
 类型检查|渐进，有TypedArray(inc 0xb1..)和泛型 `[A B Pair$2]`|强制，类型推理，需标注数值宽度+枚举穷尽+transfer/never(obj.k2DEL_)线程和可变性独占|只检查nullish
 类型理解|强制I[msft]命名，支持类型会意（最简字面即类型）|强制I[msft]命名，预定义sikfane类型会意|只要求后缀 '_' 语义化，不检查 ._priv
@@ -52,26 +52,46 @@ bash并列调用、JSON加模板内插、管道/中缀/调用链、【认假为�
 |解析位置|圆|方|花括号
 |-|-|-|-|
 [-]语句级|并列调用。还支持ES6 str多行模板调用与 `$(1 x y + 2c)` 并列多项式|void并列调用。返回非NO有lint警告，可 `[range 10].each.{}`|{v v1} 声明重赋值和 `{->o {k v} ->u{k it}}` 赋值
-.调用链|同上，支持 `o.op "s"; exit` 行首单调用免括号。 `(o.op≠o.(op))`|js下标或.(at_ 0) dunder|追加块参数，如 `e.(!!on "end").{it.eventType}; e.!!click.{}`
+.调用链|同上，支持 `o.op "s"; exit` 行首单调用免括号。 `(o.op≠o.(op))`|js .at()下标，`a.[-> 0 ""]` 即赋值。|追加块参数，如 `e.(!!on "end").{it.eventType}; e.!!click.{}`
 参数-值|同上，用于分组。`([-x]>x) 1` 是语句|数组，支持 `[{A 1 B "2"}].{3 "4"}` 表头表列模式，共用匿名proto|字典，支持多项 `{k v}; {- k v}`，写 `{- A - B}` 变量模板与 `{- [B] "v"}` 生成键名(B=NO则无此键)
 
 
 ## 语法作为工具包和Tweak
 
-LOSN的【五值】，更确的说，是【五值七字面:橙点色路单正钮】—— 类似bash的工具生态，LOSN 将语法糖作为一等公民
+LOSN的【五值论】，更确的说，是【五值七字面:橙点色路单择按】—— 类似bash的工具生态，LOSN 将语法糖作为一等公民
+
+橙点色路单，点乘（1 x y+.5x多项式）、 #66ccff #(200 1. .7) 六位颜色点、 ./a.txt ../xx  /~res/{pkg_res} /~/{xdg-home} 文件索引、//dummyjson.com/users/?${{limit 5}} 网页表单
+
+单择按，(==ENUM==) 单选下拉 + `m .04A = (m.[3].A)` 前导零=单行Excel，JS的标准RegExp字面，(==btn==) 一个编辑期全局按钮
+
+时移调试：暂时只有 `(CPU渲染,Xwayland,Xpra)+{criu,AHK}+BPFsnoop编辑可重放` 两种实现，fork快照不能用于原生UI，criu不能给H5调试。
 
 
-Excel风格索引 `m .04A = (m.[3].A)`
+## FuOP的流控与作用域
 
-时移调试上只有 `(CPU渲染,Xwayland,Xpra)+{criu,AHK}+BPFsnoop编辑可重放` 两种实现，fork快照不能用于原生UI，criu不能给H5调试。
+【飞天穿墙 做图晒档】是HOLP与FuOP对编程语言共同的要求 ——必须提供和“玩家”在自然语言上不同的控制力与超视角，就像能倒转地心引力向量那样“见血封喉”，有魔法无咏唱。无废话，同时保证心智负担低到能日常“做图晒档”。
 
 
+
+BELT, 类似于LEGB但为代码重构和move优化，也就是 Builtin, Env, Lowercase([^A-Z]) or Titlecase
+
+—— 小写自由变量，默认就是u参数上的键名（如果u存在），所以不要写 this, self, super
+
+`u.xx=u参数键, (req.sys.argv, imp.xx)=全局键, .xx=非局部, xx=非局部或u键, Xx=非局部或全局`
+
+在cyy,losn这些新语言里，`xx=非局部或u键` 被严格化为——如果u存在，非局部总是有'.'前缀。 这会鼓励框架API设计者强化OOP封装，合并函数的复用
+
+`变量=局部(参数,let和var)|非局部|自由变量`，典型的非局部包括req导入、`i=0;setTimeout.{ {->.i  .i+1} }` 引用的外层局部、外层参数。
+
+
+
+`F.pipe.{u + 1}.{2u}.{"skipMe" if NO}` 可以实现Rust变量名遮盖意向的功能，所以不允许 `- k 1; - k 2` 这样
 
 ## HOLP三定律
 
 编程方法论 HOLP, Human Oriented Lists Protocol 是处理响应式列表/键值的根源，但在了解它关于 {}[] 的接口前，需要先熟悉三个方面的约定。
 
-它们就像《Lisp七公理》《机器人三定律》
+它们就像《Lisp七公理》《机器人三定律》，为【飞天穿墙 做图晒档】奠基
 
 ### HL1
 
@@ -85,6 +105,7 @@ JSON读进来，`k:true false` 永远映射为 k_。如果访问到为null或不
 
 实现上：
 
+- **it?.{u} 语法里u参数的有无，取决于左边像不像if条件。如果是 is/has/逻辑计算与 (==enum==)?.{}，就不覆盖u**
 - 调用了 `*_`, `xx.Or("err")` 类函数而不在 [Or "wrap errmsg"].{} 下消费的函数，自己必须是 *_ 。错误信息，只用 Or.{ /404/.(test it.tags) }.{ fetchOK_ "hi" } 区分错误
 - nullish即是falsey。判定上用 is_(any)。有 is_(item, test) 帮助arr.findOK处理“函数或值”参数
 - [null,] 读进来用?.{} map处理后会消失，过程中仍存在， {- [""Or NO] v} 键模板直接得 {}，串模板 ${u.age_ u.(getAge_)} 会报错提示加 Or""
@@ -144,8 +165,6 @@ Loop【或者】OK，这是HOLP对调用栈的理解。一些实现会支持浏�
 
 同样，&& || ! 也不HOLPful。 `((both A B) Or isnt(C isnt 0))?.{} Or{}` 与比较构成了基础运算，LOSN用 is()?.{} Or{} Or{} 来排版多行elif。
 
-?.{u} 里u参数的有无，取决于左边像不像if条件。如果是 is/has/逻辑计算与 (==enum==)?.{}，就不覆盖u
-
 ## HOLP构造、可变与相等性
 
 综上所述：透过三个切面，我们实现的是 1/n/no/fail 单语法
@@ -178,43 +197,48 @@ HOLP的顶类型之一，Row也包含 ID0（绝对路径/[CPU.foreign已共享�
 
 ## 三个小人、三定律、三对口诀
 
+【FBMH-PECK方法论】很大，可以从这九个点开始学。
+
 `?. \(^_^)> \\("_"){λ. } <"[*-+]/`
 
-批曰：以一事悟易实，知拾移吾全取。 
+批曰：以一事悟易实，知拾移吾全取。 Tyemp Vonhon local-cute
 
-?. \(^_^)> 代表cyy的交互式执行与HOLP问号，\\("_") 象征 Or("runCatching") λ. 的失败返回空，<"[*-+]/ 与cyy招手方向对仗，由LOSN的 PahQL PEG 元字符组成，是其元语言。
+`?. \(^_^)> 代表cyy的交互式执行与HOLP问号，\\("_") 象征 Or("runCatching") λ. 的失败返回空，<"[*-+]/ 与cyy招手方向对仗`，它由LOSN的 PahQL PEG 元字符组成，是其元语言。
 
-【批曰】的每个字对应一类cyy语法： 以row 一{-,OK,Or} 事~> 悟pin 易${1 x y} 实#>#@，知req  拾inc 移set?? 吾our?? 全for 取if。
+【批曰】的每个字对应一类cyy语法： `以row 一{-,OK} 事~> 悟pin?? 易${1 x y},%{} 实#>#@，知req  拾inc 移now 吾our?? 全for 取if`。
 
-I[msft] KNAAS, FLIP/BLIP/BELT/DOTT 类名通配符有完整解释：Im抽象类 Imp开放继承 Is多状态enum If多态键 It接口。
+【甜网红】Tyemp Vonhon local-cute: .Ty u imp, F FnHo ON, NO Or OK^ .cue释放队列(放置于 Or("").{})
 
-`变量_` 可空，`函数OK 函数OK_` 可等待，`类型_` 可赋值。 在LOSN和cyy中类名不可以_结尾
+**I[msft] KNAAS + FLIP/BLIP/BELT/DOTT**
+
+类名通配符有完整解释：Im抽象类 Imp开放继承 Is多状态enum If多态键 It接口。
+
+`变量_` 可空，`函数OK 函数OK_` 可等待，`类型_` 可赋值。 在LOSN和cyy中类名不可以_结尾，再比如 `[-1]` 必须写 `[ -1]` 
 
 此外，全下划线和kt一样禁用。函数和变量如 'sym!' 结尾视为 sym_
 
-- Filtered List ID_lit Putback, arr.varI 的策略，未来可支持PinPut列表排序
-- BigBrace & Literals Incremental Parsing 对字面和函数级，专门的端到端热重载
-- BELT Builtin, Env, Lowercase(u.var) or Titlecase(imp.var) 的词法作用域，对标LEGB。非大写变量名默认在u参数上查
-- 让几乎所有对象（如类名static、XML、文件存储）支持动态DOT.键值
+- Filtered List ID_lit Putback, arr.varI 的策略，同时也象征 First, Last, Inv, Play 列表动画。未来可支持PinPut列表排序
+- BigBrace & Literals Incremental Parsing 对字面和函数级，有专门的端到端热重载
+- BELT Builtin, Env(.any), Lowercase(u.var) or Titlecase(imp.var) 的词法作用域，对标LEGB。非大写变量名默认在u参数上查
+- 让几乎所有对象（如类名static、XML、文件存储）支持动态DOT.键值，并可用.T快速查询原型，原型.T可访问【函数表反射】
 
-"GLtER十一Xノ 0x1248CDEF-U8ErrDeF" 
-
-代表所有数值和逻辑计算、数位宽度、主要错误分类
-
-
-Ctrl[SNOWL] /.varGITES/
+**Ctrl[SNOWL] /.varGITES/**
 
 SNOWL 代表 Save New Open(isMounterAB) Word免引号 LitStr安全模板。
 
 /.varGITES/ 里的S是单例+查表，.var 类似 useState，.varG 像生成器和缓冲区，I 用于列表id缓存编辑，T 响应类型和空，E 响应可空初始值（因为侯数也强类型不可变）。`varI(ix,a0,del)` 允许引用a0里的旧项或插入新项，节点缓存
 
-- .varG 支持 -msTime,+len,行缓冲 (短的分隔符/bufSize/时间片/单独监听 EOF=>{})。 dpr和dt 在动画-svg组件中也用于广义微分
-- FnHo(are([k,v]))?.(Join21.kv({key: a=>a[0]})) 是字典UI（for模板）作为值的方法。Join支持侯数监听，而am()没有侯数
+- .varG 支持 -msTime,+len,行缓冲 (短的分隔符/bufSize/时间片)
+- 字典UI通过K,V的for模板和Join21.kv绑定为值
+
+**"GeLtER十一Xノ 0x1248CDEF-U8ErrDeF"** 
+
+代表所有数值和逻辑计算、数位宽度、主要错误分类
+
 
 # WIP正在整理
 
 ```
-# Yemp Vonhon local-cute, u imp F.u,FnHo ON NO Or OK^ cue
 # 🔒💭🚩✉🆎🚥 w@ 9() #@1 @#
 ```
 
@@ -224,9 +248,13 @@ Row1~3 D1~D4 (F)n0~n5免前缀 实现了 kotlin.Pair 和vec3这些列表广播�
 
 比如： Join21(fAB, fx, ()=>0) 、B=numA?.(FnFlip(怎么+1往返))，FnHop则用于临时写配置，或增加 `{get_v,let_v, if404}`
 
-Vars.memo({}, PUT/URL/cache/VTT/lruCG)，url::_SAVE=设定读档
+FnFlip 如 "tidy_"?.(./a.txt).{waitOK 500; ".."} 可以异步替换内容，或另存为 tidy_a
+
+Vars.memo({}, PUT/URL/cache/VTT/lruCG)，url::SAVE_=设定读档。 Vars.ateAlike_(0, "123", "err"|返空) 实现pyjs输入读数功能
 
 函数有“三三得九”： F. pipe bind(支持kwflag和u:this) vars(传入{闭包捕获,}缓解元编程问题), fill next(override) nextKW_KF_AT, idIsSelf Yup   Fn1~5(不默认首参主语)
+
+cyy get(#>sloc,req)/set/bat(-v)/src#>/rep#>/onhead/wait9/on9/un9/diff2/i18n/ver(#@)
 
 | 0x4__e | 00Typed        | 01Login  | 02Enrich | (03IArgE            | 04NSuchE      | 05IStatE   | 06panick)     | 500Unlink       |
 | -------- | ---------------- | ---------- | ---------- | --------------------- | --------------- | ------------ | --------------- | ----------------- |
@@ -277,13 +305,15 @@ LOSN对运行时的理解是【五值:字相等可组+spgjiaVM栈机】，解释
 
 相关引用：
 
-EDDE四语法层级 ——Ex Do Def Em，表达式、forif、可导出接口、局部声明（Em1参数,Em2 let..）。
+【五值】包含EDDE四语法层级 ——Ex Do Def Em，表达式、forif、可导出接口、局部声明（Em1参数,Em2 let..）。
 
 在py里Def可能是有时序的，极端情况下会写在forif里。 `f[1].em[0].T.str|list|dict` 的接口足够支持泛型，如 `[str List], [str [int List] Dict]`，推导完 [$1 List] 这样的类型深拷贝bind就行
 
-【CMOLTE六个概念】 模块组件 集成框 类型+事件 展示页 开箱即用性 模板生态 **——软件是以【它有用时的flow】被开发和使用的，无论lib 框架“App”“容器”，或编程语言。**
+DDFL声明式数据流 ——Decl. Dataflow, (mental) flow + loops
 
-各种语言都有【LUCID五个实例】带人入门： [LineEchoOddArgs, UserRingKV_Ratelim, CounterDownBoom, IconGrid_LiveGrep, du_-h_ForkJoin](./cyy.md#妙妙词典节选)
+【CMOLTE六个概念】 模块组件 集成框 常见类型 事件 展示页 开箱即用的模板生态 **——软件是以【它有用时的flow】被开发和使用的，无论lib 框架“App”“容器”，或编程语言。**
+
+各种语言都有【LUCID五个实例】带人入门： [LineEchoOddArgs, UserRingKV_Ratelim, CounterDownBoom, IconGrid_LiveGrep, du_-h_ForkJoin](./blog/cyy.md#妙妙词典节选)
 
 ---
 

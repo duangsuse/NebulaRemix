@@ -111,6 +111,8 @@ Row包含 ID0（绝对路径/[CPU.foreign已共享]）  ID1（文件名/.key.id/
 
 Quine:用窥硬实现sexpXML。调用窥硬的lib函数不得无测试覆盖。
 
+TDDgc.imp/Quine/ItAteDeeper 如 Proxy.unquote(eval=>) 和 e.v=eg.at(e.v,"1") 是HOLP反射的三板斧
+
 `obj?.(u=> {隐含 obj.xx 作用域})`  是动态的，有时需前置 F.vars({a,b..}) 否则报错。
 
 - 换首律：追溯调用 QuineOp_() 的函数名，替换 src/ 栈帧下行号含(..)的首个区间为 `"&&"+首次输出`。

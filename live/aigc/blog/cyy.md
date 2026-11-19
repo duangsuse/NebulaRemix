@@ -258,7 +258,7 @@ prefer 于(>> a.[0:N]).复制到(b) but 从a 移到 b；你 于 #(0,0) 要30度 
 
 # Yemp Vonhon local-cute, u imp F.u,FnHo ON NO Or OK^ cue
 # am_ inc are_ made_ at_?.[] Loop isMounter As: I[msft]XO_十一Xノ
-# 🔒💭🚩✉🆎🚥 w@ 9() #@1 @# isnt并非 inc引 u你
+# 🔒💭🚩✉🆎🚥 w@ 9() #@1 @# isnt并非 both如成立 inc引 u你
 # [fun Xopt row DOT_] [.if u>> for] [As,trust_me:Loop-Or-OK] [req newF.n, >> newval, (>>expArg)]
 
 row Wtf() set ItCloses :{- i new 0}
